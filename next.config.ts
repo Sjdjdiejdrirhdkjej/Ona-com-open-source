@@ -7,6 +7,14 @@ const baseConfig: NextConfig = {
   eslint: {
     dirs: ['.'],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'posthog.com',
+      },
+    ],
+  },
   poweredByHeader: false,
   reactStrictMode: true,
   serverExternalPackages: ['@electric-sql/pglite'],
