@@ -130,7 +130,7 @@ Developer experience first, extremely flexible code structure and only keep what
 
 - ⚡ [Next.js](https://nextjs.org) with App Router support
 - 🔥 Type checking [TypeScript](https://www.typescriptlang.org)
-- 💠 Integrate with [Tailwind CSS](https://tailwindcss.com)
+- 💎 Integrate with [Tailwind CSS](https://tailwindcss.com)
 - ✅ Strict Mode for TypeScript and React 19
 - 📦 Type-safe ORM with DrizzleORM, compatible with PostgreSQL, SQLite, and MySQL
 - 💽 Offline and local development database with PGlite
@@ -139,7 +139,7 @@ Developer experience first, extremely flexible code structure and only keep what
 - ♻️ Type-safe environment variables with T3 Env
 - ⌨️ Form handling with React Hook Form
 - 🔴 Validation library with Zod
-- 📐 Linter with [ESLint](https://eslint.org) (default Next.js, Next.js Core Web Vitals, Tailwind CSS and Antfu configuration)
+- 📏 Linter with [ESLint](https://eslint.org) (default Next.js, Next.js Core Web Vitals, Tailwind CSS and Antfu configuration)
 - 💖 Code Formatter with Prettier
 - 🦊 Husky for Git Hooks (replaced by Lefthook)
 - 🚫 Lint-staged for running linters on Git staged files
@@ -147,7 +147,7 @@ Developer experience first, extremely flexible code structure and only keep what
 - 📓 Write standard compliant commit messages with Commitizen
 - 🔍 Unused files and dependencies detection with Knip
 - 🌍 I18n validation and missing translation detection with i18n-check
-- 🦵 Unit Testing with Vitest and Browser mode (replacing React Testing Library)
+- 🦺 Unit Testing with Vitest and Browser mode (replacing React Testing Library)
 - 🧪 Integration and E2E Testing with Playwright
 - 👷 Run tests on pull request with GitHub Actions
 - 🎉 Storybook for UI development
