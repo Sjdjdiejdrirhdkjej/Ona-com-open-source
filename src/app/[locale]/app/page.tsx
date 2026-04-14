@@ -62,12 +62,12 @@ function MessageBubble({ msg }: { msg: Message }) {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && <OnaAvatar />}
-      <div className="max-w-[80%] space-y-2">
+      <div className="max-w-[85%] space-y-2 sm:max-w-[80%]">
         {msg.imagePreview && (
           <img
             src={msg.imagePreview}
             alt="Uploaded"
-            className="max-h-48 rounded-xl border border-gray-200 object-cover"
+            className="max-h-48 w-full rounded-xl border border-gray-200 object-cover"
           />
         )}
         <div
@@ -97,7 +97,7 @@ function TypingIndicator() {
           <span
             key={i}
             className="size-1.5 rounded-full bg-gray-400"
-            style={{ animation: `pulse 1s ease-in-out ${i * 0.2}s infinite` }}
+            style={{ animation: `ona-pulse 1s ease-in-out ${i * 0.2}s infinite` }}
           />
         ))}
       </div>
@@ -111,8 +111,9 @@ function newConversation(): Conversation {
 
 export default function AppPage() {
   const [conversations, setConversations] = useState<Conversation[]>(() => [newConversation()]);
-  const [activeId, setActiveId] = useState<string>(() => '');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeId, setActiveId] = useState<string>('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
   const [input, setInput] = useState('');
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -120,6 +121,19 @@ export default function AppPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Detect mobile vs desktop and set sidebar default
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)');
+    const update = (e: MediaQueryListEvent | MediaQueryList) => {
+      const desktop = e.matches;
+      setIsMobile(!desktop);
+      setSidebarOpen(desktop);
+    };
+    update(mq);
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   useEffect(() => {
     if (conversations.length > 0 && !activeId) {
@@ -134,12 +148,27 @@ export default function AppPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
+  // Prevent body scroll when mobile sidebar is open
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobile, sidebarOpen]);
+
+  function closeSidebarOnMobile() {
+    if (isMobile) setSidebarOpen(false);
+  }
+
   function createNewChat() {
     const c = newConversation();
     setConversations(prev => [c, ...prev]);
     setActiveId(c.id);
     setInput('');
     setPendingImage(null);
+    closeSidebarOnMobile();
   }
 
   function deleteConversation(id: string, e: React.MouseEvent) {
@@ -156,10 +185,6 @@ export default function AppPage() {
       }
       return next;
     });
-  }
-
-  function updateConversation(id: string, updater: (c: Conversation) => Conversation) {
-    setConversations(prev => prev.map(c => c.id === id ? updater(c) : c));
   }
 
   const send = useCallback(async (text: string, imageDataUrl?: string) => {
@@ -183,25 +208,23 @@ export default function AppPage() {
       ? (trimmed.length > 42 ? `${trimmed.slice(0, 42)}…` : trimmed)
       : 'Image task';
 
-    updateConversation(activeId, c => ({
-      ...c,
-      messages: [...c.messages, userMsg],
-      title: isFirstMessage ? title : c.title,
-    }));
-
     setInput('');
     setPendingImage(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setLoading(true);
 
-    const historyMessages = [...currentConv.messages, userMsg];
     const assistantId = crypto.randomUUID();
+    const historyMessages = [...currentConv.messages, userMsg];
 
-    updateConversation(activeId, c => ({
-      ...c,
-      messages: [...c.messages, userMsg, { id: assistantId, role: 'assistant', content: '' }],
-      title: isFirstMessage ? title : c.title,
-    }));
+    setConversations(prev => prev.map(c =>
+      c.id === activeId
+        ? {
+            ...c,
+            messages: [...c.messages, userMsg, { id: assistantId, role: 'assistant' as const, content: '' }],
+            title: isFirstMessage ? title : c.title,
+          }
+        : c,
+    ));
 
     try {
       const res = await fetch('/api/chat', {
@@ -282,7 +305,7 @@ export default function AppPage() {
     setInput(e.target.value);
     const el = e.target;
     el.style.height = 'auto';
-    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -307,18 +330,69 @@ export default function AppPage() {
   const isEmpty = messages.length === 0;
   const canSend = !!(input.trim() || pendingImage) && !loading;
 
+  const sidebarContent = (
+    <>
+      <div className="shrink-0 px-3 pt-4 pb-2">
+        <button
+          onClick={createNewChat}
+          className="flex w-full items-center gap-2 rounded-xl border border-black/8 px-3 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-black/6 active:bg-black/10"
+          style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          New task
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+        {conversations.map(c => (
+          <div
+            key={c.id}
+            className={`group relative flex w-full items-start rounded-xl px-3 py-3 text-left transition-colors ${
+              c.id === activeId
+                ? 'bg-black/8 text-gray-900'
+                : 'text-gray-600 hover:bg-black/5 hover:text-gray-900 active:bg-black/8'
+            }`}
+          >
+            <button
+              onClick={() => { setActiveId(c.id); closeSidebarOnMobile(); }}
+              className="min-w-0 flex-1 text-left"
+              aria-label={`Switch to task: ${c.title}`}
+            >
+              <p className="truncate pr-6 text-sm font-medium leading-tight">{c.title}</p>
+              <p className="mt-0.5 text-xs text-gray-400">{relativeTime(c.createdAt)}</p>
+            </button>
+            <button
+              onClick={e => deleteConversation(c.id, e)}
+              className="absolute right-2 top-3 shrink-0 rounded p-1 text-gray-300 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100"
+              aria-label="Delete task"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className="shrink-0 border-t border-black/8 px-3 py-3">
+        <p className="text-xs text-gray-400">Powered by Kimi K2.5 on Fireworks AI</p>
+      </div>
+    </>
+  );
+
   return (
-    <div className="flex h-full flex-col" style={{ backgroundColor: BG }}>
-      {/* ── Top header ── */}
+    <div className="flex flex-col" style={{ backgroundColor: BG, height: '100dvh' }}>
+      {/* ── Header ── */}
       <header
         className="flex h-14 shrink-0 items-center justify-between border-b border-black/8 px-4"
         style={{ backgroundColor: 'rgba(247,246,242,0.92)', backdropFilter: 'blur(14px)' }}
       >
-        <div className="flex items-center gap-3">
-          {/* Sidebar toggle */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-black/6 hover:text-gray-900"
+            className="flex size-9 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-black/6 hover:text-gray-900 active:bg-black/10"
             aria-label="Toggle sidebar"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -333,77 +407,38 @@ export default function AppPage() {
         </div>
         <button
           onClick={createNewChat}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-black/6 hover:text-gray-900"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-black/6 hover:text-gray-900 active:bg-black/10"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
-          New task
+          <span className="hidden sm:inline">New task</span>
         </button>
       </header>
 
-      {/* ── Body: sidebar + chat ── */}
-      <div className="flex min-h-0 flex-1">
+      {/* ── Body ── */}
+      <div className="relative flex min-h-0 flex-1">
 
-        {/* ── Sidebar ── */}
+        {/* Mobile: overlay backdrop */}
+        {isMobile && sidebarOpen && (
+          <div
+            className="absolute inset-0 z-20 bg-black/30 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Sidebar — drawer on mobile, inline on desktop */}
         {sidebarOpen && (
           <aside
-            className="flex w-64 shrink-0 flex-col border-r border-black/8 overflow-hidden"
+            className={`flex shrink-0 flex-col overflow-hidden border-r border-black/8 ${
+              isMobile
+                ? 'absolute left-0 top-0 z-30 h-full w-72 shadow-xl'
+                : 'relative w-64'
+            }`}
             style={{ backgroundColor: SIDEBAR_BG }}
           >
-            <div className="flex-shrink-0 px-3 pt-4 pb-2">
-              <button
-                onClick={createNewChat}
-                className="flex w-full items-center gap-2 rounded-xl border border-black/8 px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-black/6"
-                style={{ backgroundColor: 'rgba(255,255,255,0.5)' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                </svg>
-                New task
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
-              {conversations.length === 0
-                ? (
-                    <p className="px-2 py-3 text-xs text-gray-400">No tasks yet</p>
-                  )
-                : (
-                    conversations.map(c => (
-                      <div
-                        key={c.id}
-                        className={`group relative flex w-full items-start rounded-lg px-3 py-2.5 text-left transition-colors ${
-                          c.id === activeId
-                            ? 'bg-black/8 text-gray-900'
-                            : 'text-gray-600 hover:bg-black/5 hover:text-gray-900'
-                        }`}
-                      >
-                        <button
-                          onClick={() => setActiveId(c.id)}
-                          className="min-w-0 flex-1 text-left"
-                          aria-label={`Switch to task: ${c.title}`}
-                        >
-                          <p className="truncate pr-5 text-sm font-medium leading-tight">{c.title}</p>
-                          <p className="mt-0.5 text-xs text-gray-400">{relativeTime(c.createdAt)}</p>
-                        </button>
-                        <button
-                          onClick={e => deleteConversation(c.id, e)}
-                          className="absolute right-2 top-2.5 shrink-0 rounded p-0.5 text-gray-300 opacity-0 transition-opacity hover:text-gray-600 group-hover:opacity-100"
-                          aria-label="Delete task"
-                        >
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))
-                  )}
-            </div>
-
-            <div className="shrink-0 border-t border-black/8 px-3 py-3">
-              <p className="text-xs text-gray-400">Powered by Kimi K2.5</p>
-            </div>
+            {sidebarContent}
           </aside>
         )}
 
@@ -415,12 +450,12 @@ export default function AppPage() {
               ? (
                   <div className="flex h-full flex-col items-center justify-center text-center">
                     <h1
-                      className="mb-3 text-3xl text-gray-900 sm:text-4xl"
+                      className="mb-3 text-2xl text-gray-900 sm:text-4xl"
                       style={{ fontFamily: SERIF, fontWeight: 400 }}
                     >
                       What should Ona do?
                     </h1>
-                    <p className="mb-8 max-w-sm text-sm text-gray-500">
+                    <p className="mb-7 max-w-xs text-sm text-gray-500 sm:max-w-sm">
                       Describe a task and a background agent will execute it end-to-end, then open a pull request.
                     </p>
                     <div className="flex flex-wrap justify-center gap-2">
@@ -428,7 +463,7 @@ export default function AppPage() {
                         <button
                           key={s}
                           onClick={() => send(s)}
-                          className="rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:border-gray-500 hover:text-gray-950"
+                          className="rounded-full border border-gray-300 px-4 py-2.5 text-sm text-gray-700 transition-colors hover:border-gray-500 hover:text-gray-950 active:bg-gray-100"
                           style={{ backgroundColor: '#f7f6f2' }}
                         >
                           {s}
@@ -448,15 +483,15 @@ export default function AppPage() {
                 )}
           </div>
 
-          {/* Input bar */}
-          <div className="shrink-0 border-t border-gray-200 px-4 py-4 sm:px-8">
+          {/* ── Input bar ── */}
+          <div className="shrink-0 border-t border-gray-200 px-3 py-3 sm:px-6 sm:py-4">
             <div className="mx-auto max-w-2xl">
               {pendingImage && (
                 <div className="mb-2 flex items-center gap-2">
-                  <img src={pendingImage} alt="Pending" className="h-16 rounded-lg border border-gray-200 object-cover" />
+                  <img src={pendingImage} alt="Pending" className="h-14 rounded-lg border border-gray-200 object-cover" />
                   <button
                     onClick={() => setPendingImage(null)}
-                    className="rounded-full p-1 text-gray-400 hover:text-gray-700"
+                    className="flex size-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                     aria-label="Remove image"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -467,16 +502,17 @@ export default function AppPage() {
               )}
 
               <div
-                className="flex items-end gap-2 rounded-2xl border border-gray-300 px-3 py-3 transition-shadow focus-within:border-gray-400 focus-within:shadow-sm"
+                className="flex items-end gap-2 rounded-2xl border border-gray-300 px-3 py-2.5 transition-shadow focus-within:border-gray-400 focus-within:shadow-sm"
                 style={{ backgroundColor: '#fff' }}
               >
+                {/* Image attach */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="mb-0.5 shrink-0 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 active:bg-gray-100"
                   aria-label="Attach image"
                 >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
                     <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
                     <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
                     <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -492,29 +528,26 @@ export default function AppPage() {
                   onKeyDown={handleKey}
                   onPaste={handlePaste}
                   placeholder="Describe a task for your agent…"
-                  className="flex-1 resize-none bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none"
-                  style={{ maxHeight: '180px' }}
+                  className="flex-1 resize-none bg-transparent py-1 text-sm text-gray-900 placeholder-gray-400 outline-none"
+                  style={{ maxHeight: '160px' }}
                 />
 
+                {/* Send */}
                 <button
                   onClick={() => send(input, pendingImage ?? undefined)}
                   disabled={!canSend}
                   aria-label="Send"
-                  className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
               </div>
-              <p className="mt-2 text-center text-xs text-gray-400">
-                Enter to send · Shift+Enter for new line · paste or
-                {' '}
-                <button onClick={() => fileInputRef.current?.click()} className="underline hover:text-gray-600">
-                  upload
-                </button>
-                {' '}
-                images
+
+              {/* Hint — desktop only */}
+              <p className="mt-1.5 hidden text-center text-xs text-gray-400 sm:block">
+                Enter to send · Shift+Enter for new line · paste images
               </p>
             </div>
           </div>
@@ -522,7 +555,7 @@ export default function AppPage() {
       </div>
 
       <style>{`
-        @keyframes pulse {
+        @keyframes ona-pulse {
           0%, 100% { transform: scale(1); opacity: 0.4; }
           50% { transform: scale(1.3); opacity: 1; }
         }

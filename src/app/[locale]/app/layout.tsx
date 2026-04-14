@@ -8,7 +8,7 @@ export default async function AppLayout(props: {
   setRequestLocale(locale);
 
   return (
-    <div className="h-screen" style={{ backgroundColor: '#f7f6f2' }}>
+    <div style={{ height: '100dvh', backgroundColor: '#f7f6f2' }}>
       {props.children}
     </div>
   );
