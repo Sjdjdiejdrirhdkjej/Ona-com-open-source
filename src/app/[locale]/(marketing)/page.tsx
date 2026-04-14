@@ -42,7 +42,7 @@ export default async function Index(props: IIndexProps) {
         </p>
         <div className="mt-6 flex w-full flex-col items-center gap-3 sm:mt-8 sm:w-auto sm:flex-row">
           <Link
-            href="/sign-up/"
+            href="/app/"
             className="w-full rounded-md bg-gray-950 px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80 sm:w-auto sm:px-5 sm:py-2.5"
           >
             Start for free
@@ -422,7 +422,7 @@ export default async function Index(props: IIndexProps) {
         <p className="mb-6 text-gray-500 sm:mb-8">No commitment. No setup. Just start.</p>
         <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:justify-center">
           <Link
-            href="/sign-up/"
+            href="/app/"
             className="w-full rounded-md bg-gray-950 px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80 sm:w-auto sm:px-5 sm:py-2.5"
           >
             Start for free
