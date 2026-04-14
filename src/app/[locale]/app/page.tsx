@@ -118,6 +118,7 @@ export default function AppPage() {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [search, setSearch] = useState('');
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -421,7 +422,7 @@ export default function AppPage() {
 
   const sidebarContent = (
     <>
-      <div className="shrink-0 px-3 pt-4 pb-2">
+      <div className="shrink-0 px-3 pt-4 pb-2 space-y-2">
         <button
           onClick={createNewChat}
           className="flex w-full items-center gap-2 rounded-xl border border-black/8 px-3 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-black/6 active:bg-black/10"
@@ -432,6 +433,36 @@ export default function AppPage() {
           </svg>
           New task
         </button>
+        <div className="relative">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 13 13"
+            fill="none"
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          >
+            <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.3" />
+            <path d="M9 9l2.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+          </svg>
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search tasks…"
+            className="w-full rounded-lg border border-black/8 bg-white/60 py-1.5 pl-7 pr-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-gray-300 focus:bg-white transition-colors"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+            >
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                <path d="M1 1l9 9M10 1L1 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
@@ -439,7 +470,26 @@ export default function AppPage() {
           ? (
               <div className="px-3 py-4 text-xs text-gray-400">Loading history…</div>
             )
-          : conversations.filter(c => c.messages.length > 0).map(c => (
+          : (() => {
+              const q = search.trim().toLowerCase();
+              const filtered = conversations.filter((c) => {
+                if (c.messages.length === 0) return false;
+                if (!q) return true;
+                if (c.title.toLowerCase().includes(q)) return true;
+                return c.messages.some(m =>
+                  (typeof m.content === 'string' ? m.content : JSON.stringify(m.content))
+                    .toLowerCase()
+                    .includes(q),
+                );
+              });
+              if (filtered.length === 0) {
+                return (
+                  <div className="px-3 py-4 text-xs text-gray-400">
+                    {q ? 'No tasks match your search.' : 'No tasks yet.'}
+                  </div>
+                );
+              }
+              return filtered.map(c => (
             <div
               key={c.id}
               className={`group relative flex w-full items-start rounded-xl px-3 py-3 text-left transition-colors ${
@@ -466,7 +516,8 @@ export default function AppPage() {
                 </svg>
               </button>
             </div>
-          ))}
+              ));
+            })()}
       </div>
 
       <div className="shrink-0 border-t border-black/8 px-3 py-3">
