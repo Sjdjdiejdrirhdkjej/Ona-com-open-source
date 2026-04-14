@@ -44,6 +44,7 @@ type DeviceAuthState = {
   user_code: string;
   verification_uri: string;
   interval: number;
+  expires_at: number;
   status: 'waiting' | 'polling' | 'error';
   errorMsg?: string;
 };
@@ -206,6 +207,37 @@ function CopyDeviceCode({ code }: { code: string }) {
   );
 }
 
+function CountdownTimer({ expiresAt, onExpired }: { expiresAt: number; onExpired: () => void }) {
+  const [secsLeft, setSecsLeft] = useState(() => Math.max(0, Math.round((expiresAt - Date.now()) / 1000)));
+  const onExpiredRef = useRef(onExpired);
+  onExpiredRef.current = onExpired;
+
+  useEffect(() => {
+    if (secsLeft <= 0) {
+      onExpiredRef.current();
+      return;
+    }
+    const id = setTimeout(() => setSecsLeft(s => Math.max(0, s - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [secsLeft]);
+
+  const mins = Math.floor(secsLeft / 60);
+  const secs = secsLeft % 60;
+  const isLow = secsLeft <= 60;
+
+  return (
+    <p className={`text-center text-xs ${isLow ? 'text-red-500' : 'text-gray-400'}`}>
+      Code expires in
+      {' '}
+      <span className="font-medium tabular-nums">
+        {mins > 0 ? `${mins}m ` : ''}
+        {String(secs).padStart(2, '0')}
+        s
+      </span>
+    </p>
+  );
+}
+
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
   const text = typeof msg.content === 'string'
@@ -358,12 +390,13 @@ export default function AppPage() {
         user_code: data.user_code!,
         verification_uri: data.verification_uri ?? 'https://github.com/login/device',
         interval: (data.interval ?? 5) * 1000,
+        expires_at: Date.now() + (data.expires_in ?? 900) * 1000,
         status: 'polling',
       };
       setDeviceAuth(auth);
       schedulePoll(auth);
     } catch (err) {
-      setDeviceAuth({ device_code: '', user_code: '', verification_uri: '', interval: 5000, status: 'error', errorMsg: (err as Error).message });
+      setDeviceAuth({ device_code: '', user_code: '', verification_uri: '', interval: 5000, expires_at: Date.now(), status: 'error', errorMsg: (err as Error).message });
     }
   }
 
@@ -1062,6 +1095,17 @@ export default function AppPage() {
                       />
                       Waiting for authorization…
                     </div>
+
+                    {/* Countdown */}
+                    <CountdownTimer
+                      expiresAt={deviceAuth.expires_at}
+                      onExpired={() => {
+                        if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+                        setDeviceAuth(prev => prev
+                          ? { ...prev, status: 'error', errorMsg: 'Code expired. Click "Connect GitHub" to try again.' }
+                          : prev);
+                      }}
+                    />
                   </div>
                 )}
           </div>
