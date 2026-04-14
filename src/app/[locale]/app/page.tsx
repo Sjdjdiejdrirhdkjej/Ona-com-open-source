@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 
 const SERIF = 'Georgia, "Times New Roman", serif';
@@ -59,6 +60,7 @@ function AssistantMarkdown({ text }: { text: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeHighlight]}
       components={{
         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
         strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
@@ -73,7 +75,7 @@ function AssistantMarkdown({ text }: { text: string }) {
           const isBlock = !!className;
           return isBlock
             ? (
-                <code className="block overflow-x-auto rounded-lg bg-black/10 px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre">
+                <code className={`block overflow-x-auto font-mono whitespace-pre ${className ?? ''}`}>
                   {children}
                 </code>
               )
@@ -81,7 +83,7 @@ function AssistantMarkdown({ text }: { text: string }) {
                 <code className="rounded bg-black/10 px-1 py-0.5 font-mono text-xs">{children}</code>
               );
         },
-        pre: ({ children }) => <pre className="mb-2 mt-1">{children}</pre>,
+        pre: ({ children }) => <pre className="mb-2 mt-1 overflow-hidden rounded-lg">{children}</pre>,
         blockquote: ({ children }) => (
           <blockquote className="mb-2 border-l-2 border-gray-400 pl-3 italic text-gray-600">
             {children}

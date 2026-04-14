@@ -1,6 +1,15 @@
 @layer theme, base, clerk, components, utilities; /* Ensure Clerk is compatible with Tailwind CSS v4 */
 
 @import 'tailwindcss';
+@import 'highlight.js/styles/github.css';
+
+.hljs {
+  background: rgba(0, 0, 0, 0.06) !important;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem !important;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
 
 :root {
   --background: #f7f6f2;
