@@ -4,6 +4,7 @@ import { z } from 'zod/v4';
 export const Env = createEnv({
   server: {
     DATABASE_URL: z.string().min(1),
+    DAYTONA_API_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().optional(),
@@ -13,6 +14,7 @@ export const Env = createEnv({
   },
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    DAYTONA_API_KEY: process.env.DAYTONA_API_KEY,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NODE_ENV: process.env.NODE_ENV,
   },

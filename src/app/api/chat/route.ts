@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { getGitHubToken, githubToolDefinitions, runGitHubTool } from '@/libs/GitHub';
+import { daytonaToolDefinitions, isDaytonaTool, runDaytonaTool } from '@/libs/Daytona';
 
 export const runtime = 'nodejs';
 
@@ -51,6 +52,16 @@ You are built to handle these types of tasks autonomously:
 **Issue → PR workflow**
 - Read an issue with github_get_issue, understand the request, implement the fix, open a PR that references the issue.
 
+## Daytona sandbox execution
+When you need to actually *run* code — tests, builds, linters, scripts — use the Daytona sandbox tools:
+1. **sandbox_create** — spin up an isolated container (ephemeral, auto-stops after 30 min).
+2. **sandbox_git_clone** — clone a repo into the sandbox.
+3. **sandbox_exec** — run shell commands (install deps, run tests, build, etc.).
+4. **sandbox_write_file / sandbox_read_file / sandbox_list_files** — read and write files inside the sandbox.
+5. **sandbox_delete** — delete the sandbox when done.
+
+Use a sandbox whenever the user asks you to run, test, build, or verify code, or when you need to confirm that a change works before opening a PR.
+
 ## Rules
 - Never fabricate file contents, branch names, commit SHAs, or PR URLs. Every claim must come from a tool result.
 - For risky or large changes, open a draft PR and explain the risk clearly.
@@ -84,6 +95,13 @@ const TOOL_LABELS: Record<string, string> = {
   github_create_issue: 'Creating issue',
   github_add_comment: 'Adding comment',
   github_clone_repo: 'Cloning repository',
+  sandbox_create: 'Spinning up sandbox',
+  sandbox_exec: 'Running command',
+  sandbox_write_file: 'Writing file to sandbox',
+  sandbox_read_file: 'Reading file from sandbox',
+  sandbox_list_files: 'Listing sandbox files',
+  sandbox_delete: 'Deleting sandbox',
+  sandbox_git_clone: 'Cloning repo into sandbox',
 };
 
 function toolLabel(name: string): string {
@@ -265,7 +283,7 @@ export async function POST(req: NextRequest) {
       for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
         const res = await callFireworks({
           messages: conversation,
-          tools: githubToolDefinitions,
+          tools: [...githubToolDefinitions, ...daytonaToolDefinitions],
           tool_choice: 'auto',
           stream: false,
           max_tokens: 1400,
@@ -294,11 +312,11 @@ export async function POST(req: NextRequest) {
         await Promise.all(
           message.tool_calls.map(async (toolCall) => {
             try {
-              const result = await runGitHubTool(
-                githubToken,
-                toolCall.function.name,
-                parseToolArgs(toolCall.function.arguments),
-              );
+              const toolName = toolCall.function.name;
+              const toolArgs = parseToolArgs(toolCall.function.arguments);
+              const result = isDaytonaTool(toolName)
+                ? await runDaytonaTool(toolName, toolArgs)
+                : await runGitHubTool(githubToken, toolName, toolArgs);
               conversation.push({
                 role: 'tool',
                 tool_call_id: toolCall.id,
