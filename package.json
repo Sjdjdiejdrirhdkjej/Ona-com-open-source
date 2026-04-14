@@ -5,11 +5,11 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev:next": "next dev --turbopack",
+    "dev:next": "next dev --turbopack -p 5000 -H 0.0.0.0",
     "dev": "run-p db-server:file dev:next",
     "build:next": "next build",
     "build": "run-p db-server:memory build:* --race",
-    "start": "next start",
+    "start": "next start -p 5000 -H 0.0.0.0",
     "build-stats": "cross-env ANALYZE=true npm run build",
     "clean": "rimraf .next out coverage",
     "lint": "eslint .",
