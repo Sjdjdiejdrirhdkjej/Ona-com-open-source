@@ -1,37 +1,43 @@
-# Next.js Boilerplate on Replit
+# Ona — AI Background Software Engineering Platform
 
 ## Project Overview
-A Next.js 15 boilerplate with Turbopack, Tailwind CSS v4, Drizzle ORM, PGLite (local PostgreSQL), next-intl (i18n), and React 19.
+An Ona.com clone — a platform for AI background software engineering agents. The landing page visually matches ona.com, and `/app` is a real AI chat interface powered by Fireworks AI (Llama 4 Maverick) where users can issue tasks to background agents that produce pull requests.
 
 ## Architecture
 - **Framework**: Next.js 15 with App Router and Turbopack
 - **Database**: PGLite (embedded PostgreSQL, no Docker needed) — runs as a local socket server (`pglite-server --db=local.db`)
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
-- **i18n**: next-intl
-- **Forms**: React Hook Form + Zod validation
+- **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
+- **AI**: Fireworks AI — Llama 4 Maverick (`accounts/fireworks/models/llama4-maverick-instruct-basic`), streaming, vision/image support
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
 ## Replit Configuration
 - **Dev server**: port 5000, bound to `0.0.0.0` (required for Replit preview)
 - **Workflow**: "Start application" runs `npm run dev` (starts PGLite file server + Next.js dev server in parallel)
-- **Scripts updated**:
-  - `dev:next`: `next dev --turbopack -p 5000 -H 0.0.0.0`
-  - `start`: `next start -p 5000 -H 0.0.0.0`
+- **Secrets**: `FIREWORKS_API_KEY` (Fireworks AI)
 
-## Environment Variables
-- `DATABASE_URL`: PostgreSQL connection string (defaults to local PGLite at `postgresql://postgres:postgres@127.0.0.1:5432/postgres`)
-- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`: Clerk auth public key
-- `CLERK_SECRET_KEY`: Clerk auth secret (put in `.env.local`, not tracked by git)
-- `NEXT_PUBLIC_POSTHOG_KEY`: PostHog analytics key (optional)
-- `ARCJET_KEY`: Arcjet security key (optional, put in `.env.local`)
+## Key Files
+- `src/app/[locale]/(marketing)/page.tsx` — Full ona.com landing page (hero, features, testimonials, footer)
+- `src/app/[locale]/app/page.tsx` — Chat UI at /app with real AI streaming + image upload
+- `src/app/api/chat/route.ts` — Server-side streaming API route calling Fireworks AI
+- `src/app/[locale]/app/layout.tsx` — Minimal layout for /app
+- `src/app/[locale]/(marketing)/layout.tsx` — Marketing nav with NavPromptBox + Get Started
+- `src/components/MobileMenu.tsx` — Mobile hamburger with prompt box
+- `src/components/NavPromptBox.tsx` — Desktop navbar prompt input
+- `src/libs/Env.ts` — Environment variable validation
 
-## Key Directories
-- `src/app/` — Next.js App Router pages
-- `src/components/` — Shared UI components
-- `src/libs/` — Library configs (Env, I18n, DB)
-- `src/models/` — Drizzle schema/models
-- `migrations/` — Drizzle migration files
+## Design Constants
+- Background: `#f7f6f2`
+- Serif font: `Georgia, "Times New Roman", serif`
+- Dark navy (announcement bar): `#18182a`
+- Agent avatar gradient: `linear-gradient(135deg,#7b68ee,#9370db)`
+
+## Chat Interface (/app)
+- Real streaming AI responses via `src/app/api/chat/route.ts`
+- Image upload (file picker button) and paste-from-clipboard support
+- System prompt positions Ona as a background software engineering agent platform
+- Suggestion chips: Weekly digest, Review PRs, Find CVEs, COBOL migration
 
 ## Development
 ```bash
