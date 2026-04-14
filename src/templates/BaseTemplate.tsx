@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { AppConfig } from '@/utils/AppConfig';
 
 export const BaseTemplate = (props: {
@@ -6,41 +6,36 @@ export const BaseTemplate = (props: {
   rightNav?: React.ReactNode;
   children: React.ReactNode;
 }) => {
-  const t = useTranslations('BaseTemplate');
-
   return (
-    <div className="w-full px-1 text-gray-700 antialiased">
-      <div className="mx-auto max-w-screen-md">
-        <header className="border-b border-gray-300">
-          <div className="pb-8 pt-16">
-            <h1 className="text-3xl font-bold text-gray-900">
-              {AppConfig.name}
-            </h1>
-            <h2 className="text-xl">{t('description')}</h2>
+    <div className="min-h-screen antialiased" style={{ backgroundColor: '#f7f6f2', color: '#111' }}>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 border-b border-black/8"
+        style={{ backgroundColor: 'rgba(247,246,242,0.88)', backdropFilter: 'blur(14px)' }}
+      >
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="flex-shrink-0">
+            <span className="text-lg font-bold tracking-tight text-gray-950">
+              {AppConfig.name.toUpperCase()}
+            </span>
+          </Link>
+
+          <nav aria-label="Main navigation" className="hidden md:flex">
+            <ul className="flex items-center gap-1 text-sm font-medium text-gray-700">
+              {props.leftNav}
+            </ul>
+          </nav>
+
+          <div className="flex items-center gap-2 text-sm">
+            {props.rightNav}
           </div>
+        </div>
+      </header>
 
-          <div className="flex justify-between">
-            <nav aria-label="Main navigation">
-              <ul className="flex flex-wrap gap-x-5 text-xl">
-                {props.leftNav}
-              </ul>
-            </nav>
+      <main className="pt-14">{props.children}</main>
 
-            <nav>
-              <ul className="flex flex-wrap gap-x-5 text-xl">
-                {props.rightNav}
-              </ul>
-            </nav>
-          </div>
-        </header>
-
-        <main>{props.children}</main>
-
-        <footer className="border-t border-gray-300 py-8 text-center text-sm">
-          {`© Copyright ${new Date().getFullYear()} ${AppConfig.name}. `}
-          {t('made_with')}
-        </footer>
-      </div>
+      <footer className="border-t border-gray-200 py-10 text-center text-sm text-gray-500" style={{ backgroundColor: '#f7f6f2' }}>
+        {`© ${new Date().getFullYear()} ${AppConfig.name}. All rights reserved.`}
+      </footer>
     </div>
   );
 };
