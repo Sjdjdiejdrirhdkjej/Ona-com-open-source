@@ -207,18 +207,25 @@ function CopyDeviceCode({ code }: { code: string }) {
 }
 
 function CountdownTimer({ expiresAt, onExpired }: { expiresAt: number; onExpired: () => void }) {
-  const [secsLeft, setSecsLeft] = useState(() => Math.max(0, Math.round((expiresAt - Date.now()) / 1000)));
+  const [secsLeft, setSecsLeft] = useState<number | null>(null);
   const onExpiredRef = useRef(onExpired);
   onExpiredRef.current = onExpired;
 
   useEffect(() => {
+    setSecsLeft(Math.max(0, Math.round((expiresAt - Date.now()) / 1000)));
+  }, [expiresAt]);
+
+  useEffect(() => {
+    if (secsLeft === null) return;
     if (secsLeft <= 0) {
       onExpiredRef.current();
       return;
     }
-    const id = setTimeout(() => setSecsLeft(s => Math.max(0, s - 1)), 1000);
+    const id = setTimeout(() => setSecsLeft(s => (s !== null ? Math.max(0, s - 1) : null)), 1000);
     return () => clearTimeout(id);
   }, [secsLeft]);
+
+  if (secsLeft === null) return null;
 
   const mins = Math.floor(secsLeft / 60);
   const secs = secsLeft % 60;
@@ -814,7 +821,7 @@ export default function AppPage() {
                 aria-label={`Switch to task: ${c.title}`}
               >
                 <p className="truncate pr-6 text-sm font-medium leading-tight">{c.title}</p>
-                <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{relativeTime(c.createdAt)}</p>
+                <p suppressHydrationWarning className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">{relativeTime(c.createdAt)}</p>
               </button>
               <button
                 onClick={e => deleteConversation(c.id, e)}

@@ -95,7 +95,7 @@ export const BaseTemplate = (props: {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 dark:border-gray-800 py-6 text-xs text-gray-400 dark:text-gray-500">
-            <span>{`© ${new Date().getFullYear()} ${AppConfig.name}`}</span>
+            <span suppressHydrationWarning>{`© ${new Date().getFullYear()} ${AppConfig.name}`}</span>
             <div className="flex flex-wrap gap-3">
               {['Status', 'Security', 'Imprint', 'Terms of service', 'Privacy policy', 'Cookie policy'].map(
                 item => (
