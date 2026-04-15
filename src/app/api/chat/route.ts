@@ -533,7 +533,16 @@ export async function POST(req: NextRequest) {
               let result: unknown;
               if (isCallLibrarianTool(toolName)) {
                 const request = typeof toolArgs.request === 'string' ? toolArgs.request : JSON.stringify(toolArgs);
-                result = await runLibrarianSubagent(request);
+                const parentLabel = label;
+                result = await runLibrarianSubagent(request, (event, stepLabel, error) => {
+                  if (event === 'start') {
+                    emit({ type: 'librarian_step_start', parentLabel, step: stepLabel });
+                    if (jobId) persistJobEvent(jobId, 'librarian_step_start', { parentLabel, step: stepLabel }).catch(() => {});
+                  } else {
+                    emit({ type: 'librarian_step_complete', parentLabel, step: stepLabel, error: error ?? false });
+                    if (jobId) persistJobEvent(jobId, 'librarian_step_complete', { parentLabel, step: stepLabel, error: error ?? false }).catch(() => {});
+                  }
+                });
               } else if (isDaytonaTool(toolName)) {
                 result = await runDaytonaTool(toolName, toolArgs);
               } else {

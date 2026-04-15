@@ -330,11 +330,45 @@ function parseArgs(raw: string): Record<string, unknown> {
   try { return JSON.parse(raw || '{}') as Record<string, unknown>; } catch { return {}; }
 }
 
+// ── Internal step label (human-readable label for each tool call) ─────────────
+
+function internalStepLabel(name: string, args: Record<string, unknown>): string {
+  const s = (k: string) => (typeof args[k] === 'string' ? (args[k] as string) : '');
+  const trim = (v: string, max = 50) => (v.length > max ? `${v.slice(0, max)}…` : v);
+
+  switch (name) {
+    case 'fetch_url': {
+      const url = s('url').replace(/^https?:\/\//, '');
+      return `Fetching ${trim(url, 52)}`;
+    }
+    case 'search_web':
+      return s('query') ? `Searching "${trim(s('query'), 45)}"` : 'Searching web';
+    case 'npm_package':
+      return s('package_name') ? `Looking up ${s('package_name')} on npm` : 'Looking up npm package';
+    case 'github_readme': {
+      const owner = s('owner');
+      const repo = s('repo');
+      return owner && repo ? `Reading ${owner}/${repo} README` : 'Reading GitHub README';
+    }
+    default:
+      return name.replace(/_/g, ' ');
+  }
+}
+
+// ── Step callback type ────────────────────────────────────────────────────────
+
+export type LibrarianStepCallback = (
+  event: 'start' | 'complete',
+  stepLabel: string,
+  error?: boolean,
+) => void;
+
 /**
  * Run the full librarian subagent loop for a research request.
  * Called by the main AI via the `call_librarian` tool.
+ * @param onStep Optional callback fired as each internal tool call starts and completes.
  */
-export async function runLibrarianSubagent(request: string): Promise<string> {
+export async function runLibrarianSubagent(request: string, onStep?: LibrarianStepCallback): Promise<string> {
   const messages: LibrarianMessage[] = [
     { role: 'system', content: LIBRARIAN_SYSTEM_PROMPT },
     { role: 'user', content: request },
@@ -351,11 +385,15 @@ export async function runLibrarianSubagent(request: string): Promise<string> {
 
     for (const toolCall of toolCalls) {
       const args = parseArgs(toolCall.function.arguments);
+      const stepLabel = internalStepLabel(toolCall.function.name, args);
+      onStep?.('start', stepLabel);
       let result: unknown;
       try {
         result = await runInternalTool(toolCall.function.name, args);
+        onStep?.('complete', stepLabel);
       } catch (err) {
         result = { error: (err as Error).message };
+        onStep?.('complete', stepLabel, true);
       }
       messages.push({
         role: 'tool',

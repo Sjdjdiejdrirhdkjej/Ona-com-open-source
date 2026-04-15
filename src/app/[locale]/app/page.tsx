@@ -13,9 +13,15 @@ type ContentPart =
   | { type: 'text'; text: string }
   | { type: 'image_url'; image_url: { url: string } };
 
+type SubStep = {
+  label: string;
+  status: 'running' | 'done' | 'error';
+};
+
 type ToolStep = {
   label: string;
   status: 'running' | 'done' | 'error';
+  subSteps?: SubStep[];
 };
 
 type Message = {
@@ -310,7 +316,33 @@ function ToolStepIcon({ status }: { status: ToolStep['status'] }) {
   );
 }
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="10"
+      height="10"
+      viewBox="0 0 10 10"
+      fill="none"
+      className="shrink-0 transition-transform"
+      style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
+    >
+      <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ToolStepsBlock({ steps }: { steps: ToolStep[] }) {
+  const [expandedLabels, setExpandedLabels] = useState<Set<string>>(new Set());
+
+  function toggleLabel(label: string) {
+    setExpandedLabels(prev => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  }
+
   return (
     <div className="flex justify-start">
       <OnaAvatar />
@@ -318,23 +350,61 @@ function ToolStepsBlock({ steps }: { steps: ToolStep[] }) {
         className="rounded-2xl rounded-tl-sm border border-gray-200 dark:border-gray-700 px-4 py-3 space-y-1.5"
         style={{ backgroundColor: 'var(--bg-2)' }}
       >
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <ToolStepIcon status={step.status} />
-            <span
-              className={`text-xs ${
-                step.status === 'done'
-                  ? 'text-gray-400 dark:text-gray-500'
-                  : step.status === 'error'
-                    ? 'text-red-400'
-                    : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              {step.label}
-              {step.status === 'running' ? '…' : ''}
-            </span>
-          </div>
-        ))}
+        {steps.map((step, i) => {
+          const hasSubSteps = !!(step.subSteps && step.subSteps.length > 0);
+          const isOpen = expandedLabels.has(step.label) || (step.status === 'running' && hasSubSteps);
+          return (
+            <div key={i}>
+              <div className="flex items-center gap-2">
+                <ToolStepIcon status={step.status} />
+                <span
+                  className={`text-xs ${
+                    step.status === 'done'
+                      ? 'text-gray-400 dark:text-gray-500'
+                      : step.status === 'error'
+                        ? 'text-red-400'
+                        : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  {step.label}
+                  {step.status === 'running' && !hasSubSteps ? '…' : ''}
+                </span>
+                {hasSubSteps && (
+                  <button
+                    onClick={() => toggleLabel(step.label)}
+                    className="ml-1 flex items-center gap-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    <ChevronIcon open={isOpen} />
+                    <span className="text-xs tabular-nums">
+                      {step.subSteps!.length}
+                    </span>
+                  </button>
+                )}
+              </div>
+              {hasSubSteps && isOpen && (
+                <div className="mt-1.5 ml-4 pl-3 space-y-1 border-l border-gray-200 dark:border-gray-700">
+                  {step.subSteps!.map((sub, j) => (
+                    <div key={j} className="flex items-center gap-2">
+                      <ToolStepIcon status={sub.status} />
+                      <span
+                        className={`text-xs ${
+                          sub.status === 'done'
+                            ? 'text-gray-400 dark:text-gray-500'
+                            : sub.status === 'error'
+                              ? 'text-red-400'
+                              : 'text-gray-500 dark:text-gray-400'
+                        }`}
+                      >
+                        {sub.label}
+                        {sub.status === 'running' ? '…' : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -505,6 +575,44 @@ export default function AppPage() {
               messages = messages.map(m =>
                 m.role === 'tool_steps'
                   ? { ...m, content: (m.content as ToolStep[]).map(s => ({ ...s, status: s.status === 'running' ? 'done' as const : s.status })) }
+                  : m,
+              );
+            } else if (ev.type === 'librarian_step_start') {
+              const parentLabel = ev.data.parentLabel as string;
+              const step = ev.data.step as string;
+              messages = messages.map(m =>
+                m.role === 'tool_steps'
+                  ? {
+                      ...m,
+                      content: (m.content as ToolStep[]).map(s =>
+                        s.label === parentLabel
+                          ? { ...s, subSteps: [...(s.subSteps ?? []), { label: step, status: 'running' as const }] }
+                          : s,
+                      ),
+                    }
+                  : m,
+              );
+            } else if (ev.type === 'librarian_step_complete') {
+              const parentLabel = ev.data.parentLabel as string;
+              const step = ev.data.step as string;
+              const hasError = !!ev.data.error;
+              messages = messages.map(m =>
+                m.role === 'tool_steps'
+                  ? {
+                      ...m,
+                      content: (m.content as ToolStep[]).map(s =>
+                        s.label === parentLabel
+                          ? {
+                              ...s,
+                              subSteps: (s.subSteps ?? []).map(sub =>
+                                sub.label === step
+                                  ? { ...sub, status: (hasError ? 'error' : 'done') as SubStep['status'] }
+                                  : sub,
+                              ),
+                            }
+                          : s,
+                      ),
+                    }
                   : m,
               );
             } else if (ev.type === 'content') {
@@ -876,6 +984,8 @@ export default function AppPage() {
               jobId?: string;
               toolStepsMsgId?: string;
               nextAssistantMsgId?: string;
+              parentLabel?: string;
+              step?: string;
             };
 
             if (json.type === 'job_id' && json.jobId) {
@@ -954,6 +1064,53 @@ export default function AppPage() {
                             ...s,
                             status: s.status === 'running' ? 'done' as const : s.status,
                           })),
+                        }
+                      : m,
+                  ),
+                };
+              }));
+            } else if (json.type === 'librarian_step_start' && json.parentLabel && json.step) {
+              const { parentLabel, step } = json as { parentLabel: string; step: string };
+              setConversations(prev => prev.map(c => {
+                if (c.id !== convId) return c;
+                return {
+                  ...c,
+                  messages: c.messages.map(m =>
+                    m.role === 'tool_steps'
+                      ? {
+                          ...m,
+                          content: (m.content as ToolStep[]).map(s =>
+                            s.label === parentLabel
+                              ? { ...s, subSteps: [...(s.subSteps ?? []), { label: step, status: 'running' as const }] }
+                              : s,
+                          ),
+                        }
+                      : m,
+                  ),
+                };
+              }));
+            } else if (json.type === 'librarian_step_complete' && json.parentLabel && json.step) {
+              const { parentLabel, step, error: hasError } = json as { parentLabel: string; step: string; error?: boolean };
+              setConversations(prev => prev.map(c => {
+                if (c.id !== convId) return c;
+                return {
+                  ...c,
+                  messages: c.messages.map(m =>
+                    m.role === 'tool_steps'
+                      ? {
+                          ...m,
+                          content: (m.content as ToolStep[]).map(s =>
+                            s.label === parentLabel
+                              ? {
+                                  ...s,
+                                  subSteps: (s.subSteps ?? []).map(sub =>
+                                    sub.label === step
+                                      ? { ...sub, status: (hasError ? 'error' : 'done') as SubStep['status'] }
+                                      : sub,
+                                  ),
+                                }
+                              : s,
+                          ),
                         }
                       : m,
                   ),
