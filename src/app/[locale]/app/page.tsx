@@ -375,6 +375,7 @@ export default function AppPage() {
   const [deviceAuth, setDeviceAuth] = useState<DeviceAuthState | null>(null);
   const [toolSteps, setToolSteps] = useState<ToolStep[]>([]);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -695,6 +696,10 @@ export default function AppPage() {
             };
 
             if (json.type === 'tool_call' && json.tools?.length) {
+              if (toolClearTimerRef.current) {
+                clearTimeout(toolClearTimerRef.current);
+                toolClearTimerRef.current = null;
+              }
               setToolSteps(json.tools.map((label: string) => ({ label, status: 'running' as const })));
             } else if (json.type === 'tool_start' && json.tool) {
               setToolSteps(prev =>
@@ -711,7 +716,11 @@ export default function AppPage() {
                 ),
               );
             } else if (json.type === 'tool_done') {
-              setToolSteps([]);
+              setToolSteps(prev => prev.map(s => ({ ...s, status: 'done' as const })));
+              toolClearTimerRef.current = setTimeout(() => {
+                setToolSteps([]);
+                toolClearTimerRef.current = null;
+              }, 1500);
             } else if (json.type === 'error' && json.message) {
               throw new Error(json.message);
             } else if (json.delta) {
@@ -755,6 +764,10 @@ export default function AppPage() {
       );
     } finally {
       setLoading(false);
+      if (toolClearTimerRef.current) {
+        clearTimeout(toolClearTimerRef.current);
+        toolClearTimerRef.current = null;
+      }
       setToolSteps([]);
     }
 
