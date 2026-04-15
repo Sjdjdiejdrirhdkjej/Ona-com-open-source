@@ -1,7 +1,4 @@
 {
   "buildCommand": "npm run build",
-  "env": {
-    "DATABASE_URL": "postgresql://postgres@localhost:5432/postgres",
-    "SKIP_ENV_VALIDATION": "1"
-  }
+  "installCommand": "npm install --legacy-peer-deps"
 }

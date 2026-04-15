@@ -17,6 +17,12 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - **Workflow**: "Start application" runs `npm run dev` (Next.js dev server on port 5000)
 - **Secrets**: `FIREWORKS_API_KEY` (Fireworks AI)
 
+## Vercel Build Configuration
+- **Build command**: `npm run build`, which runs `next build` directly
+- **Install command**: `npm install --legacy-peer-deps`
+- The build no longer starts a local PGlite server or expands recursive `build:*` scripts.
+- `src/libs/DB.ts` skips Drizzle migrations during Next.js production builds and fails explicitly at runtime if `DATABASE_URL` is missing.
+
 ## Key Files
 - `src/app/[locale]/(marketing)/page.tsx` — Full ona.com landing page (hero, features, testimonials, footer)
 - `src/app/[locale]/app/page.tsx` — Chat UI at /app with real AI streaming + image upload
@@ -93,7 +99,7 @@ npm run db:studio    # Open Drizzle Studio
    ```javascript
    await installLanguagePackages({ language: "nodejs", packages: [
      "next-intl", "@t3-oss/env-nextjs", "zod", "drizzle-orm",
-     "pg", "pino", "pino-pretty", "react-markdown", "rehype-highlight",
+    "pg", "pino", "pino-pretty", "posthog-js", "react-markdown", "rehype-highlight",
      "remark-gfm", "highlight.js", "react-hook-form",
      "@hookform/resolvers", "@electric-sql/pglite", "@daytonaio/sdk"
    ]});

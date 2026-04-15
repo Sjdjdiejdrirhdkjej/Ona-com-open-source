@@ -3,36 +3,50 @@ import path from 'node:path';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import * as schema from '@/models/Schema';
-import { Env } from './Env';
 
 // Stores the db connection in the global scope to prevent multiple instances due to hot reloading with Next.js
 const globalForDb = globalThis as unknown as {
   drizzle: NodePgDatabase<typeof schema>;
 };
 
-// Need a database for production? Check out https://www.prisma.io/?via=nextjsboilerplate
-// Tested and compatible with Next.js Boilerplate
+const databaseUrl = process.env.DATABASE_URL;
+const isNextProductionBuild = process.env.NEXT_PHASE === 'phase-production-build';
+
+const createBuildTimeDb = () => {
+  return new Proxy({}, {
+    get() {
+      throw new Error('Database access is unavailable during the Next.js production build.');
+    },
+  }) as NodePgDatabase<typeof schema>;
+};
+
 const createDbConnection = () => {
-  const isLocal = Env.DATABASE_URL.includes('localhost') || Env.DATABASE_URL.includes('127.0.0.1');
-  const hasSSLParam = Env.DATABASE_URL.includes('ssl=');
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL is not configured. Add a PostgreSQL connection string before using database-backed routes.');
+  }
+
+  const isLocal = databaseUrl.includes('localhost') || databaseUrl.includes('127.0.0.1');
+  const hasSSLParam = databaseUrl.includes('ssl=');
   return drizzle({
     connection: {
-      connectionString: Env.DATABASE_URL,
+      connectionString: databaseUrl,
       ssl: !isLocal && !hasSSLParam ? true : undefined,
     },
     schema,
   });
 };
 
-const db = globalForDb.drizzle || createDbConnection();
+const db = globalForDb.drizzle || (isNextProductionBuild && !databaseUrl ? createBuildTimeDb() : createDbConnection());
 
 // Only store in global during development to prevent hot reload issues
-if (Env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
   globalForDb.drizzle = db;
 }
 
-await migrate(db, {
-  migrationsFolder: path.join(process.cwd(), 'migrations'),
-});
+if (!isNextProductionBuild) {
+  await migrate(db, {
+    migrationsFolder: path.join(process.cwd(), 'migrations'),
+  });
+}
 
 export { db };

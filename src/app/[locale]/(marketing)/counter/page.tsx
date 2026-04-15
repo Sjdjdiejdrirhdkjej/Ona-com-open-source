@@ -5,6 +5,8 @@ import { Suspense } from 'react';
 import { CounterForm } from '@/components/CounterForm';
 import { CurrentCount } from '@/components/CurrentCount';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(props: {
   params: Promise<{ locale: string }>;
 }) {
