@@ -694,9 +694,19 @@ export default function AppPage() {
 
   useEffect(() => {
     if (conversations.length > 0 && !activeId) {
-      setActiveId(conversations[0]!.id);
+      const params = new URLSearchParams(window.location.search);
+      const urlId = params.get('c');
+      const fromUrl = urlId ? conversations.find(c => c.id === urlId) : null;
+      setActiveId(fromUrl ? fromUrl.id : conversations[0]!.id);
     }
   }, [conversations, activeId]);
+
+  useEffect(() => {
+    if (!activeId) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('c', activeId);
+    window.history.replaceState(null, '', url.toString());
+  }, [activeId]);
 
   const activeConversation = conversations.find(c => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
