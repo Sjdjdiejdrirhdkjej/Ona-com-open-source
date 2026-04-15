@@ -9,7 +9,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
-- **AI**: Fireworks AI — Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`), streaming, vision/image support, 262k context, tool-use
+- **AI**: Fireworks AI — main chat uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`) by default for deeper autonomous research
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
 ## Replit Configuration
@@ -44,6 +44,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - Image upload (file picker button) and paste-from-clipboard support
 - System prompt positions Ona as a background software engineering agent platform
 - Suggestion chips: Inspect repos, Clone a repo, Review PRs, Find CVEs
+- Librarian research tasks are handled by `src/libs/Librarian.ts` as an autonomous source-grounded research analyst with a longer research loop and detailed implementation-ready reports
 
 ## Background Agent System
 - **Persistent tool steps**: Tool call batches (e.g., "Reading file", "Creating branch") are saved as `tool_steps` messages in the DB and rendered permanently in the conversation — they never disappear
