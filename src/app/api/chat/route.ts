@@ -87,50 +87,136 @@ Use a sandbox whenever the user asks you to run, test, build, or verify code, or
 - After completing a task, summarize: what you did, what PR was opened (with URL), and what needs human review.
 - If a task is too large for one pass, break it into sub-tasks and ask the user which to tackle first.`;
 
-const TOOL_LABELS: Record<string, string> = {
-  github_get_viewer: 'Checking GitHub identity',
-  github_list_repositories: 'Listing repositories',
-  github_get_repository: 'Reading repository',
-  github_get_file_tree: 'Mapping codebase',
-  github_read_file: 'Reading file',
-  github_upsert_file: 'Writing file',
-  github_delete_file: 'Deleting file',
-  github_search_code: 'Searching code',
-  github_list_branches: 'Listing branches',
-  github_create_branch: 'Creating branch',
-  github_list_commits: 'Reading commit history',
-  github_get_commit: 'Reading commit',
-  github_list_pull_requests: 'Listing pull requests',
-  github_get_pull_request: 'Reading pull request',
-  github_get_pr_diff: 'Reading PR diff',
-  github_create_pull_request: 'Creating pull request',
-  github_add_pr_review: 'Submitting PR review',
-  github_add_pr_reviewers: 'Requesting PR reviewers',
-  github_add_pr_labels: 'Applying PR labels',
-  github_list_issues: 'Listing issues',
-  github_get_issue: 'Reading issue',
-  github_create_issue: 'Creating issue',
-  github_add_comment: 'Adding comment',
-  github_clone_repo: 'Cloning repository',
-  sandbox_create: 'Spinning up sandbox',
-  sandbox_exec: 'Running command',
-  sandbox_write_file: 'Writing file to sandbox',
-  sandbox_read_file: 'Reading file from sandbox',
-  sandbox_list_files: 'Listing sandbox files',
-  sandbox_delete: 'Deleting sandbox',
-  sandbox_git_clone: 'Cloning repo into sandbox',
-  call_librarian: 'Consulting librarian',
-};
+function toolLabel(name: string, args: Record<string, unknown> = {}): string {
+  // Helper: resolve owner/repo from either combined `repository` or separate `owner`+`repo`
+  function repo(): string {
+    if (typeof args.repository === 'string' && args.repository) return args.repository;
+    const o = typeof args.owner === 'string' ? args.owner : '';
+    const r = typeof args.repo === 'string' ? args.repo : '';
+    return o && r ? `${o}/${r}` : r || o || '';
+  }
 
-function toolLabel(name: string, args?: Record<string, unknown>): string {
-  if (name === 'sandbox_read_file' && args?.path) {
-    return `Read ${args.path}`;
+  // Helper: trim long strings
+  function trim(s: string, max = 48): string {
+    return s.length > max ? `${s.slice(0, max)}…` : s;
   }
-  if (name === 'call_librarian' && typeof args?.request === 'string') {
-    const snippet = args.request.slice(0, 60);
-    return `Librarian: ${snippet}${args.request.length > 60 ? '…' : ''}`;
+
+  const s = (key: string) => (typeof args[key] === 'string' ? (args[key] as string) : '');
+  const n = (key: string) => (typeof args[key] === 'number' ? args[key] : null);
+
+  switch (name) {
+    // ── Identity ───────────────────────────────────────────────────────────
+    case 'github_get_viewer':
+      return 'Checking GitHub identity';
+
+    // ── Repository ────────────────────────────────────────────────────────
+    case 'github_list_repositories':
+      return 'Listing repositories';
+    case 'github_get_repository':
+      return repo() ? `Reading ${repo()}` : 'Reading repository';
+    case 'github_search_code':
+      return s('query') ? `Searching for "${trim(s('query'))}"` : 'Searching code';
+    case 'github_get_file_tree':
+      return repo() ? `Mapping ${repo()}` : 'Mapping codebase';
+    case 'github_list_directory': {
+      const path = s('path') || '/';
+      return repo() ? `Listing ${path} in ${repo()}` : `Listing ${path}`;
+    }
+
+    // ── File reads / writes ───────────────────────────────────────────────
+    case 'github_read_file':
+      return s('path') ? `Reading ${s('path')}` : 'Reading file';
+    case 'github_upsert_file': {
+      const branch = s('branch');
+      return s('path')
+        ? `Writing ${s('path')}${branch ? ` → ${branch}` : ''}`
+        : 'Writing file';
+    }
+    case 'github_delete_file':
+      return s('path') ? `Deleting ${s('path')}` : 'Deleting file';
+
+    // ── Branches ──────────────────────────────────────────────────────────
+    case 'github_list_branches':
+      return repo() ? `Listing branches in ${repo()}` : 'Listing branches';
+    case 'github_create_branch':
+      return s('newBranch') ? `Creating branch ${s('newBranch')}` : 'Creating branch';
+
+    // ── Commits ───────────────────────────────────────────────────────────
+    case 'github_list_commits': {
+      const branch = s('branch');
+      return repo()
+        ? `Listing commits on ${branch || 'default'} in ${repo()}`
+        : 'Reading commit history';
+    }
+    case 'github_get_commit':
+      return s('sha') ? `Reading commit ${s('sha').slice(0, 7)}` : 'Reading commit';
+
+    // ── Pull requests ─────────────────────────────────────────────────────
+    case 'github_list_pull_requests': {
+      const state = s('state') || 'open';
+      return repo() ? `Listing ${state} PRs in ${repo()}` : `Listing ${state} PRs`;
+    }
+    case 'github_get_pull_request':
+      return n('pull_number') !== null ? `Reading PR #${n('pull_number')}` : 'Reading pull request';
+    case 'github_get_pr_diff':
+      return n('pull_number') !== null ? `Diffing PR #${n('pull_number')}` : 'Reading PR diff';
+    case 'github_create_pull_request':
+      return s('title') ? `Opening PR: ${trim(s('title'))}` : 'Creating pull request';
+    case 'github_add_pr_review':
+      return n('pull_number') !== null ? `Reviewing PR #${n('pull_number')}` : 'Submitting review';
+    case 'github_add_pr_reviewers':
+      return n('pull_number') !== null ? `Requesting reviewers for PR #${n('pull_number')}` : 'Requesting reviewers';
+    case 'github_add_pr_labels':
+      return n('pull_number') !== null ? `Labeling PR #${n('pull_number')}` : 'Applying labels';
+
+    // ── Issues ────────────────────────────────────────────────────────────
+    case 'github_list_issues': {
+      const state = s('state') || 'open';
+      return repo() ? `Listing ${state} issues in ${repo()}` : `Listing ${state} issues`;
+    }
+    case 'github_get_issue':
+      return n('issue_number') !== null ? `Reading issue #${n('issue_number')}` : 'Reading issue';
+    case 'github_create_issue':
+      return s('title') ? `Creating issue: ${trim(s('title'))}` : 'Creating issue';
+    case 'github_add_comment': {
+      const num = n('issue_number');
+      return num !== null ? `Commenting on #${num}` : 'Adding comment';
+    }
+    case 'github_clone_repo':
+      return repo() ? `Cloning ${repo()}` : 'Cloning repository';
+
+    // ── Daytona sandbox ───────────────────────────────────────────────────
+    case 'sandbox_create': {
+      const lang = s('language') || 'python';
+      return `Creating ${lang} sandbox`;
+    }
+    case 'sandbox_exec': {
+      const cmd = s('command');
+      return cmd ? `Running: ${trim(cmd, 52)}` : 'Running command';
+    }
+    case 'sandbox_write_file':
+      return s('path') ? `Writing ${s('path')} to sandbox` : 'Writing file to sandbox';
+    case 'sandbox_read_file':
+      return s('path') ? `Reading ${s('path')} from sandbox` : 'Reading file from sandbox';
+    case 'sandbox_list_files':
+      return s('path') ? `Listing ${s('path')} in sandbox` : 'Listing sandbox files';
+    case 'sandbox_delete':
+      return 'Deleting sandbox';
+    case 'sandbox_git_clone': {
+      const url = s('url');
+      const shortUrl = url.replace(/^https?:\/\/(github\.com\/)?/, '').replace(/\.git$/, '');
+      return url ? `Cloning ${trim(shortUrl, 40)} into sandbox` : 'Cloning repo into sandbox';
+    }
+
+    // ── Librarian ─────────────────────────────────────────────────────────
+    case 'call_librarian': {
+      const req = s('request');
+      return req ? `Librarian: ${trim(req, 55)}` : 'Consulting librarian';
+    }
+
+    default:
+      return name.replace(/^(github_|sandbox_)/, '').replace(/_/g, ' ');
   }
-  return TOOL_LABELS[name] ?? name.replace('github_', '').replace(/_/g, ' ');
 }
 
 type ContentPart =
