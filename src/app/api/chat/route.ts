@@ -4,6 +4,7 @@ import { db } from '@/libs/DB';
 import { agentEventsSchema, agentJobsSchema, conversationsSchema, messagesSchema } from '@/models/Schema';
 import { getGitHubToken, githubToolDefinitions, runGitHubTool } from '@/libs/GitHub';
 import { daytonaToolDefinitions, isDaytonaTool, runDaytonaTool } from '@/libs/Daytona';
+import { isLibrarianTool, librarianToolDefinitions, runLibrarianTool } from '@/libs/Librarian';
 
 export const runtime = 'nodejs';
 
@@ -54,6 +55,15 @@ You are built to handle these types of tasks autonomously:
 
 **Issue → PR workflow**
 - Read an issue with github_get_issue, understand the request, implement the fix, open a PR that references the issue.
+
+## Librarian — documentation & research
+Before writing code that depends on an unfamiliar library, API, or pattern, use the librarian tools to scout authoritative sources first:
+1. **librarian_search_web** — Search for documentation, tutorials, changelogs, or reference implementations. Returns ranked URLs.
+2. **librarian_fetch_url** — Fetch and read any public URL in full (docs pages, MDN, RFCs, blog posts, changelogs).
+3. **librarian_npm_package** — Look up an npm package: latest version, README, homepage, peer deps. Use before adding a dependency.
+4. **librarian_github_readme** — Read the README of any public GitHub repo. Great for finding usage examples and getting oriented in a new library.
+
+Use the librarian proactively: if a task involves a library you haven't seen in the conversation yet, fetch its docs before writing code.
 
 ## Daytona sandbox execution
 When you need to actually *run* code — tests, builds, linters, scripts — use the Daytona sandbox tools:
