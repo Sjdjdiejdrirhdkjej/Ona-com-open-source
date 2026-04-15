@@ -15,6 +15,13 @@
       "when": 1776163035966,
       "tag": "0001_heavy_tag",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776239487312,
+      "tag": "0002_remarkable_typhoid_mary",
+      "breakpoints": true
     }
   ]
 }
