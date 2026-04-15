@@ -489,11 +489,10 @@ export async function POST(req: NextRequest) {
         return;
       }
 
-      const MAX_TOOL_ITERATIONS = 25;
       let currentAssistantMsgId = assistantMessageId ?? crypto.randomUUID();
       let currentAssistantText = '';
 
-      for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
+      while (true) {
         let iterText = '';
         const { content, toolCalls, finishReason } = await streamFireworksCall(
           {
