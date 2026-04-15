@@ -311,7 +311,7 @@ function newConversation(): Conversation {
 }
 
 export default function AppPage() {
-  const [conversations, setConversations] = useState<Conversation[]>(() => [newConversation()]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
@@ -335,7 +335,7 @@ export default function AppPage() {
     async function loadHistory() {
       try {
         const res = await fetch('/api/conversations');
-        if (!res.ok) return;
+        if (!res.ok) throw new Error('Failed to load history');
         const data = await res.json() as Array<{
           id: string;
           title: string;
@@ -356,9 +356,12 @@ export default function AppPage() {
           }));
           loaded.forEach(c => syncedIds.current.add(c.id));
           setConversations([newConversation(), ...loaded]);
+        } else {
+          setConversations([newConversation()]);
         }
-      } catch {}
-      finally {
+      } catch {
+        setConversations([newConversation()]);
+      } finally {
         setLoadingHistory(false);
       }
     }
@@ -1001,6 +1004,7 @@ export default function AppPage() {
               )}
 
               <div
+                suppressHydrationWarning
                 className="flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-gray-700 px-3 py-2.5 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
                 style={{ backgroundColor: 'var(--bg-input)' }}
               >
@@ -1017,9 +1021,10 @@ export default function AppPage() {
                     <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
                 <textarea
+                  suppressHydrationWarning
                   ref={textareaRef}
                   rows={1}
                   value={input}
