@@ -715,7 +715,6 @@ export default function AppPage() {
             } else if (json.type === 'error' && json.message) {
               throw new Error(json.message);
             } else if (json.delta) {
-              setToolSteps([]);
               const delta = json.delta;
               assistantText += delta;
               setConversations(prev =>
@@ -1046,7 +1045,7 @@ export default function AppPage() {
                     {messages.filter(m => m.role === 'user' || !!m.content).map(msg => (
                       <MessageBubble key={msg.id} msg={msg} />
                     ))}
-                    {loading && !messages.at(-1)?.content && <TypingIndicator steps={toolSteps} />}
+                    {loading && (!messages.at(-1)?.content || toolSteps.length > 0) && <TypingIndicator steps={toolSteps} />}
                     <div ref={bottomRef} />
                   </div>
                 )}
