@@ -1,24 +1,24 @@
 # Ona-com-open-source
 
-An open-source, high-fidelity clone of the [Ona](https://ona.com) marketing web app. This project is built using a modern, scalable tech stack centered around Next.js 15 and is designed to serve as a robust foundation for marketing sites and SaaS applications.
+A comprehensive, **open-source full-stack application** inspired by the [Ona](https://ona.com) platform. This project serves as a production-ready foundation for building modern web applications, featuring a robust frontend, a scalable backend, and integrated developer tooling.
 
 ## 🚀 Overview
 
-**Ona-com-open-source** is a "marketing app clone" that leverages the latest features of the Next.js App Router. It provides a branded experience with localized routing, a type-safe database layer, and a comprehensive suite of development tools.
+**Ona-com-open-source** is a high-performance, full-stack application built with the latest web technologies. It provides a complete end-to-end solution including localized routing, a type-safe database layer, authentication scaffolding, and an automated testing suite.
 
 ### Key Features
 
-- **Next.js 15 (App Router):** Utilizing the latest React 19 features and server components.
-- **Tailwind CSS 4:** Modern, utility-first styling for a fast and responsive UI.
-- **Internationalization (i18n):** Multi-language support (`en`, `fr`) powered by `next-intl`.
-- **Database Integration:** Type-safe database operations using **Drizzle ORM** with **PGlite** for a seamless local development experience (no external database required for local dev).
-- **Authentication Scaffolding:** Pre-configured routes for `/sign-in` and `/sign-up` (integratable with Clerk).
-- **Quality Tooling:** 
-  - **Testing:** Vitest for unit/integration tests and Playwright for E2E testing.
-  - **Storybook:** Isolated component development and documentation.
-  - **Linting & Formatting:** ESLint (Antfu configuration) and Prettier.
-- **Security:** Integrated with Arcjet for rate limiting and bot protection.
-- **Monitoring:** Sentry and PostHog integration for error tracking and analytics.
+- **Next.js 15 (App Router):** Leveraging React 19 server components and optimized rendering.
+- **Full-Stack Architecture:** Integrated frontend and backend logic with seamless data flow.
+- **Tailwind CSS 4:** Modern, utility-first styling for a sleek and responsive user interface.
+- **Internationalization (i18n):** Native multi-language support (`en`, `fr`) powered by `next-intl`.
+- **Type-Safe Database:** Database operations using **Drizzle ORM** with **PGlite** for instant local development and PostgreSQL for production.
+- **Authentication:** Pre-configured authentication flows for secure user management (Clerk-ready).
+- **Quality Assurance:** 
+  - **Testing:** Comprehensive unit/integration tests with Vitest and E2E testing with Playwright.
+  - **Storybook:** Isolated component development environment.
+  - **Linting:** Professional-grade ESLint and formatting standards.
+- **Security & Analytics:** Built-in integration for Arcjet (security), Sentry (monitoring), and PostHog (analytics).
 
 ## 🛠️ Tech Stack
 
@@ -31,11 +31,11 @@ An open-source, high-fidelity clone of the [Ona](https://ona.com) marketing web 
 | **Database** | [PGlite](https://pglite.dev/) (Local), PostgreSQL (Remote) |
 | **Auth** | [Clerk](https://clerk.com/) (Optional) |
 | **Testing** | [Vitest](https://vitest.dev/), [Playwright](https://playwright.dev/) |
-| **UI Components** | [Storybook](https://storybook.js.org/) |
+| **Monitoring** | [Sentry](https://sentry.io/), [PostHog](https://posthog.com/) |
 
 ## 📥 Installation
 
-Follow these steps to get the project running on your local machine.
+Follow these steps to get the application running on your local machine.
 
 ### Prerequisites
 
@@ -81,14 +81,14 @@ NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
 ARCJET_KEY=your_arcjet_key
 ```
 
-### Database Setup
+### Database Management
 
-By default, the project uses **PGlite**, which runs a PostgreSQL-compatible database in-memory or as a local file. No additional setup is required for local development.
+The application is pre-configured with **PGlite**, allowing you to start developing immediately without an external database.
 
-To update the schema:
+To update the application schema:
 1. Modify `src/models/Schema.ts`.
 2. Generate migrations: `npm run db:generate`.
-3. Migrations are applied automatically during development.
+3. Migrations are automatically applied during the development cycle.
 
 ## 💻 Development
 
@@ -98,36 +98,36 @@ Start the development server:
 npm run dev
 ```
 
-The application will be available at `http://localhost:5000` (Note: default port is 5000 as per `package.json`).
+The application will be available at `http://localhost:5000` (Default port specified in `package.json`).
 
 ### Useful Commands
 
-- `npm run build` - Create an optimized production build.
-- `npm run start` - Start the production server.
-- `npm run lint` - Run ESLint checks.
-- `npm run test` - Run unit tests with Vitest.
-- `npm run test:e2e` - Run end-to-end tests with Playwright.
-- `npm run storybook` - Launch Storybook for component exploration.
+- `npm run build` - Generate a production-optimized build.
+- `npm run start` - Launch the production server.
+- `npm run lint` - Execute ESLint code quality checks.
+- `npm run test` - Run unit and integration tests.
+- `npm run test:e2e` - Run end-to-end browser tests.
+- `npm run storybook` - Open the component documentation portal.
 
 ## 📂 Project Structure
 
 ```text
 .
-├── .github          # GitHub Actions & Workflows
-├── .storybook       # Storybook Configuration
-├── migrations       # Database Migrations
-├── public           # Static Assets (Images, Icons)
+├── .github          # CI/CD Workflows & GitHub Actions
+├── .storybook       # Storybook UI Documentation
+├── migrations       # Database Schema Migrations
+├── public           # Static Assets & Media
 ├── src
-│   ├── app          # Next.js App Router (Pages & APIs)
-│   ├── components   # Reusable UI Components
-│   ├── libs         # Third-party Library Configurations
-│   ├── locales      # i18n Translation Files
-│   ├── models       # Database Schema & Models
-│   ├── styles       # Global CSS & Tailwind Styles
-│   ├── templates    # Layout Templates
-│   ├── types        # TypeScript Definitions
-│   └── utils        # Helper Functions & App Config
-└── tests            # E2E and Integration Tests
+│   ├── app          # Next.js App Router (Pages & API Routes)
+│   ├── components   # Modular React Components
+│   ├── libs         # Library & Service Configurations
+│   ├── locales      # Localization JSON Files
+│   ├── models       # Database Schemas & Data Models
+│   ├── styles       # Global Styling & Tailwind Config
+│   ├── templates    # Page Layout Templates
+│   ├── types        # Global TypeScript Definitions
+│   └── utils        # Utility Functions & Application Config
+└── tests            # Comprehensive Test Suites
 ```
 
 ## 📜 Credits
