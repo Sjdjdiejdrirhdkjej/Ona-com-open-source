@@ -163,7 +163,7 @@ export default async function Index(props: IIndexProps) {
             The AI engineering workforce.
           </h2>
           <p className="mt-3 text-base text-gray-500 dark:text-gray-400 sm:mt-4 sm:text-lg">
-            Set the direction. Ona runs the execution. Continuously and autonomously.
+            Set the direction. ONA but OPEN SOURCE runs the execution. Continuously and autonomously.
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export default async function Index(props: IIndexProps) {
             {
               tag: 'Background agents',
               title: 'Task in, pull request out.',
-              body: 'Ona executes end-to-end in the background. Keep momentum from any device.',
+              body: 'ONA but OPEN SOURCE executes end-to-end in the background. Keep momentum from any device.',
               cta: 'See how agents work',
             },
             {
@@ -236,12 +236,12 @@ export default async function Index(props: IIndexProps) {
           {[
             {
               title: 'Code migration & modernization',
-              body: 'Migrate hundreds of repos in parallel — COBOL, Java & framework upgrades, CI pipelines. Ona does the work. You review the PRs.',
+              body: 'Migrate hundreds of repos in parallel — COBOL, Java & framework upgrades, CI pipelines. ONA but OPEN SOURCE does the work. You review the PRs.',
               cta: 'Learn more about code migration',
             },
             {
               title: 'AI code review',
-              body: "Ona doesn't just scan patterns — it compiles, runs tests, and reviews in a real environment.",
+              body: "ONA but OPEN SOURCE doesn't just scan patterns — it compiles, runs tests, and reviews in a real environment.",
               cta: 'Learn more about code review',
             },
             {
@@ -290,7 +290,7 @@ export default async function Index(props: IIndexProps) {
             className="mb-6 text-xl leading-relaxed text-gray-900 dark:text-gray-100 sm:mb-8 sm:text-2xl md:text-3xl"
             style={{ fontFamily: SERIF, fontWeight: 400 }}
           >
-            "90–95% of migration work is done by Ona Automations. We just have to do the final
+            "90–95% of migration work is done by ONA but OPEN SOURCE Automations. We just have to do the final
             push commands."
           </blockquote>
           <Link href="/about/" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:underline">
@@ -300,7 +300,7 @@ export default async function Index(props: IIndexProps) {
           <div className="mt-8 grid grid-cols-1 gap-5 sm:mt-10 sm:grid-cols-3 sm:gap-6">
             {[
               { stat: '4x', label: 'productivity increase' },
-              { stat: '83%', label: 'of PRs co-authored by Ona' },
+              { stat: '83%', label: 'of PRs co-authored by ONA but OPEN SOURCE' },
               { stat: '400+', label: 'Python repos modernized in 6 months' },
             ].map(item => (
               <div key={item.stat} className="border-t border-gray-300 dark:border-gray-700 pt-5 sm:border-t-0 sm:pt-0 first:border-t-0 first:pt-0">
@@ -372,7 +372,7 @@ export default async function Index(props: IIndexProps) {
               tag: 'AI',
               date: 'February 19, 2026',
               author: 'Johannes Landgraf',
-              title: 'Ona Automations: proactive background agents',
+              title: 'ONA but OPEN SOURCE Automations: proactive background agents',
               body: 'Background agents that write, test, and ship code on a schedule.',
             },
             {
@@ -416,7 +416,7 @@ export default async function Index(props: IIndexProps) {
           className="mb-2 text-3xl text-gray-950 dark:text-gray-50 sm:text-4xl md:text-5xl"
           style={{ fontFamily: SERIF, fontWeight: 400 }}
         >
-          Start shipping with Ona
+          Start shipping with ONA but OPEN SOURCE
         </h2>
         <p className="mb-6 text-gray-500 dark:text-gray-400 sm:mb-8">No commitment. No setup. Just start.</p>
         <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:justify-center">

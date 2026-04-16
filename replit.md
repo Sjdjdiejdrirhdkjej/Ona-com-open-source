@@ -1,7 +1,7 @@
-# Ona — AI Background Software Engineering Platform
+# ONA but OPEN SOURCE — AI Background Software Engineering Platform
 
 ## Project Overview
-An Ona.com clone — a platform for AI background software engineering agents. The landing page visually matches ona.com, and `/app` is a real AI chat interface powered by Fireworks AI (Llama 4 Maverick) where users can issue tasks to background agents that produce pull requests.
+An open-source platform for AI background software engineering agents. The landing page uses a minimalist AI-agent platform aesthetic, and `/app` is a real AI chat interface powered by Fireworks AI where users can issue tasks to background agents that produce pull requests. The app is branded as “ONA but OPEN SOURCE”.
 
 ## Architecture
 - **Framework**: Next.js 15 with App Router and Turbopack
@@ -9,7 +9,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
-- **AI**: Fireworks AI — main chat Ona Max uses Kimi K2.5 (`accounts/fireworks/models/kimi-k2p5`); Ona Max Fast uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
+- **AI**: Fireworks AI — main chat ONA but OPEN SOURCE Max uses Kimi K2.5 (`accounts/fireworks/models/kimi-k2p5`); ONA but OPEN SOURCE Max Fast uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
 ## Replit Configuration
@@ -43,7 +43,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 ## Chat Interface (/app)
 - Real streaming AI responses via `src/app/api/chat/route.ts`
 - Image upload (file picker button) and paste-from-clipboard support
-- System prompt positions Ona as a background software engineering agent platform
+- System prompt positions ONA but OPEN SOURCE as a background software engineering agent platform
 - Suggestion chips: Inspect repos, Clone a repo, Review PRs, Find CVEs
 - Librarian research tasks are handled by `src/libs/Librarian.ts` as an autonomous source-grounded research analyst with a longer research loop and detailed implementation-ready reports
 - Browser automation tasks are handled by `src/libs/BrowserUse.ts` — the Browser Use Expert subagent uses Firecrawl's cloud-hosted browser (full JS rendering) to navigate, click, fill forms, scroll, screenshot, and extract data from live websites. Invoked via `call_browser_use` tool — internal tools (`browse`, `screenshot`, `search_web`) are never exposed to the main AI. Model overridable via `FIREWORKS_BROWSER_MODEL` env var.

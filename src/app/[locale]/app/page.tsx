@@ -8,6 +8,7 @@ import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
 
 const SERIF = 'Georgia, "Times New Roman", serif';
+const APP_NAME = 'ONA but OPEN SOURCE';
 
 type ContentPart =
   | { type: 'text'; text: string }
@@ -1548,7 +1549,7 @@ export default function AppPage() {
             </svg>
           </button>
           <Link href="/" className="text-base font-bold tracking-tight text-gray-950 dark:text-gray-50">
-            ONA
+            {APP_NAME}
           </Link>
         </div>
         <div className="flex items-center gap-2">
@@ -1574,7 +1575,7 @@ export default function AppPage() {
                 <button
                   onClick={startDeviceAuth}
                   disabled={githubStatus?.configured === false}
-                  title={githubStatus?.configured === false ? 'GITHUB_CLIENT_ID is not configured.' : 'Connect GitHub to let Ona inspect repos and open PRs.'}
+                  title={githubStatus?.configured === false ? 'GITHUB_CLIENT_ID is not configured.' : `Connect GitHub to let ${APP_NAME} inspect repos and open PRs.`}
                   className="flex items-center gap-2 rounded-lg border border-black/10 dark:border-white/10 px-3 py-2 text-sm transition-colors bg-gray-950 dark:bg-gray-100 dark:text-gray-900 text-white hover:opacity-85 active:opacity-75 disabled:pointer-events-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -1632,7 +1633,7 @@ export default function AppPage() {
                       className="mb-3 text-2xl text-gray-900 dark:text-gray-100 sm:text-4xl"
                       style={{ fontFamily: SERIF, fontWeight: 400 }}
                     >
-                      What should Ona do?
+                      {`What should ${APP_NAME} do?`}
                     </h1>
                     <p className="mb-7 max-w-xs text-sm text-gray-500 dark:text-gray-400 sm:max-w-sm">
                       Connect GitHub, describe a task, and a background agent can inspect repos, create a branch, commit changes, and open a pull request.
@@ -1740,9 +1741,9 @@ export default function AppPage() {
               {/* Model selector */}
               {(() => {
                 const MODEL_OPTIONS = [
-                  { key: 'ona-max', label: 'Ona Max', sub: 'Kimi K2.5' },
-                  { key: 'ona-max-fast', label: 'Ona Max Fast', sub: 'Kimi K2.5 Turbo' },
-                  { key: 'ona-mini', label: 'Ona Mini', sub: 'MiniMax M2.7' },
+                  { key: 'ona-max', label: `${APP_NAME} Max`, sub: 'Kimi K2.5' },
+                  { key: 'ona-max-fast', label: `${APP_NAME} Max Fast`, sub: 'Kimi K2.5 Turbo' },
+                  { key: 'ona-mini', label: `${APP_NAME} Mini`, sub: 'MiniMax M2.7' },
                 ] as const;
                 const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[1];
                 return (
@@ -1866,7 +1867,7 @@ export default function AppPage() {
           >
             <h2 className="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100">Connect GitHub</h2>
             <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-              Authorize Ona to access your repositories.
+              {`Authorize ${APP_NAME} to access your repositories.`}
             </p>
 
             {deviceAuth.status === 'error'

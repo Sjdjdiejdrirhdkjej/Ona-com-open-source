@@ -40,7 +40,7 @@ export const BaseTemplate = (props: {
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex-shrink-0">
             <span className="text-lg font-bold tracking-tight text-gray-950 dark:text-gray-50">
-              {AppConfig.name.toUpperCase()}
+              {AppConfig.name}
             </span>
           </Link>
 

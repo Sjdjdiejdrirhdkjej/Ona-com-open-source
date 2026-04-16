@@ -1,5 +1,5 @@
 /**
- * Browser Use Expert subagent — invoked exclusively by the main Ona AI via `call_browser_use`.
+ * Browser Use Expert subagent — invoked exclusively by the main ONA but OPEN SOURCE AI via `call_browser_use`.
  *
  * Architecture (Hermes-inspired):
  *   Main AI ──call_browser_use──▶ runBrowserUseSubagent()
@@ -421,7 +421,7 @@ const INTERNAL_TOOLS: ToolDefinition[] = [
 
 const CURRENT_DATE = new Date().toISOString().slice(0, 10);
 
-const BROWSER_USE_SYSTEM_PROMPT = `You are the **BROWSER USE EXPERT**, a specialist browser automation agent inside the Ona engineering system.
+const BROWSER_USE_SYSTEM_PROMPT = `You are the **BROWSER USE EXPERT**, a specialist browser automation agent inside the ONA but OPEN SOURCE engineering system.
 
 Your job: complete tasks requiring real web browser interaction using a persistent cloud-hosted browser session.
 
@@ -522,7 +522,7 @@ function stripHtml(raw: string): string {
 async function searchWeb(query: string, maxResults = 8): Promise<unknown> {
   const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=us-en`;
   const res = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Ona-BrowserUse/1.0)', Accept: 'text/html' },
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ONA-but-OPEN-SOURCE-BrowserUse/1.0)', Accept: 'text/html' },
     signal: AbortSignal.timeout(15000),
   });
   const html = await res.text();

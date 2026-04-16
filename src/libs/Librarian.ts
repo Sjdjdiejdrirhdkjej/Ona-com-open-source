@@ -1,5 +1,5 @@
 /**
- * Librarian subagent — invoked exclusively by the main Ona AI via `call_librarian`.
+ * Librarian subagent — invoked exclusively by the main ONA but OPEN SOURCE AI via `call_librarian`.
  *
  * Architecture:
  *   Main AI ──call_librarian──▶ runLibrarianSubagent()
@@ -20,7 +20,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 
 const LIBRARIAN_SYSTEM_PROMPT = `# THE LIBRARIAN
 
-You are **THE LIBRARIAN**, a specialized open-source documentation and library research agent inside the Ona engineering system.
+You are **THE LIBRARIAN**, a specialized open-source documentation and library research agent inside the ONA but OPEN SOURCE engineering system.
 
 Your job: answer questions about external libraries, APIs, SDKs, and frameworks by finding **EVIDENCE** from primary sources.
 
@@ -330,7 +330,7 @@ async function runInternalTool(name: string, args: Record<string, unknown>): Pro
     const maxChars = Math.min(Number(args.max_chars ?? 30000), 80000);
     const res = await httpFetch(url, {
       headers: {
-        'User-Agent': 'Ona-Librarian/1.0 (documentation scout)',
+        'User-Agent': 'ONA-but-OPEN-SOURCE-Librarian/1.0 (documentation scout)',
         Accept: 'text/html,application/xhtml+xml,text/plain,application/json',
       },
       redirect: 'follow',
@@ -349,7 +349,7 @@ async function runInternalTool(name: string, args: Record<string, unknown>): Pro
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=us-en`;
 
     const res = await httpFetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Ona-Librarian/1.0)', Accept: 'text/html' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ONA-but-OPEN-SOURCE-Librarian/1.0)', Accept: 'text/html' },
     });
     const html = await res.text();
 
@@ -413,7 +413,7 @@ async function runInternalTool(name: string, args: Record<string, unknown>): Pro
     const res = await httpFetch(apiUrl, {
       headers: {
         Accept: 'application/vnd.github.raw+json',
-        'User-Agent': 'Ona-Librarian/1.0',
+        'User-Agent': 'ONA-but-OPEN-SOURCE-Librarian/1.0',
         'X-GitHub-Api-Version': '2022-11-28',
       },
     });

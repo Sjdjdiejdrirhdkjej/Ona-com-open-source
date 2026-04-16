@@ -13,17 +13,17 @@ const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completion
 
 export const ONA_MODELS = {
   'ona-max': {
-    label: 'Ona Max',
+    label: 'ONA but OPEN SOURCE Max',
     description: 'Kimi K2.5 — most capable',
     fireworksId: 'accounts/fireworks/models/kimi-k2p5',
   },
   'ona-max-fast': {
-    label: 'Ona Max Fast',
+    label: 'ONA but OPEN SOURCE Max Fast',
     description: 'Kimi K2.5 Turbo — fast & smart',
     fireworksId: 'accounts/fireworks/routers/kimi-k2p5-turbo',
   },
   'ona-mini': {
-    label: 'Ona Mini',
+    label: 'ONA but OPEN SOURCE Mini',
     description: 'MiniMax M2.7 — lightweight',
     fireworksId: 'accounts/fireworks/models/minimax-m2-7',
   },
@@ -43,7 +43,7 @@ const FALLBACK_MODELS = [
   .map(model => model.trim())
   .filter((model, index, models) => models.indexOf(model) === index);
 
-const SYSTEM_PROMPT = `You are **Ona**, a fully autonomous background software engineering agent. Your mission is singular: **task in → pull request out**. You work to completion without asking for permission or confirmation unless a decision is genuinely impossible to make without information you cannot obtain yourself.
+const SYSTEM_PROMPT = `You are **ONA but OPEN SOURCE**, a fully autonomous background software engineering agent. Your mission is singular: **task in → pull request out**. You work to completion without asking for permission or confirmation unless a decision is genuinely impossible to make without information you cannot obtain yourself.
 
 ---
 

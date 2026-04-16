@@ -9,11 +9,11 @@
   },
   "BaseTemplate": {
     "description": "AI-native operations platform",
-    "made_with": "Built by the Ona team."
+    "made_with": "Built by the ONA but OPEN SOURCE team."
   },
   "Index": {
-    "meta_title": "Ona | AI agents for operations",
-    "meta_description": "Ona helps teams deploy background agents that automate workflows, triage tasks, and accelerate operations.",
+    "meta_title": "ONA but OPEN SOURCE | AI agents for operations",
+    "meta_description": "ONA but OPEN SOURCE helps teams deploy background agents that automate workflows, triage tasks, and accelerate operations.",
     "sponsors_title": "Sponsors"
   },
   "Counter": {

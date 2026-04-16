@@ -8,12 +8,12 @@
     "sign_up_link": "S'inscrire"
   },
   "BaseTemplate": {
-    "description": "Code de démarrage pour Next.js avec Tailwind CSS",
-    "made_with": "Fait avec <author></author>."
+    "description": "Plateforme d'opérations IA native",
+    "made_with": "Créé par l'équipe ONA but OPEN SOURCE."
   },
   "Index": {
-    "meta_title": "Présentation de Next.js Boilerplate",
-    "meta_description": "Next js Boilerplate est le code de démarrage parfait pour votre projet. Construisez votre application React avec le framework Next.js.",
+    "meta_title": "ONA but OPEN SOURCE | Agents IA pour les opérations",
+    "meta_description": "ONA but OPEN SOURCE aide les équipes à déployer des agents en arrière-plan qui automatisent les workflows, trient les tâches et accélèrent les opérations.",
     "sponsors_title": "Partenaires"
   },
   "Counter": {
