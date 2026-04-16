@@ -239,7 +239,8 @@ If a fix attempt does not resolve the problem after two tries:
 - **One branch per task** — never mix unrelated changes on the same branch.
 - **Large or risky changes** → open a **draft PR**, describe the risk, ask for review before merging.
 - **No redundant comments** — do not comment code that already makes the intent obvious.
-- **One final summary** after task completion — PR URL, files changed, anything needing human review. No padding.`;
+- **One final summary** after task completion — PR URL, files changed, anything needing human review. No padding.
+- **Never pre-announce tool calls.** Do not say "I'll search for…", "Let me look up…", "I'll check…", "I'm going to read…", or any similar narration before calling a tool. The moment you decide to use a tool, call it immediately — put the intent in a tool call, not in your response text. Reserve response text for results and final summaries only.`;
 
 function toolLabel(name: string, args: Record<string, unknown> = {}): string {
   // Helper: resolve owner/repo from either combined `repository` or separate `owner`+`repo`
@@ -749,6 +750,31 @@ export async function POST(req: NextRequest) {
         if (!toolCalls.length) {
           await flushContentEvent();
           const finalText = currentAssistantText || iterText || content;
+
+          // ── Intent-without-action detection ─────────────────────────────────
+          // The model sometimes outputs "I'll search for X" or "Let me look up Y"
+          // in its response text without actually emitting a tool call. When that
+          // happens, nudge it to call the tool instead of silently stopping.
+          const intentPattern = /\b(I['']ll|I will|let me|I['']m going to|I am going to|I need to|I should|I can)\b[^.!?\n]{0,120}\b(search|look|find|check|read|fetch|browse|scan|inspect|analyze|research|query|get|grab|pull|load|open|navigate|call|use|run|execute|create|write|update|list|review|clone|examine)\b/i;
+          if (finalText && intentPattern.test(finalText.slice(-800))) {
+            // Save the partial text so the user can see the reasoning, then continue.
+            if (conversationId && currentAssistantMsgId) {
+              await saveMessage(conversationId, currentAssistantMsgId, 'assistant', finalText);
+            }
+            const nextAssistantMsgId = crypto.randomUUID();
+            emit({ type: 'next_assistant_msg', nextAssistantMsgId });
+            if (jobId) await persistJobEvent(jobId, 'next_assistant_msg', { nextAssistantMsgId });
+            currentAssistantMsgId = nextAssistantMsgId;
+            currentAssistantText = '';
+            conversation.push({ role: 'assistant', content: finalText });
+            conversation.push({
+              role: 'user',
+              content: 'You described an action but did not call any tools. Execute the tool call now — do not narrate, just call it.',
+            });
+            continue;
+          }
+          // ────────────────────────────────────────────────────────────────────
+
           if (!finalText) emit({ delta: 'I could not produce a response.' });
 
           if (conversationId && currentAssistantMsgId) {
