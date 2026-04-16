@@ -1,10 +1,11 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { signOut, useSession } from '@/libs/auth-client';
+import { signOut } from '@/libs/auth-client';
+import { useServerSession } from '@/components/SessionProvider';
 
 export function UserDropdown() {
-  const { data: session } = useSession();
+  const session = useServerSession();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
