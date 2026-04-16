@@ -14,7 +14,7 @@
  */
 
 const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completions';
-const BROWSER_USE_MODEL = process.env.FIREWORKS_BROWSER_MODEL ?? 'accounts/fireworks/models/kimi-k2p5-instruct';
+const BROWSER_USE_MODEL = process.env.FIREWORKS_BROWSER_MODEL ?? 'accounts/fireworks/models/kimi-k2-instruct-0905';
 const BROWSER_USE_MAX_ITERATIONS = 15;
 
 const CURRENT_YEAR = new Date().getFullYear();
