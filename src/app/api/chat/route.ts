@@ -116,7 +116,18 @@ Your training knowledge is frozen at a past date. For anything outside the repos
 - \`github_add_comment\` → comment on issues or PRs when needed
 
 **When GitHub is NOT connected:**
-Tell the user: "Connect your GitHub account using the button above to let me access your repositories." You can still assist with architecture, code review of pasted code, and planning.
+If the user asks to clone, inspect, or work on a specific repository by name, do NOT just tell them to connect GitHub. Instead:
+1. Acknowledge GitHub is not connected so you cannot access their private repos or make commits.
+2. Immediately use \`call_librarian\` to search the web for that repository (e.g. "Find the GitHub URL, README, and codebase structure for <repo name>") and return everything you find — file structure, key files, purpose, tech stack, open issues, recent commits, etc.
+3. Offer concrete help based on what the librarian found: architecture review, code explanation, suggested improvements, or a plan for when they do connect GitHub.
+
+For all other requests (no specific repo target), tell the user to connect their GitHub account using the button above. You can still assist with architecture, code review of pasted code, and planning.
+
+**When a repo is NOT found in the user's account:**
+If \`github_list_repositories\` or \`github_get_file_tree\` confirms the repository does not exist in the connected account (wrong name, wrong owner, or the user is asking about a public third-party repo):
+1. Try an exact-name search with \`github_search_code\` in case the repo exists under a different owner.
+2. If still not found, immediately use \`call_librarian\` to search the web for that repository by name and return what you find — README, file structure, tech stack, open issues, official docs, etc.
+3. Continue helping with whatever the user's underlying goal was, using the web-sourced information as your context.
 
 ---
 
@@ -672,24 +683,140 @@ export async function POST(req: NextRequest) {
       if (!githubToken) {
         conversation.splice(1, 0, {
           role: 'user',
-          content: 'GitHub is not connected for this user. If they ask for any repository action, tell them to connect their GitHub account using the "Connect GitHub" button first. You can still help with general coding questions and planning.',
+          content: 'GitHub is not connected for this user. You CANNOT access their private repos, create branches, or open PRs. However, you CAN use call_librarian to search the web for any public repository, read its README, explore its file structure, and research its tech stack — do this immediately when the user mentions a repo by name. For general coding help with pasted code, answer directly. To prompt connection, mention the "Connect GitHub" button.',
         });
 
-        let text = '';
-        await streamFireworksCall(
-          { messages: conversation, max_tokens: 8192, temperature: 0.15, reasoning_effort: 'high' },
-          (delta) => {
-            emit({ delta });
-            text += delta;
-            queueContentEvent(delta);
-          },
-          fireworksModelId,
-        );
+        // Run a mini agentic loop with librarian + browser tools so the model can
+        // search the web for repositories even without a GitHub connection.
+        let noGhAssistantMsgId = assistantMessageId ?? crypto.randomUUID();
+        let noGhAssistantText = '';
+        const noGhRecentSigs: string[] = [];
+        const noGhTools = [callLibrarianToolDefinition, callBrowserUseToolDefinition];
 
-        await flushContentEvent();
-        if (conversationId && assistantMessageId) {
-          await saveMessage(conversationId, assistantMessageId, 'assistant', text);
+        for (;;) {
+          let iterText = '';
+          const { content, toolCalls, finishReason } = await streamFireworksCall(
+            { messages: conversation, tools: noGhTools, tool_choice: 'auto', max_tokens: 8192, temperature: 0.15, reasoning_effort: 'high' },
+            (delta) => {
+              emit({ delta });
+              iterText += delta;
+              noGhAssistantText += delta;
+              queueContentEvent(delta);
+            },
+            fireworksModelId,
+          );
+
+          if (finishReason === 'length') {
+            await flushContentEvent();
+            if (conversationId && noGhAssistantMsgId) {
+              await saveMessage(conversationId, noGhAssistantMsgId, 'assistant', noGhAssistantText || iterText || content);
+            }
+            const continueMsg = '\n\n*(Response was very long — continuing…)*';
+            emit({ delta: continueMsg });
+            queueContentEvent(continueMsg);
+            conversation.push({ role: 'assistant', content: (noGhAssistantText || iterText || content) + continueMsg });
+            conversation.push({ role: 'user', content: 'Continue exactly where you left off.' });
+            noGhAssistantText = '';
+            noGhAssistantMsgId = crypto.randomUUID();
+            emit({ type: 'next_assistant_msg', nextAssistantMsgId: noGhAssistantMsgId });
+            if (jobId) await persistJobEvent(jobId, 'next_assistant_msg', { nextAssistantMsgId: noGhAssistantMsgId });
+            continue;
+          }
+
+          if (!toolCalls.length) {
+            await flushContentEvent();
+            const finalText = noGhAssistantText || iterText || content;
+            if (conversationId && noGhAssistantMsgId) {
+              await saveMessage(conversationId, noGhAssistantMsgId, 'assistant', finalText || 'I could not produce a response.');
+            }
+            break;
+          }
+
+          // Loop detection
+          const sig = toolCalls.map(t => `${t.function.name}:${t.function.arguments.slice(0, 300)}`).join('|');
+          noGhRecentSigs.push(sig);
+          if (noGhRecentSigs.length > 3) noGhRecentSigs.shift();
+          if (noGhRecentSigs.length === 3 && noGhRecentSigs.every(s => s === sig)) break;
+
+          if (iterText && conversationId && noGhAssistantMsgId) {
+            await flushContentEvent();
+            await saveMessage(conversationId, noGhAssistantMsgId, 'assistant', iterText);
+            noGhAssistantText = '';
+          }
+
+          const labels = toolCalls.map(t => toolLabel(t.function.name, parseToolArgs(t.function.arguments)));
+          const toolStepsMsgId = crypto.randomUUID();
+          const nextAssistantMsgId = crypto.randomUUID();
+          noGhAssistantMsgId = nextAssistantMsgId;
+          noGhAssistantText = '';
+
+          emit({ type: 'tool_call', tools: labels, toolStepsMsgId, nextAssistantMsgId });
+          if (jobId) await persistJobEvent(jobId, 'tool_call', { tools: labels, toolStepsMsgId, nextAssistantMsgId });
+
+          conversation.push({ role: 'assistant', content: content ?? '', tool_calls: toolCalls });
+          const toolSteps: Array<{ label: string; status: string }> = labels.map(l => ({ label: l, status: 'running' }));
+
+          await Promise.all(toolCalls.map(async (toolCall) => {
+            const toolName = toolCall.function.name;
+            const toolArgs = parseToolArgs(toolCall.function.arguments);
+            const label = toolLabel(toolName, toolArgs);
+            emit({ type: 'tool_start', tool: label });
+            if (jobId) await persistJobEvent(jobId, 'tool_start', { tool: label });
+            try {
+              let result: unknown;
+              if (isCallLibrarianTool(toolName)) {
+                const request = typeof toolArgs.request === 'string' ? toolArgs.request : JSON.stringify(toolArgs);
+                result = await runLibrarianSubagent(request, (event, stepLabel, error) => {
+                  if (event === 'start') {
+                    emit({ type: 'librarian_step_start', parentLabel: label, step: stepLabel });
+                    if (jobId) persistJobEvent(jobId, 'librarian_step_start', { parentLabel: label, step: stepLabel }).catch(() => {});
+                  } else {
+                    emit({ type: 'librarian_step_complete', parentLabel: label, step: stepLabel, error: error ?? false });
+                    if (jobId) persistJobEvent(jobId, 'librarian_step_complete', { parentLabel: label, step: stepLabel, error: error ?? false }).catch(() => {});
+                  }
+                });
+                const report = typeof result === 'string' ? result : JSON.stringify(result);
+                emit({ type: 'librarian_report', parentLabel: label, report });
+                if (jobId) persistJobEvent(jobId, 'librarian_report', { parentLabel: label, report }).catch(() => {});
+              } else if (isCallBrowserUseTool(toolName)) {
+                const task = typeof toolArgs.task === 'string' ? toolArgs.task : JSON.stringify(toolArgs);
+                result = await runBrowserUseSubagent(task, (event, stepLabel, error) => {
+                  if (event === 'start') {
+                    emit({ type: 'browser_use_step_start', parentLabel: label, step: stepLabel });
+                    if (jobId) persistJobEvent(jobId, 'browser_use_step_start', { parentLabel: label, step: stepLabel }).catch(() => {});
+                  } else {
+                    emit({ type: 'browser_use_step_complete', parentLabel: label, step: stepLabel, error: error ?? false });
+                    if (jobId) persistJobEvent(jobId, 'browser_use_step_complete', { parentLabel: label, step: stepLabel, error: error ?? false }).catch(() => {});
+                  }
+                });
+                const report = typeof result === 'string' ? result : JSON.stringify(result);
+                emit({ type: 'browser_use_report', parentLabel: label, report });
+                if (jobId) persistJobEvent(jobId, 'browser_use_report', { parentLabel: label, report }).catch(() => {});
+              } else {
+                result = { error: 'Tool not available without GitHub connection.' };
+              }
+              conversation.push({ role: 'tool', tool_call_id: toolCall.id, content: JSON.stringify(result).slice(0, 32000) });
+              const idx = toolSteps.findIndex(s => s.label === label);
+              if (idx !== -1) toolSteps[idx]!.status = 'done';
+              emit({ type: 'tool_complete', tool: label });
+              if (jobId) await persistJobEvent(jobId, 'tool_complete', { tool: label });
+            } catch (error) {
+              conversation.push({ role: 'tool', tool_call_id: toolCall.id, content: JSON.stringify({ error: (error as Error).message }) });
+              const idx = toolSteps.findIndex(s => s.label === label);
+              if (idx !== -1) toolSteps[idx]!.status = 'error';
+              emit({ type: 'tool_complete', tool: label, error: true });
+              if (jobId) await persistJobEvent(jobId, 'tool_complete', { tool: label, error: true });
+            }
+          }));
+
+          if (conversationId) {
+            const finalSteps = toolSteps.map(s => ({ ...s, status: s.status === 'running' ? 'done' : s.status }));
+            await saveMessage(conversationId, toolStepsMsgId, 'tool_steps', finalSteps);
+          }
+          emit({ type: 'tool_done' });
+          if (jobId) await persistJobEvent(jobId, 'tool_done', {});
         }
+
         if (jobId) {
           await persistJobEvent(jobId, 'done', {});
           await db.update(agentJobsSchema).set({ status: 'done' }).where(eq(agentJobsSchema.id, jobId));
