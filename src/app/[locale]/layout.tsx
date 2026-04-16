@@ -1,4 +1,3 @@
-import { ClerkProvider } from '@clerk/nextjs';
 import type { Metadata } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
@@ -50,13 +49,11 @@ export default async function RootLayout(props: {
   setRequestLocale(locale);
 
   return (
-    <ClerkProvider>
-      <html lang={locale} suppressHydrationWarning>
-        <body suppressHydrationWarning>
-          <ThemeInitializer />
-          <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang={locale} suppressHydrationWarning>
+      <body suppressHydrationWarning>
+        <ThemeInitializer />
+        <NextIntlClientProvider>{props.children}</NextIntlClientProvider>
+      </body>
+    </html>
   );
 }

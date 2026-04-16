@@ -20,7 +20,8 @@ An open-source platform for AI background software engineering agents. The landi
   - After any code change, run `npm run build` once and restart the workflow to apply changes
 - **Preview compatibility**: `next.config.ts` allows Replit dev origins including the current `REPLIT_DEV_DOMAIN` so proxied `_next` assets load correctly.
 - **Hydration compatibility**: theme preference is applied after client mount via `src/components/ThemeInitializer.tsx`, avoiding server/client HTML attribute mismatches in the Replit preview.
-- **Secrets**: `FIREWORKS_API_KEY` (Fireworks AI)
+- **Auth**: Better Auth with GitHub OAuth — replaces Clerk. Session cookie: `better-auth.session_token`
+- **Secrets**: `FIREWORKS_API_KEY` (Fireworks AI), `BETTER_AUTH_SECRET` (32+ char secret), `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`
 - **SWC**: `@next/swc-linux-x64-gnu@15.5.15` is installed as an optional dependency — it must match the Next.js version exactly to avoid silent fallback to slow JS transforms.
 
 ## Vercel Build Configuration

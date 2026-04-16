@@ -1,6 +1,8 @@
-import { auth } from '@clerk/nextjs/server';
+import { headers } from 'next/headers';
 import { setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+
+import { auth } from '@/libs/auth';
 
 export default async function AppLayout(props: {
   children: React.ReactNode;
@@ -9,8 +11,8 @@ export default async function AppLayout(props: {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
     redirect('/sign-in');
   }
 
