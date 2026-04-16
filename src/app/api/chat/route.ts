@@ -1,6 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { eq } from 'drizzle-orm';
+import { z } from 'zod/v4';
 import { db } from '@/libs/DB';
+import { logger } from '@/libs/Logger';
 import { agentEventsSchema, agentJobsSchema, conversationsSchema, messagesSchema } from '@/models/Schema';
 import { getGitHubToken, githubToolDefinitions, runGitHubTool } from '@/libs/GitHub';
 import { daytonaToolDefinitions, isDaytonaTool, prebootSandbox, runDaytonaTool } from '@/libs/Daytona';
@@ -42,7 +44,7 @@ const FALLBACK_MODELS = [
 ].filter((model): model is string => Boolean(model?.trim()))
   .map(model => model.trim())
   .filter((model, index, models) => models.indexOf(model) === index);
-const MAX_AGENT_ITERATIONS = Infinity;
+const MAX_AGENT_ITERATIONS = 50;
 
 const CURRENT_DATE = new Date().toISOString().slice(0, 10);
 
@@ -596,6 +598,28 @@ function makeStream() {
   return { readable, emit, close };
 }
 
+const contentPartSchema = z.object({
+  type: z.string(),
+  text: z.string().optional(),
+  image_url: z.object({ url: z.string() }).optional(),
+});
+
+const chatRequestSchema = z.object({
+  messages: z.array(z.object({
+    role: z.enum(['user', 'assistant', 'system', 'tool']),
+    content: z.union([z.string(), z.array(contentPartSchema)]),
+    tool_call_id: z.string().optional(),
+    tool_calls: z.array(z.object({
+      id: z.string(),
+      type: z.literal('function'),
+      function: z.object({ name: z.string(), arguments: z.string() }),
+    })).optional(),
+  })).min(1, 'At least one message is required'),
+  conversationId: z.string().uuid().optional(),
+  assistantMessageId: z.string().uuid().optional(),
+  model: z.string().optional(),
+});
+
 async function saveMessage(conversationId: string, msgId: string, role: string, content: unknown) {
   try {
     await db.insert(messagesSchema).values({
@@ -605,13 +629,17 @@ async function saveMessage(conversationId: string, msgId: string, role: string, 
       content: typeof content === 'string' ? content : JSON.stringify(content),
     });
     await db.update(conversationsSchema).set({ updatedAt: new Date() }).where(eq(conversationsSchema.id, conversationId));
-  } catch {}
+  } catch (err) {
+    logger.warn({ err, conversationId, msgId }, 'saveMessage: failed to persist message');
+  }
 }
 
 async function persistJobEvent(jobId: string, type: string, data: Record<string, unknown> = {}) {
   try {
     await db.insert(agentEventsSchema).values({ jobId, type, data: JSON.stringify(data) });
-  } catch {}
+  } catch (err) {
+    logger.warn({ err, jobId, type }, 'persistJobEvent: failed to persist event');
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -626,14 +654,24 @@ export async function POST(req: NextRequest) {
   (async () => {
     let jobId: string | null = null;
     try {
-      const body = await req.json() as {
-        messages: ApiMessage[];
-        conversationId?: string;
-        assistantMessageId?: string;
-        model?: string;
-      };
+      let rawBody: unknown;
+      try {
+        rawBody = await req.json();
+      } catch {
+        emit({ type: 'error', message: 'Invalid JSON in request body.' });
+        close();
+        return;
+      }
 
-      const { messages, conversationId, assistantMessageId, model } = body;
+      const parsed = chatRequestSchema.safeParse(rawBody);
+      if (!parsed.success) {
+        const message = parsed.error.issues.map(i => i.message).join('; ');
+        emit({ type: 'error', message: `Bad request: ${message}` });
+        close();
+        return;
+      }
+
+      const { messages, conversationId, assistantMessageId, model } = parsed.data;
       const fireworksModelId = model && model in ONA_MODELS
         ? ONA_MODELS[model as OnaModelKey].fireworksId
         : undefined;
@@ -1078,7 +1116,9 @@ export async function POST(req: NextRequest) {
         try {
           await persistJobEvent(jobId, 'error', { message: (error as Error).message });
           await db.update(agentJobsSchema).set({ status: 'error' }).where(eq(agentJobsSchema.id, jobId));
-        } catch {}
+        } catch (dbErr) {
+          logger.warn({ dbErr, jobId }, 'Failed to persist job error status');
+        }
       }
     } finally {
       if (jobId) {
@@ -1087,7 +1127,9 @@ export async function POST(req: NextRequest) {
           if (jobs[0]?.status === 'running') {
             await db.update(agentJobsSchema).set({ status: 'done' }).where(eq(agentJobsSchema.id, jobId));
           }
-        } catch {}
+        } catch (dbErr) {
+          logger.warn({ dbErr, jobId }, 'Failed to mark job as done');
+        }
       }
       close();
     }
