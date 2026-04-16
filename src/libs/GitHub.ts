@@ -1,13 +1,12 @@
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
 import { execFile } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
+import { auth } from './auth';
 
 const execFileAsync = promisify(execFile);
 const GITHUB_API = 'https://api.github.com';
-export const TOKEN_COOKIE = 'ona_github_token';
-export const USER_COOKIE = 'ona_github_user';
 const WORKSPACE_ROOT = '/tmp/ona-github-workspaces';
 
 export type GitHubUser = {
@@ -17,119 +16,39 @@ export type GitHubUser = {
   html_url?: string;
 };
 
-// ── Device Auth helpers ────────────────────────────────────────────────────
-
-export type DeviceCodeResponse = {
-  device_code: string;
-  user_code: string;
-  verification_uri: string;
-  expires_in: number;
-  interval: number;
-};
-
-export type DevicePollResult =
-  | { status: 'authorized'; access_token: string }
-  | { status: 'pending' }
-  | { status: 'slow_down'; interval: number }
-  | { status: 'expired' }
-  | { status: 'denied' }
-  | { status: 'error'; message: string };
-
-export function getGitHubClientId() {
-  return process.env.GITHUB_CLIENT_ID ?? '';
-}
-
 export function isGitHubConfigured() {
-  return Boolean(process.env.GITHUB_CLIENT_ID);
+  return Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
 }
 
-export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
-  const clientId = getGitHubClientId();
-  if (!clientId) {
-    throw new Error('GITHUB_CLIENT_ID is not configured.');
-  }
+// Reads the GitHub access token for the currently signed-in user from
+// Better Auth's account table. Returns undefined if unauthenticated or
+// the user has no linked GitHub account.
+export async function getGitHubToken(): Promise<string | undefined> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) return undefined;
 
-  const res = await fetch('https://github.com/login/device/code', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: clientId,
-      scope: 'repo read:user user:email',
-    }),
-  });
+    const pool = (auth as any).options?.database as import('pg').Pool | undefined;
+    if (!pool) return undefined;
 
-  if (!res.ok) {
-    throw new Error(`GitHub device code request failed: ${res.status}`);
-  }
-
-  const data = await res.json() as DeviceCodeResponse & { error?: string; error_description?: string };
-  if (data.error) {
-    throw new Error(data.error_description ?? data.error);
-  }
-
-  return data;
-}
-
-export async function pollDeviceToken(deviceCode: string): Promise<DevicePollResult> {
-  const clientId = getGitHubClientId();
-  if (!clientId) {
-    return { status: 'error', message: 'GITHUB_CLIENT_ID is not configured.' };
-  }
-
-  const res = await fetch('https://github.com/login/oauth/access_token', {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      client_id: clientId,
-      device_code: deviceCode,
-      grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    }),
-  });
-
-  if (!res.ok) {
-    return { status: 'error', message: `GitHub poll failed: ${res.status}` };
-  }
-
-  const data = await res.json() as {
-    access_token?: string;
-    error?: string;
-    interval?: number;
-  };
-
-  if (data.access_token) {
-    return { status: 'authorized', access_token: data.access_token };
-  }
-
-  switch (data.error) {
-    case 'authorization_pending': return { status: 'pending' };
-    case 'slow_down': return { status: 'slow_down', interval: data.interval ?? 10 };
-    case 'expired_token': return { status: 'expired' };
-    case 'access_denied': return { status: 'denied' };
-    default: return { status: 'error', message: data.error ?? 'Unknown error' };
+    const result = await pool.query(
+      'SELECT access_token FROM "account" WHERE user_id = $1 AND provider_id = $2 LIMIT 1',
+      [session.user.id, 'github'],
+    );
+    return (result.rows[0] as { access_token?: string } | undefined)?.access_token ?? undefined;
+  } catch {
+    return undefined;
   }
 }
 
-// ── Cookie helpers ─────────────────────────────────────────────────────────
-
-export function tokenCookieHeader(value: string, maxAge: number) {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  return `${TOKEN_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
-}
-
-export function clearCookieHeader(name: string) {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  return `${name}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure}`;
-}
-
-export async function getGitHubToken() {
-  const cookieStore = await cookies();
-  return cookieStore.get(TOKEN_COOKIE)?.value;
+// Returns the Better Auth session user (name, email, image from GitHub profile).
+export async function getSessionUser() {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    return session?.user ?? null;
+  } catch {
+    return null;
+  }
 }
 
 // ── GitHub API wrapper ─────────────────────────────────────────────────────

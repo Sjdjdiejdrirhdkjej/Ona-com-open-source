@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { UserDropdown } from '@/components/UserDropdown';
 import ReactMarkdown from 'react-markdown';
 import rehypeHighlight from 'rehype-highlight';
 import remarkGfm from 'remark-gfm';
@@ -42,26 +43,6 @@ type Conversation = {
   activeJobId?: string | null;
 };
 
-type GitHubStatus = {
-  configured: boolean;
-  connected: boolean;
-  user?: {
-    login: string;
-    avatar_url?: string;
-    html_url?: string;
-  };
-  error?: string;
-};
-
-type DeviceAuthState = {
-  device_code: string;
-  user_code: string;
-  verification_uri: string;
-  interval: number;
-  expires_at: number;
-  status: 'waiting' | 'polling' | 'error';
-  errorMsg?: string;
-};
 
 const SUGGESTIONS = [
   'Inspect my repos and suggest agent tasks',
@@ -214,81 +195,6 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function CopyDeviceCode({ code }: { code: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {}
-  }
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 dark:border-gray-700 py-1.5 text-xs text-gray-500 dark:text-gray-400 transition-colors hover:border-gray-400 hover:text-gray-800 dark:hover:text-gray-100"
-    >
-      {copied
-        ? (
-            <>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Copied!
-            </>
-          )
-        : (
-            <>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect x="4" y="1" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M1 4v6a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
-              Copy code
-            </>
-          )}
-    </button>
-  );
-}
-
-function CountdownTimer({ expiresAt, onExpired }: { expiresAt: number; onExpired: () => void }) {
-  const [secsLeft, setSecsLeft] = useState<number | null>(null);
-  const onExpiredRef = useRef(onExpired);
-  onExpiredRef.current = onExpired;
-
-  useEffect(() => {
-    setSecsLeft(Math.max(0, Math.round((expiresAt - Date.now()) / 1000)));
-  }, [expiresAt]);
-
-  useEffect(() => {
-    if (secsLeft === null) return;
-    if (secsLeft <= 0) {
-      onExpiredRef.current();
-      return;
-    }
-    const id = setTimeout(() => setSecsLeft(s => (s !== null ? Math.max(0, s - 1) : null)), 1000);
-    return () => clearTimeout(id);
-  }, [secsLeft]);
-
-  if (secsLeft === null) return null;
-
-  const mins = Math.floor(secsLeft / 60);
-  const secs = secsLeft % 60;
-  const isLow = secsLeft <= 60;
-
-  return (
-    <p className={`text-center text-xs ${isLow ? 'text-red-500' : 'text-gray-400'}`}>
-      Code expires in
-      {' '}
-      <span className="font-medium tabular-nums">
-        {mins > 0 ? `${mins}m ` : ''}
-        {String(secs).padStart(2, '0')}
-        s
-      </span>
-    </p>
-  );
-}
 
 function MessageBubble({ msg }: { msg: Message }) {
   const isUser = msg.role === 'user';
@@ -548,13 +454,10 @@ export default function AppPage() {
   const [modelMenuOpen, setModelMenuOpen] = useState(false);
   const modelMenuRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState('');
-  const [githubStatus, setGithubStatus] = useState<GitHubStatus | null>(null);
-  const [deviceAuth, setDeviceAuth] = useState<DeviceAuthState | null>(null);
   const [atMention, setAtMention] = useState<{ query: string; caretPos: number } | null>(null);
   const [sandboxFiles, setSandboxFiles] = useState<string[]>([]);
   const [atMentionIndex, setAtMentionIndex] = useState(0);
   const [atMentionFetching, setAtMentionFetching] = useState(false);
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -825,102 +728,6 @@ export default function AppPage() {
           : c,
       ));
     } catch {}
-  }
-
-  useEffect(() => {
-    async function loadGitHubStatus() {
-      try {
-        const res = await fetch('/api/github/status');
-        const data = await res.json() as GitHubStatus;
-        setGithubStatus(data);
-      } catch {
-        setGithubStatus({ configured: false, connected: false });
-      }
-    }
-    loadGitHubStatus();
-  }, []);
-
-  async function disconnectGitHub() {
-    await fetch('/api/github/logout', { method: 'POST' });
-    setGithubStatus(prev => ({ configured: prev?.configured ?? true, connected: false }));
-  }
-
-  function cancelDeviceAuth() {
-    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-    setDeviceAuth(null);
-  }
-
-  async function startDeviceAuth() {
-    try {
-      const res = await fetch('/api/github/device/start', { method: 'POST' });
-      const data = await res.json() as {
-        device_code?: string;
-        user_code?: string;
-        verification_uri?: string;
-        interval?: number;
-        expires_in?: number;
-        error?: string;
-      };
-      if (!res.ok || !data.device_code) {
-        throw new Error(data.error ?? 'Failed to start device auth');
-      }
-      const auth: DeviceAuthState = {
-        device_code: data.device_code,
-        user_code: data.user_code!,
-        verification_uri: data.verification_uri ?? 'https://github.com/login/device',
-        interval: (data.interval ?? 5) * 1000,
-        expires_at: Date.now() + (data.expires_in ?? 900) * 1000,
-        status: 'polling',
-      };
-      setDeviceAuth(auth);
-      schedulePoll(auth);
-    } catch (err) {
-      setDeviceAuth({ device_code: '', user_code: '', verification_uri: '', interval: 5000, expires_at: Date.now(), status: 'error', errorMsg: (err as Error).message });
-    }
-  }
-
-  function schedulePoll(auth: DeviceAuthState) {
-    pollTimerRef.current = setTimeout(() => pollDeviceAuth(auth), auth.interval);
-  }
-
-  async function pollDeviceAuth(auth: DeviceAuthState) {
-    try {
-      const res = await fetch('/api/github/device/poll', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ device_code: auth.device_code }),
-      });
-      const data = await res.json() as {
-        status: string;
-        user?: GitHubStatus['user'];
-        interval?: number;
-        error?: string;
-      };
-
-      if (data.status === 'authorized') {
-        setDeviceAuth(null);
-        setGithubStatus({ configured: true, connected: true, user: data.user });
-        return;
-      }
-      if (data.status === 'expired') {
-        setDeviceAuth(prev => prev ? { ...prev, status: 'error', errorMsg: 'Code expired. Please try again.' } : null);
-        return;
-      }
-      if (data.status === 'denied') {
-        setDeviceAuth(prev => prev ? { ...prev, status: 'error', errorMsg: 'Access denied.' } : null);
-        return;
-      }
-      if (data.status === 'error') {
-        setDeviceAuth(prev => prev ? { ...prev, status: 'error', errorMsg: data.error ?? 'Unknown error' } : null);
-        return;
-      }
-      const nextInterval = data.status === 'slow_down' ? (data.interval ?? auth.interval / 1000 + 5) * 1000 : auth.interval;
-      const nextAuth = { ...auth, interval: nextInterval };
-      setDeviceAuth(nextAuth);
-      schedulePoll(nextAuth);
-    } catch {
-      schedulePoll(auth);
-    }
   }
 
   // Detect mobile vs desktop and set sidebar default
@@ -1787,36 +1594,7 @@ export default function AppPage() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          {githubStatus?.connected
-            ? (
-                <button
-                  onClick={disconnectGitHub}
-                  title={`Connected as ${githubStatus.user?.login ?? 'GitHub user'}. Click to disconnect.`}
-                  className="flex items-center gap-2 rounded-lg border border-black/10 dark:border-white/10 bg-white/60 dark:bg-white/5 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 transition-colors hover:bg-black/6 dark:hover:bg-white/8 hover:text-gray-950 dark:hover:text-gray-50 active:bg-black/10"
-                >
-                  {githubStatus.user?.avatar_url
-                    ? <img src={githubStatus.user.avatar_url} alt="" className="size-5 rounded-full" />
-                    : (
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.77.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.95-.09-.23-.48-.95-.82-1.14-.28-.16-.68-.55-.01-.56.63-.01 1.08.59 1.23.83.72 1.24 1.87.89 2.33.68.07-.53.28-.89.51-1.1-1.78-.21-3.64-.91-3.64-4.04 0-.89.31-1.62.82-2.19-.08-.21-.36-1.04.08-2.16 0 0 .67-.22 2.2.84A7.37 7.37 0 018 3.95c.68 0 1.36.09 2 .27 1.53-1.06 2.2-.84 2.2-.84.44 1.12.16 1.95.08 2.16.51.57.82 1.3.82 2.19 0 3.14-1.87 3.83-3.65 4.04.29.25.54.74.54 1.5 0 1.09-.01 1.96-.01 2.23 0 .22.15.48.55.4A8.13 8.13 0 0016 8.2C16 3.67 12.42 0 8 0z" />
-                        </svg>
-                      )}
-                  <span className="hidden sm:inline">{githubStatus.user?.login ?? 'GitHub connected'}</span>
-                </button>
-              )
-            : (
-                <button
-                  onClick={startDeviceAuth}
-                  disabled={githubStatus?.configured === false}
-                  title={githubStatus?.configured === false ? 'GITHUB_CLIENT_ID is not configured.' : `Connect GitHub to let ${APP_NAME} inspect repos and open PRs.`}
-                  className="flex items-center gap-2 rounded-lg border border-black/10 dark:border-white/10 px-3 py-2 text-sm transition-colors bg-gray-950 dark:bg-gray-100 dark:text-gray-900 text-white hover:opacity-85 active:opacity-75 disabled:pointer-events-none disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.77.4.08.55-.18.55-.4 0-.2-.01-.86-.01-1.56-2.01.38-2.53-.5-2.69-.95-.09-.23-.48-.95-.82-1.14-.28-.16-.68-.55-.01-.56.63-.01 1.08.59 1.23.83.72 1.24 1.87.89 2.33.68.07-.53.28-.89.51-1.1-1.78-.21-3.64-.91-3.64-4.04 0-.89.31-1.62.82-2.19-.08-.21-.36-1.04.08-2.16 0 0 .67-.22 2.2.84A7.37 7.37 0 018 3.95c.68 0 1.36.09 2 .27 1.53-1.06 2.2-.84 2.2-.84.44 1.12.16 1.95.08 2.16.51.57.82 1.3.82 2.19 0 3.14-1.87 3.83-3.65 4.04.29.25.54.74.54 1.5 0 1.09-.01 1.96-.01 2.23 0 .22.15.48.55.4A8.13 8.13 0 0016 8.2C16 3.67 12.42 0 8 0z" />
-                  </svg>
-                  <span className="hidden sm:inline">Connect GitHub</span>
-                </button>
-              )}
+          <UserDropdown />
           <button
             onClick={createNewChat}
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-black/6 dark:hover:bg-white/8 hover:text-gray-900 dark:hover:text-gray-100 active:bg-black/10"
@@ -1871,11 +1649,6 @@ export default function AppPage() {
                     <p className="mb-7 max-w-xs text-sm text-gray-500 dark:text-gray-400 sm:max-w-sm">
                       Connect GitHub, describe a task, and a background agent can inspect repos, create a branch, commit changes, and open a pull request.
                     </p>
-                    {githubStatus?.configured === false && (
-                      <p className="mb-4 max-w-sm rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/50 px-4 py-3 text-xs text-amber-800 dark:text-amber-300">
-                        GitHub Device Auth needs GITHUB_CLIENT_ID before users can connect their repositories.
-                      </p>
-                    )}
                     <div className="flex flex-wrap justify-center gap-2">
                       {SUGGESTIONS.map(s => (
                         <button
@@ -2085,59 +1858,6 @@ export default function AppPage() {
         </div>
       </div>
 
-      {/* ── Device Auth Modal ── */}
-      {deviceAuth && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm"
-          onClick={e => e.target === e.currentTarget && cancelDeviceAuth()}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-gray-700 p-7 shadow-2xl"
-            style={{ backgroundColor: 'var(--bg)' }}
-          >
-            <h2 className="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100">Connect GitHub</h2>
-            <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-              {`Authorize ${APP_NAME} to access your repositories.`}
-            </p>
-
-            {deviceAuth.status === 'error'
-              ? (
-                  <div className="rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 px-4 py-3">
-                    <p className="text-sm text-red-700 dark:text-red-400">{deviceAuth.errorMsg ?? 'An error occurred.'}</p>
-                  </div>
-                )
-              : (
-                  <>
-                    <p className="mb-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                      1. Go to
-                      {' '}
-                      <a href={deviceAuth.verification_uri} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-600 dark:text-indigo-400 underline">
-                        {deviceAuth.verification_uri}
-                      </a>
-                    </p>
-                    <p className="mb-3 text-center text-xs text-gray-500 dark:text-gray-400">2. Enter this code:</p>
-                    <div className="rounded-xl border-2 border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 px-4 py-3 text-center">
-                      <span className="font-mono text-xl font-bold tracking-widest text-indigo-700 dark:text-indigo-300">
-                        {deviceAuth.user_code}
-                      </span>
-                    </div>
-                    <CopyDeviceCode code={deviceAuth.user_code} />
-                    <div className="mt-3">
-                      <CountdownTimer expiresAt={deviceAuth.expires_at} onExpired={() => setDeviceAuth(prev => prev ? { ...prev, status: 'error', errorMsg: 'Code expired. Please try again.' } : null)} />
-                    </div>
-                    <p className="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">Waiting for authorization…</p>
-                  </>
-                )}
-
-            <button
-              onClick={cancelDeviceAuth}
-              className="mt-5 w-full rounded-xl border border-gray-200 dark:border-gray-700 py-2.5 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:border-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
