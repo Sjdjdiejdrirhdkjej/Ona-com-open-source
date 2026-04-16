@@ -15,7 +15,7 @@ export const ONA_MODELS = {
   'ona-max': {
     label: 'Ona Max',
     description: 'Kimi K2.5 — most capable',
-    fireworksId: 'accounts/fireworks/models/kimi-k2p5-instruct',
+    fireworksId: 'accounts/fireworks/models/kimi-k2p5',
   },
   'ona-max-fast': {
     label: 'Ona Max Fast',

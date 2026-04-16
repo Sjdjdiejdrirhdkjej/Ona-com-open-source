@@ -9,7 +9,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
-- **AI**: Fireworks AI — main chat uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
+- **AI**: Fireworks AI — main chat Ona Max uses Kimi K2.5 (`accounts/fireworks/models/kimi-k2p5`); Ona Max Fast uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
 ## Replit Configuration
