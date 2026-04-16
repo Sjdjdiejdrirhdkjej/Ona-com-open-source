@@ -15,7 +15,7 @@ export const ONA_MODELS = {
   'ona-max': {
     label: 'ONA Max',
     description: 'GLM 5.1 — most capable',
-    fireworksId: 'accounts/fireworks/models/glm-4-5-1',
+    fireworksId: 'accounts/fireworks/models/glm-5p1',
   },
   'ona-max-fast': {
     label: 'ONA Max Fast',
