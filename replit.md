@@ -10,6 +10,7 @@ An open-source platform for AI background software engineering agents. The landi
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
 - **AI**: Fireworks AI — main chat ONA Max uses Kimi K2.5 (`accounts/fireworks/models/kimi-k2p5`); ONA Max Fast uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
+- **GitHub delivery policy**: repository changes default to branch + pull request; direct writes to the repository default branch are blocked unless the user explicitly asks for a direct push.
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
 ## Replit Configuration
@@ -47,6 +48,7 @@ An open-source platform for AI background software engineering agents. The landi
 - Real streaming AI responses via `src/app/api/chat/route.ts`
 - Image upload (file picker button) and paste-from-clipboard support
 - System prompt positions ONA but OPEN SOURCE as a background software engineering agent platform
+- GitHub tools support branch creation, file writes on feature branches, and pull request creation; `src/libs/GitHub.ts` prevents accidental direct writes to the default branch.
 - Suggestion chips: Inspect repos, Clone a repo, Review PRs, Find CVEs
 - Librarian research tasks are handled by `src/libs/Librarian.ts` as an autonomous source-grounded research analyst with a longer research loop and detailed implementation-ready reports
 - Browser automation tasks are handled by `src/libs/BrowserUse.ts` — the Browser Use Expert subagent uses Firecrawl's cloud-hosted browser (full JS rendering) to navigate, click, fill forms, scroll, screenshot, and extract data from live websites. Invoked via `call_browser_use` tool — internal tools (`browse`, `screenshot`, `search_web`) are never exposed to the main AI. Model overridable via `FIREWORKS_BROWSER_MODEL` env var.

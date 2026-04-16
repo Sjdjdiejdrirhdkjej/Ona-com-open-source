@@ -195,6 +195,14 @@ async function readFileSha(token: string, owner: string, repo: string, filePath:
   }
 }
 
+async function assertWritableBranch(token: string, owner: string, repo: string, branch: string, allowDirectPush: unknown) {
+  const repository = await githubFetch<{ default_branch: string }>(token, repoPath(owner, repo));
+  if (branch === repository.default_branch && allowDirectPush !== true) {
+    throw new Error(`Refusing to write directly to the default branch "${repository.default_branch}". Create a feature branch and open a pull request, or set allowDirectPushToDefaultBranch to true only when the user explicitly asks to push directly.`);
+  }
+  return repository.default_branch;
+}
+
 // ── AI tool definitions ────────────────────────────────────────────────────
 
 export const githubToolDefinitions = [
@@ -395,7 +403,7 @@ export const githubToolDefinitions = [
     type: 'function',
     function: {
       name: 'github_upsert_file',
-      description: 'Create or update a single file in a branch.',
+      description: 'Create or update a single file in a feature branch. Prefer using this on a task branch, then open a pull request.',
       parameters: {
         type: 'object',
         required: ['path', 'branch', 'content', 'message'],
@@ -404,9 +412,10 @@ export const githubToolDefinitions = [
           owner: { type: 'string' },
           repo: { type: 'string' },
           path: { type: 'string', description: 'File path inside the repo.' },
-          branch: { type: 'string', description: 'Target branch.' },
+          branch: { type: 'string', description: 'Target feature branch. Do not use the default branch unless the user explicitly requests a direct push.' },
           content: { type: 'string', description: 'Full UTF-8 file content.' },
           message: { type: 'string', description: 'Commit message.' },
+          allowDirectPushToDefaultBranch: { type: 'boolean', description: 'Set true only if the user explicitly asks to push directly to the default branch instead of creating a PR.' },
         },
         additionalProperties: false,
       },
@@ -416,7 +425,7 @@ export const githubToolDefinitions = [
     type: 'function',
     function: {
       name: 'github_delete_file',
-      description: 'Delete a file from a branch.',
+      description: 'Delete a file from a feature branch. Prefer using this on a task branch, then open a pull request.',
       parameters: {
         type: 'object',
         required: ['path', 'branch', 'message'],
@@ -425,8 +434,9 @@ export const githubToolDefinitions = [
           owner: { type: 'string' },
           repo: { type: 'string' },
           path: { type: 'string', description: 'File path to delete.' },
-          branch: { type: 'string', description: 'Branch to delete from.' },
+          branch: { type: 'string', description: 'Feature branch to delete from. Do not use the default branch unless the user explicitly requests a direct push.' },
           message: { type: 'string', description: 'Commit message.' },
+          allowDirectPushToDefaultBranch: { type: 'boolean', description: 'Set true only if the user explicitly asks to push directly to the default branch instead of creating a PR.' },
         },
         additionalProperties: false,
       },
@@ -493,7 +503,7 @@ export const githubToolDefinitions = [
     type: 'function',
     function: {
       name: 'github_create_pull_request',
-      description: 'Open a pull request. Write a clear description with what changed, why, files affected, and how to test.',
+      description: 'Open a pull request. This is the preferred delivery path for repository changes. Write a clear description with what changed, why, files affected, and how to test.',
       parameters: {
         type: 'object',
         required: ['title', 'head'],
@@ -826,6 +836,7 @@ export async function runGitHubTool(token: string, name: string, args: Record<st
     const content = String(args.content ?? '');
     const message = String(args.message ?? '');
     if (!filePath || !branch || !message) throw new Error('path, branch, and message are required.');
+    await assertWritableBranch(token, owner, repo, branch, args.allowDirectPushToDefaultBranch);
     const sha = await readFileSha(token, owner, repo, filePath, branch);
     return githubFetch(token, `${repoPath(owner, repo)}/contents/${encodePath(filePath)}`, {
       method: 'PUT',
@@ -838,6 +849,7 @@ export async function runGitHubTool(token: string, name: string, args: Record<st
     const branch = String(args.branch ?? '');
     const message = String(args.message ?? '');
     if (!filePath || !branch || !message) throw new Error('path, branch, and message are required.');
+    await assertWritableBranch(token, owner, repo, branch, args.allowDirectPushToDefaultBranch);
     const sha = await readFileSha(token, owner, repo, filePath, branch);
     if (!sha) throw new Error(`File not found: ${filePath} on branch ${branch}`);
     return githubFetch(token, `${repoPath(owner, repo)}/contents/${encodePath(filePath)}`, {
