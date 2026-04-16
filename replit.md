@@ -9,7 +9,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
-- **AI**: Fireworks AI — main chat uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`) by default for deeper autonomous research
+- **AI**: Fireworks AI — main chat uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2.5 Instruct (`accounts/fireworks/models/kimi-k2p5-instruct`) — all overridable via env vars
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
 ## Replit Configuration
@@ -45,6 +45,7 @@ An Ona.com clone — a platform for AI background software engineering agents. T
 - System prompt positions Ona as a background software engineering agent platform
 - Suggestion chips: Inspect repos, Clone a repo, Review PRs, Find CVEs
 - Librarian research tasks are handled by `src/libs/Librarian.ts` as an autonomous source-grounded research analyst with a longer research loop and detailed implementation-ready reports
+- Browser automation tasks are handled by `src/libs/BrowserUse.ts` — the Browser Use Expert subagent uses Firecrawl's cloud-hosted browser (full JS rendering) to navigate, click, fill forms, scroll, screenshot, and extract data from live websites. Invoked via `call_browser_use` tool — internal tools (`browse`, `screenshot`, `search_web`) are never exposed to the main AI. Model overridable via `FIREWORKS_BROWSER_MODEL` env var.
 
 ## Background Agent System
 - **Persistent tool steps**: Tool call batches (e.g., "Reading file", "Creating branch") are saved as `tool_steps` messages in the DB and rendered permanently in the conversation — they never disappear

@@ -5,6 +5,7 @@ import { agentEventsSchema, agentJobsSchema, conversationsSchema, messagesSchema
 import { getGitHubToken, githubToolDefinitions, runGitHubTool } from '@/libs/GitHub';
 import { daytonaToolDefinitions, isDaytonaTool, runDaytonaTool } from '@/libs/Daytona';
 import { callLibrarianToolDefinition, isCallLibrarianTool, runLibrarianSubagent } from '@/libs/Librarian';
+import { callBrowserUseToolDefinition, isCallBrowserUseTool, runBrowserUseSubagent } from '@/libs/BrowserUse';
 
 export const runtime = 'nodejs';
 
@@ -99,6 +100,21 @@ Use the librarian proactively:
 - When you want a reference implementation from a popular open-source repo, ask the librarian.
 
 Example call: \`call_librarian({ request: "Find the drizzle-orm docs for running migrations programmatically in a Next.js API route" })\`
+
+## Browser Use Expert subagent — real browser automation
+You have access to a specialist Browser Use Expert subagent via the \`call_browser_use\` tool. The Browser Use Expert operates a real cloud-hosted browser (fully renders JavaScript and SPAs) and can navigate URLs, click elements, fill forms, scroll pages, wait for dynamic content, take screenshots, and extract data from any live website — then returns a structured report.
+
+Use the browser use expert when the task requires genuine browser interaction:
+- Checking the live state of a deployed website or web app
+- Filling out web forms, completing multi-step web workflows
+- Extracting data from JS-rendered pages or SPAs that plain HTTP fetching cannot reach
+- Taking a screenshot of a specific URL or UI state for visual confirmation
+- Verifying that a feature you shipped actually works end-to-end on the live site
+- Automating any web UI interaction step-by-step
+
+Do NOT call \`call_browser_use\` for static documentation lookups or npm/GitHub research — use \`call_librarian\` for those instead.
+
+Example call: \`call_browser_use({ task: "Go to https://example.com/login, type 'test@test.com' into #email and 'password123' into #password, click the submit button, then return the content of the page and a screenshot." })\`
 
 ## Daytona sandbox execution
 When you need to actually *run* code — tests, builds, linters, scripts — use the Daytona sandbox tools:
@@ -243,6 +259,12 @@ function toolLabel(name: string, args: Record<string, unknown> = {}): string {
     case 'call_librarian': {
       const req = s('request');
       return req ? `Librarian: ${trim(req, 55)}` : 'Consulting librarian';
+    }
+
+    // ── Browser Use Expert ────────────────────────────────────────────────
+    case 'call_browser_use': {
+      const task = s('task');
+      return task ? `Browser: ${trim(task, 52)}` : 'Using browser';
     }
 
     default:
@@ -525,7 +547,7 @@ export async function POST(req: NextRequest) {
         const { content, toolCalls, finishReason } = await streamFireworksCall(
           {
             messages: conversation,
-            tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition],
+            tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition],
             tool_choice: 'auto',
             max_tokens: 16384,
             temperature: 0.3,
@@ -610,6 +632,21 @@ export async function POST(req: NextRequest) {
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
                 emit({ type: 'librarian_report', parentLabel, report });
                 if (jobId) persistJobEvent(jobId, 'librarian_report', { parentLabel, report }).catch(() => {});
+              } else if (isCallBrowserUseTool(toolName)) {
+                const task = typeof toolArgs.task === 'string' ? toolArgs.task : JSON.stringify(toolArgs);
+                const parentLabel = label;
+                result = await runBrowserUseSubagent(task, (event, stepLabel, error) => {
+                  if (event === 'start') {
+                    emit({ type: 'browser_use_step_start', parentLabel, step: stepLabel });
+                    if (jobId) persistJobEvent(jobId, 'browser_use_step_start', { parentLabel, step: stepLabel }).catch(() => {});
+                  } else {
+                    emit({ type: 'browser_use_step_complete', parentLabel, step: stepLabel, error: error ?? false });
+                    if (jobId) persistJobEvent(jobId, 'browser_use_step_complete', { parentLabel, step: stepLabel, error: error ?? false }).catch(() => {});
+                  }
+                });
+                const report = typeof result === 'string' ? result : JSON.stringify(result);
+                emit({ type: 'browser_use_report', parentLabel, report });
+                if (jobId) persistJobEvent(jobId, 'browser_use_report', { parentLabel, report }).catch(() => {});
               } else if (isDaytonaTool(toolName)) {
                 result = await runDaytonaTool(toolName, toolArgs);
                 if (toolName === 'sandbox_create' && conversationId) {
