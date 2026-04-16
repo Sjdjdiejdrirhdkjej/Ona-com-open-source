@@ -24,8 +24,8 @@ export const ONA_MODELS = {
   },
   'ona-mini': {
     label: 'ONA Mini',
-    description: 'Llama 4 Scout — lightweight',
-    fireworksId: 'accounts/fireworks/models/llama4-scout-instruct-basic',
+    description: 'Llama 3.1 8B — lightweight',
+    fireworksId: 'accounts/fireworks/models/llama-v3p1-8b-instruct',
   },
 } as const;
 
