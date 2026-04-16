@@ -16,6 +16,7 @@ export function NavPromptBox() {
   return (
     <form onSubmit={handleSubmit} className="relative flex items-center">
       <input
+        suppressHydrationWarning
         ref={inputRef}
         type="text"
         value={value}
@@ -25,6 +26,7 @@ export function NavPromptBox() {
         style={{ backdropFilter: 'blur(6px)' }}
       />
       <button
+        suppressHydrationWarning
         type="submit"
         aria-label="Send"
         className="absolute right-1.5 flex size-5 items-center justify-center rounded-full bg-gray-900 text-white transition-opacity hover:opacity-80 disabled:opacity-30"

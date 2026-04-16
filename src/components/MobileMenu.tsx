@@ -28,6 +28,7 @@ export function MobileMenu() {
   return (
     <div className="md:hidden">
       <button
+        suppressHydrationWarning
         onClick={() => setOpen(prev => !prev)}
         aria-label="Toggle menu"
         className="flex size-9 items-center justify-center rounded-md text-gray-700 dark:text-gray-300 transition-colors hover:bg-black/5 dark:hover:bg-white/8"
@@ -68,6 +69,7 @@ export function MobileMenu() {
             <div className="mt-4 flex flex-col gap-2 border-t border-gray-200 dark:border-gray-800 pt-4">
               <form onSubmit={handleSubmit} className="relative flex items-center">
                 <input
+                  suppressHydrationWarning
                   ref={inputRef}
                   type="text"
                   value={prompt}
@@ -76,6 +78,7 @@ export function MobileMenu() {
                   className="h-10 w-full rounded-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 pl-4 pr-11 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none focus:border-gray-400 focus:bg-white dark:focus:bg-gray-700 focus:shadow-sm"
                 />
                 <button
+                  suppressHydrationWarning
                   type="submit"
                   aria-label="Send"
                   disabled={!prompt.trim()}
