@@ -1743,7 +1743,7 @@ export default function AppPage() {
                 const MODEL_OPTIONS = [
                   { key: 'ona-max', label: 'ONA Max', sub: 'Kimi K2.5' },
                   { key: 'ona-max-fast', label: 'ONA Max Fast', sub: 'Kimi K2.5 Turbo' },
-                  { key: 'ona-mini', label: 'ONA Mini', sub: 'MiniMax M2.7' },
+                  { key: 'ona-mini', label: 'ONA Mini', sub: 'Llama 4 Scout' },
                 ] as const;
                 const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[1];
                 return (
