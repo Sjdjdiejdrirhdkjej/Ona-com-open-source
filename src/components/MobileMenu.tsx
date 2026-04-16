@@ -18,7 +18,6 @@ export function MobileMenu() {
   return (
     <div className="md:hidden">
       <button
-        suppressHydrationWarning
         onClick={() => setOpen(prev => !prev)}
         aria-label="Toggle menu"
         className="flex size-9 items-center justify-center rounded-md text-gray-700 dark:text-gray-300 transition-colors hover:bg-black/5 dark:hover:bg-white/8"

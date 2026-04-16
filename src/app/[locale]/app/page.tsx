@@ -1820,7 +1820,6 @@ export default function AppPage() {
               })()}
 
               <div
-                suppressHydrationWarning
                 className="flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-gray-700 px-3 py-2.5 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
                 style={{ backgroundColor: 'var(--bg-input)' }}
               >
@@ -1840,7 +1839,6 @@ export default function AppPage() {
                 <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
 
                 <textarea
-                  suppressHydrationWarning
                   ref={textareaRef}
                   rows={1}
                   value={input}
