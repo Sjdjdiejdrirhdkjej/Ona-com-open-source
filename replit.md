@@ -9,7 +9,7 @@ An open-source platform for AI background software engineering agents. The landi
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
 - **i18n**: next-intl with `[locale]` routing, locales en/fr, `as-needed` prefix (so `/app` works without prefix)
-- **AI**: Fireworks AI — main chat ONA Max uses Kimi K2.5 (`accounts/fireworks/models/kimi-k2p5`); ONA Max Fast uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
+- **AI**: Fireworks AI — ONA Max uses GLM 5.1 (`accounts/fireworks/models/glm-5p1`); ONA Max Fast uses Kimi K2.5 Turbo (`accounts/fireworks/routers/kimi-k2p5-turbo`); ONA Mini uses Qwen3 8B (`accounts/fireworks/models/qwen3-8b`); the Librarian research subagent uses Kimi K2 Thinking (`accounts/fireworks/models/kimi-k2-thinking`); the Browser Use Expert subagent uses Kimi K2 Instruct 0905 (`accounts/fireworks/models/kimi-k2-instruct-0905`) — all overridable via env vars
 - **GitHub delivery policy**: repository changes default to branch + pull request; direct writes to the repository default branch are blocked unless the user explicitly asks for a direct push.
 - **Package manager**: npm (with `legacy-peer-deps=true` in `.npmrc`)
 
@@ -56,15 +56,16 @@ An open-source platform for AI background software engineering agents. The landi
 ## Background Agent System
 - **Persistent tool steps**: Tool call batches (e.g., "Reading file", "Creating branch") are saved as `tool_steps` messages in the DB and rendered permanently in the conversation — they never disappear
 - **Background execution**: The agent loop runs as a detached server-side async. If the tab closes, work continues on the server. Progress is written to `agent_events` table in real-time
-- **Reconnect polling**: On page load, conversations with an active job ID start polling `/api/jobs/[jobId]/events?after=<cursor>` every 3 seconds. Events are replayed to reconstruct state
+- **Reconnect polling**: On page load, conversations with an active job ID start polling `/api/jobs/[jobId]/events?after=<cursor>` every 3 seconds. Events are replayed to reconstruct state. If the browser stream aborts or drops mid-task, the client keeps the active job, resets the job-generated UI messages, and replays persisted job events from the beginning to avoid duplicate streamed text.
 - **Server-side message saving**: The API route saves both `tool_steps` messages and `assistant` messages directly to the `messages` table — the frontend no longer saves assistant messages
+- **Anti-cutoff handling**: Streaming content deltas are batched into `agent_events` as `content` events, and model `finish_reason=length` automatically injects a continuation turn so the agent continues from where it stopped instead of ending mid-task.
 - **`BackgroundWorkingBanner`**: Shows "Working in background…" indicator in the chat when the agent is running after SSE disconnect
 
 ## Database Schema
 - `conversations` — conversation records
 - `messages` — chat messages; `role` can be `user`, `assistant`, or `tool_steps` (JSON array of ToolStep)
 - `agent_jobs` — one per `/api/chat` call; status: `running | done | error`
-- `agent_events` — sequential event log per job (tool_call, tool_start, tool_complete, tool_done, content, error, done)
+- `agent_events` — sequential event log per job (tool_call, tool_start, tool_complete, tool_done, next_assistant_msg, content, error, done)
 
 ## Development
 ```bash

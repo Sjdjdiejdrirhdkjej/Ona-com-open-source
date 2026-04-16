@@ -652,6 +652,9 @@ export default function AppPage() {
                   ? { ...m, content: (m.content as ToolStep[]).map(s => ({ ...s, status: s.status === 'running' ? 'done' as const : s.status })) }
                   : m,
               );
+            } else if (ev.type === 'next_assistant_msg') {
+              const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? crypto.randomUUID();
+              messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
             } else if (ev.type === 'librarian_step_start') {
               const parentLabel = ev.data.parentLabel as string;
               const step = ev.data.step as string;
@@ -1043,6 +1046,22 @@ export default function AppPage() {
 
     // Tracks which assistant message is being filled with deltas
     let currentAssistantId = assistantId;
+    let currentJobId: string | null = null;
+    let streamFinished = false;
+    let keepBackgroundJob = false;
+    const replayGeneratedMessageIds = new Set<string>([assistantId]);
+
+    function prepareBackgroundReplay() {
+      setConversations(prev => prev.map(c => {
+        if (c.id !== convId) return c;
+        return {
+          ...c,
+          messages: c.messages
+            .filter(m => m.id === assistantId || !replayGeneratedMessageIds.has(m.id))
+            .map(m => m.id === assistantId ? { ...m, content: '' } : m),
+        };
+      }));
+    }
 
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -1080,7 +1099,10 @@ export default function AppPage() {
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
-          if (data === '[DONE]') break;
+          if (data === '[DONE]') {
+            streamFinished = true;
+            break;
+          }
           try {
             const json = JSON.parse(data) as {
               delta?: string;
@@ -1099,13 +1121,26 @@ export default function AppPage() {
 
             if (json.type === 'job_id' && json.jobId) {
               const jobId = json.jobId;
+              currentJobId = jobId;
               setConversations(prev => prev.map(c =>
                 c.id === convId ? { ...c, activeJobId: jobId } : c,
               ));
+            } else if (json.type === 'next_assistant_msg' && json.nextAssistantMsgId) {
+              currentAssistantId = json.nextAssistantMsgId;
+              replayGeneratedMessageIds.add(json.nextAssistantMsgId);
+              setConversations(prev => prev.map(c => {
+                if (c.id !== convId) return c;
+                return {
+                  ...c,
+                  messages: [...c.messages, { id: json.nextAssistantMsgId!, role: 'assistant', content: '' }],
+                };
+              }));
             } else if (json.type === 'tool_call' && json.tools?.length) {
               const toolStepsMsgId = json.toolStepsMsgId ?? crypto.randomUUID();
               const nextAssistantMsgId = json.nextAssistantMsgId ?? crypto.randomUUID();
               currentAssistantId = nextAssistantMsgId;
+              replayGeneratedMessageIds.add(toolStepsMsgId);
+              replayGeneratedMessageIds.add(nextAssistantMsgId);
 
               setConversations(prev => prev.map(c => {
                 if (c.id !== convId) return c;
@@ -1267,12 +1302,23 @@ export default function AppPage() {
             if (e instanceof Error && e.message !== 'Unexpected token') throw e;
           }
         }
+        if (streamFinished) break;
       }
+      streamFinished = true;
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
-        // User stopped generation — clean up silently
+        keepBackgroundJob = !!currentJobId;
+        if (currentJobId) {
+          prepareBackgroundReplay();
+          scheduleBackgroundPoll(convId, currentJobId, 0);
+        }
       } else {
         const errText = `Something went wrong: ${(err as Error).message}`;
+        keepBackgroundJob = !!currentJobId && !streamFinished;
+        if (keepBackgroundJob && currentJobId) {
+          prepareBackgroundReplay();
+          scheduleBackgroundPoll(convId, currentJobId, 0);
+        }
         const targetId = currentAssistantId;
         setConversations(prev =>
           prev.map(c =>
@@ -1292,9 +1338,11 @@ export default function AppPage() {
     } finally {
       abortControllerRef.current = null;
       setLoading(false);
-      setConversations(prev => prev.map(c =>
-        c.id === convId ? { ...c, activeJobId: null } : c,
-      ));
+      if (streamFinished && !keepBackgroundJob) {
+        setConversations(prev => prev.map(c =>
+          c.id === convId ? { ...c, activeJobId: null } : c,
+        ));
+      }
     }
   }, [activeId, conversations, loading, selectedModel]);
 

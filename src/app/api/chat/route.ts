@@ -42,6 +42,7 @@ const FALLBACK_MODELS = [
 ].filter((model): model is string => Boolean(model?.trim()))
   .map(model => model.trim())
   .filter((model, index, models) => models.indexOf(model) === index);
+const MAX_AGENT_ITERATIONS = 60;
 
 const SYSTEM_PROMPT = `You are **ONA**, a fully autonomous background software engineering agent. Your mission is singular: **task in → pull request out**. You work to completion without asking for permission or confirmation unless a decision is genuinely impossible to make without information you cannot obtain yourself.
 
@@ -599,13 +600,40 @@ export async function POST(req: NextRequest) {
         ? ONA_MODELS[model as OnaModelKey].fireworksId
         : undefined;
 
-      jobId = crypto.randomUUID();
+      jobId = conversationId ? crypto.randomUUID() : null;
+      let pendingContentEvent = '';
+      let contentFlushTimer: ReturnType<typeof setTimeout> | null = null;
 
-      if (conversationId) {
-        await db.insert(agentJobsSchema).values({ id: jobId, conversationId, status: 'running' });
+      async function flushContentEvent() {
+        if (contentFlushTimer) {
+          clearTimeout(contentFlushTimer);
+          contentFlushTimer = null;
+        }
+        const text = pendingContentEvent;
+        pendingContentEvent = '';
+        if (jobId && text) {
+          await persistJobEvent(jobId, 'content', { text });
+        }
       }
 
-      emit({ type: 'job_id', jobId });
+      function queueContentEvent(delta: string) {
+        if (!jobId || !delta) return;
+        pendingContentEvent += delta;
+        if (pendingContentEvent.length >= 800) {
+          flushContentEvent().catch(() => {});
+          return;
+        }
+        if (!contentFlushTimer) {
+          contentFlushTimer = setTimeout(() => {
+            flushContentEvent().catch(() => {});
+          }, 750);
+        }
+      }
+
+      if (conversationId && jobId) {
+        await db.insert(agentJobsSchema).values({ id: jobId, conversationId, status: 'running' });
+        emit({ type: 'job_id', jobId });
+      }
 
       const githubToken = await getGitHubToken();
 
@@ -626,10 +654,12 @@ export async function POST(req: NextRequest) {
           (delta) => {
             emit({ delta });
             text += delta;
+            queueContentEvent(delta);
           },
           fireworksModelId,
         );
 
+        await flushContentEvent();
         if (conversationId && assistantMessageId) {
           await saveMessage(conversationId, assistantMessageId, 'assistant', text);
         }
@@ -642,8 +672,9 @@ export async function POST(req: NextRequest) {
 
       let currentAssistantMsgId = assistantMessageId ?? crypto.randomUUID();
       let currentAssistantText = '';
+      let completed = false;
 
-      while (true) {
+      for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
         let iterText = '';
         const { content, toolCalls, finishReason } = await streamFireworksCall(
           {
@@ -658,26 +689,35 @@ export async function POST(req: NextRequest) {
             emit({ delta });
             iterText += delta;
             currentAssistantText += delta;
+            queueContentEvent(delta);
           },
           fireworksModelId,
         );
 
         if (finishReason === 'length') {
+          await flushContentEvent();
           const truncatedText = currentAssistantText || iterText || content;
           if (conversationId && currentAssistantMsgId) {
             await saveMessage(conversationId, currentAssistantMsgId, 'assistant', truncatedText);
           }
-          const continueMsg = '\n\n*(Response was very long — continuing…)*';
+          const continueMsg = '\n\n*(Response was very long — continuing automatically so the task is not cut off…)*';
           emit({ delta: continueMsg });
+          queueContentEvent(continueMsg);
           conversation.push({ role: 'assistant', content: (truncatedText + continueMsg) });
+          conversation.push({
+            role: 'user',
+            content: 'Continue exactly where you left off. Do not summarize, restart, or ask for confirmation. Keep working until the original task is complete and verified.',
+          });
           currentAssistantText = '';
           currentAssistantMsgId = crypto.randomUUID();
           const nextAssistantMsgId = currentAssistantMsgId;
           emit({ type: 'next_assistant_msg', nextAssistantMsgId });
+          if (jobId) await persistJobEvent(jobId, 'next_assistant_msg', { nextAssistantMsgId });
           continue;
         }
 
         if (!toolCalls.length) {
+          await flushContentEvent();
           const finalText = currentAssistantText || iterText || content;
           if (!finalText) emit({ delta: 'I could not produce a response.' });
 
@@ -687,10 +727,12 @@ export async function POST(req: NextRequest) {
           if (jobId) {
             await persistJobEvent(jobId, 'done', {});
           }
+          completed = true;
           break;
         }
 
         if (iterText && conversationId && currentAssistantMsgId) {
+          await flushContentEvent();
           await saveMessage(conversationId, currentAssistantMsgId, 'assistant', iterText);
           currentAssistantText = '';
         }
@@ -782,6 +824,16 @@ export async function POST(req: NextRequest) {
 
         emit({ type: 'tool_done' });
         if (jobId) await persistJobEvent(jobId, 'tool_done', {});
+      }
+
+      if (!completed) {
+        const limitMessage = '\n\nI paused after a long run to avoid looping indefinitely. The task may need another message to continue.';
+        emit({ delta: limitMessage });
+        queueContentEvent(limitMessage);
+        await flushContentEvent();
+        if (conversationId && currentAssistantMsgId) {
+          await saveMessage(conversationId, currentAssistantMsgId, 'assistant', currentAssistantText + limitMessage);
+        }
       }
     } catch (error) {
       emit({ type: 'error', message: (error as Error).message });
