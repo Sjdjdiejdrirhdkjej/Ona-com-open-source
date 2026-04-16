@@ -537,6 +537,9 @@ export default function AppPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollRAFRef = useRef<number | null>(null);
+  const userScrolledUpRef = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const syncedIds = useRef<Set<string>>(new Set());
@@ -910,9 +913,36 @@ export default function AppPage() {
   const activeConversation = conversations.find(c => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
 
+  // Coalesced scroll: cancel any pending RAF and queue a new one.
+  // Uses direct scrollTop assignment (no smooth animation) so rapid streaming
+  // updates don't stack conflicting CSS scroll animations.
+  const scrollToBottom = useCallback((force = false) => {
+    if (!force && userScrolledUpRef.current) return;
+    if (scrollRAFRef.current !== null) cancelAnimationFrame(scrollRAFRef.current);
+    scrollRAFRef.current = requestAnimationFrame(() => {
+      const el = scrollContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+      scrollRAFRef.current = null;
+    });
+  }, []);
+
+  // Auto-scroll whenever messages or loading state change.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+    scrollToBottom();
+  }, [messages, loading, scrollToBottom]);
+
+  // Detect when the user manually scrolls up so we stop auto-scrolling.
+  // Reset automatically when content brings them back to the bottom.
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    function onScroll() {
+      const distFromBottom = el!.scrollHeight - el!.scrollTop - el!.clientHeight;
+      userScrolledUpRef.current = distFromBottom > 80;
+    }
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     if (!modelMenuOpen) return;
@@ -996,6 +1026,8 @@ export default function AppPage() {
     setInput('');
     setPendingImage(null);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
+    userScrolledUpRef.current = false;
+    scrollToBottom(true);
     setLoading(true);
 
     const assistantId = crypto.randomUUID();
@@ -1705,7 +1737,7 @@ export default function AppPage() {
         {/* ── Chat area ── */}
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Messages / empty state */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
             {isEmpty
               ? (
                   <div className="flex h-full flex-col items-center justify-center text-center">
