@@ -13,6 +13,63 @@ export const runtime = 'nodejs';
 
 const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completions';
 
+// ── Ultrawork todo types ────────────────────────────────────────────────────
+type TodoStatus = 'pending' | 'in_progress' | 'done';
+type TodoItem = { id: string; task: string; status: TodoStatus };
+
+const TODO_WRITE_TOOL = {
+  type: 'function',
+  function: {
+    name: 'todo_write',
+    description: 'Write your complete todo list for the current task. Call this at the start of any multi-step task and update it whenever a step changes status. The user can see this list in real time. Replace the entire list each call.',
+    parameters: {
+      type: 'object',
+      properties: {
+        todos: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Short unique ID, e.g. "1", "2", "3".' },
+              task: { type: 'string', description: 'Task description.' },
+              status: { type: 'string', enum: ['pending', 'in_progress', 'done'], description: 'Current status.' },
+            },
+            required: ['id', 'task', 'status'],
+          },
+          description: 'Complete todo list — replaces previous list entirely.',
+        },
+      },
+      required: ['todos'],
+    },
+  },
+} as const;
+
+const TODO_READ_TOOL = {
+  type: 'function',
+  function: {
+    name: 'todo_read',
+    description: 'Read the current todo list to review what is pending, in progress, or done.',
+    parameters: { type: 'object', properties: {}, required: [] },
+  },
+} as const;
+
+const TASK_COMPLETE_TOOL = {
+  type: 'function',
+  function: {
+    name: 'task_complete',
+    description: 'Signal that you have fully finished the task. You MUST call this tool to exit the ultrawork loop — stopping your response without calling it will cause the system to re-prompt you to continue. Only call this when all todos are done and the work is verified.',
+    parameters: {
+      type: 'object',
+      properties: {
+        summary: { type: 'string', description: 'Brief summary of what was accomplished.' },
+      },
+      required: ['summary'],
+    },
+  },
+} as const;
+
+const ULTRAWORK_TOOLS = [TODO_WRITE_TOOL, TODO_READ_TOOL, TASK_COMPLETE_TOOL];
+
 export const ONA_MODELS = {
   'ona-max': {
     label: 'ONA Max',
@@ -235,6 +292,32 @@ Only after passing this audit should you write the final summary and close the t
 
 ---
 
+## ULTRAWORK LOOP
+
+You run inside an **ultrawork loop**. The loop will not exit until you explicitly call \`task_complete\`. If you stop responding without calling it, the system inspects your todo list:
+
+- **Uncompleted todos remain** → you are re-injected to keep working.
+- **All todos are done** → you are prompted to call \`task_complete\`.
+- **No todos were ever written** → the loop exits (single-step tasks are fine without todo list).
+
+### Tools
+
+**\`todo_write\`** — Write your complete task breakdown at the start of every multi-step job. Update it as you go (mark steps \`in_progress\` when starting, \`done\` when verified). The user sees this list live. Pass the full list each call.
+
+**\`todo_read\`** — Read back your current list if you need to re-orient mid-task.
+
+**\`task_complete\`** — Call this when everything is done and verified. This is the **only exit from the loop**. Include a one-paragraph summary of what was accomplished.
+
+### Workflow for any multi-step task
+
+1. \`todo_write\` with a breakdown of all steps (first step \`in_progress\`, rest \`pending\`).
+2. Work through each step. After completing each step: \`todo_write\` with that step marked \`done\` and the next marked \`in_progress\`.
+3. When all steps are verified: \`todo_write\` with all items \`done\`, then \`task_complete\`.
+
+**Never stop mid-task and leave todos pending** — the loop will pull you back. Use \`task_complete\` intentionally when done.
+
+---
+
 ## TROUBLESHOOTING PROTOCOL
 
 If a fix attempt does not resolve the problem after two tries:
@@ -386,6 +469,16 @@ function toolLabel(name: string, args: Record<string, unknown> = {}): string {
     case 'call_browser_use': {
       const task = s('task');
       return task ? `Browser: ${trim(task, 52)}` : 'Using browser';
+    }
+
+    // ── Ultrawork tools ───────────────────────────────────────────────────
+    case 'todo_write':
+      return 'Updating task list';
+    case 'todo_read':
+      return 'Reading task list';
+    case 'task_complete': {
+      const summary = s('summary');
+      return summary ? `Task complete: ${trim(summary, 48)}` : 'Task complete';
     }
 
     default:
@@ -897,6 +990,15 @@ export async function POST(req: NextRequest) {
       let currentAssistantText = '';
       let completed = false;
 
+      // ── Ultrawork state ─────────────────────────────────────────────────
+      let todos: TodoItem[] = [];
+      let taskCompleted = false;
+
+      function emitTodoUpdate() {
+        emit({ type: 'todo_update', todos });
+        if (jobId) persistJobEvent(jobId, 'todo_update', { todos }).catch(() => {});
+      }
+
       // Loop detection: track the last 3 tool-call batch signatures.
       // If all 3 are identical the agent is stuck — break out gracefully.
       const recentBatchSigs: string[] = [];
@@ -906,7 +1008,7 @@ export async function POST(req: NextRequest) {
         const { content, toolCalls, finishReason } = await streamFireworksCall(
           {
             messages: conversation,
-            tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition],
+            tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition, ...ULTRAWORK_TOOLS],
             tool_choice: 'auto',
             max_tokens: 16384,
             temperature: 0.15,
@@ -946,6 +1048,46 @@ export async function POST(req: NextRequest) {
         if (!toolCalls.length) {
           await flushContentEvent();
           const finalText = currentAssistantText || iterText || content;
+
+          // ── Ultrawork continuation ────────────────────────────────────────
+          // If the AI stopped but hasn't called task_complete, check todos.
+          if (!taskCompleted && todos.length > 0) {
+            const pending = todos.filter(t => t.status !== 'done');
+            if (pending.length > 0) {
+              // Still has incomplete todos — re-inject to continue.
+              if (finalText && conversationId && currentAssistantMsgId) {
+                await saveMessage(conversationId, currentAssistantMsgId, 'assistant', finalText);
+              }
+              const nextAssistantMsgId = crypto.randomUUID();
+              emit({ type: 'next_assistant_msg', nextAssistantMsgId });
+              if (jobId) await persistJobEvent(jobId, 'next_assistant_msg', { nextAssistantMsgId });
+              currentAssistantMsgId = nextAssistantMsgId;
+              currentAssistantText = '';
+              const pendingList = pending.map(t => `- [${t.id}] ${t.task} (${t.status})`).join('\n');
+              conversation.push({ role: 'assistant', content: finalText });
+              conversation.push({
+                role: 'user',
+                content: `[Ultrawork Loop] You stopped but have ${pending.length} incomplete task(s):\n${pendingList}\n\nContinue working. Update todos with \`todo_write\` as you complete each step. When truly done, call \`task_complete\`.`,
+              });
+              continue;
+            }
+            // All todos are done but task_complete wasn't called — nudge to finalize.
+            if (finalText && conversationId && currentAssistantMsgId) {
+              await saveMessage(conversationId, currentAssistantMsgId, 'assistant', finalText);
+            }
+            const nextAssistantMsgId = crypto.randomUUID();
+            emit({ type: 'next_assistant_msg', nextAssistantMsgId });
+            if (jobId) await persistJobEvent(jobId, 'next_assistant_msg', { nextAssistantMsgId });
+            currentAssistantMsgId = nextAssistantMsgId;
+            currentAssistantText = '';
+            conversation.push({ role: 'assistant', content: finalText });
+            conversation.push({
+              role: 'user',
+              content: '[Ultrawork Loop] All your todos are marked done. Call `task_complete` with a brief summary to exit the loop.',
+            });
+            continue;
+          }
+          // ────────────────────────────────────────────────────────────────────
 
           // ── Intent-without-action detection ─────────────────────────────────
           // The model sometimes outputs "I'll search for X" or "Let me look up Y"
@@ -1074,6 +1216,26 @@ export async function POST(req: NextRequest) {
                     await db.update(conversationsSchema).set({ sandboxId }).where(eq(conversationsSchema.id, conversationId));
                   }
                 }
+              } else if (toolName === 'todo_write') {
+                const raw = Array.isArray(toolArgs.todos) ? toolArgs.todos : [];
+                todos = raw.map((item: unknown) => {
+                  const t = item as Record<string, unknown>;
+                  return {
+                    id: String(t.id ?? ''),
+                    task: String(t.task ?? ''),
+                    status: (['pending', 'in_progress', 'done'].includes(t.status as string) ? t.status : 'pending') as TodoStatus,
+                  };
+                });
+                emitTodoUpdate();
+                result = { ok: true, todos };
+              } else if (toolName === 'todo_read') {
+                result = { todos };
+              } else if (toolName === 'task_complete') {
+                taskCompleted = true;
+                const summary = typeof toolArgs.summary === 'string' ? toolArgs.summary : '';
+                todos = todos.map(t => ({ ...t, status: 'done' as TodoStatus }));
+                emitTodoUpdate();
+                result = { ok: true, message: 'Task marked complete. Write your final summary now.' };
               } else {
                 result = await runGitHubTool(githubToken, toolName, toolArgs);
               }

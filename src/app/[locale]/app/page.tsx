@@ -21,6 +21,9 @@ type SubStep = {
   status: 'running' | 'done' | 'error';
 };
 
+type TodoStatus = 'pending' | 'in_progress' | 'done';
+type TodoItem = { id: string; task: string; status: TodoStatus };
+
 type ToolStep = {
   label: string;
   status: 'running' | 'done' | 'error';
@@ -438,6 +441,73 @@ function BackgroundWorkingBanner() {
   );
 }
 
+function TodoPanel({ todos, onDismiss }: { todos: TodoItem[]; onDismiss: () => void }) {
+  if (todos.length === 0) return null;
+  const allDone = todos.every(t => t.status === 'done');
+
+  return (
+    <div
+      className="shrink-0 border-t border-gray-200 dark:border-gray-800 px-4 py-3 sm:px-8"
+      style={{ backgroundColor: 'var(--bg)' }}
+    >
+      <div
+        className="mx-auto max-w-2xl rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3"
+        style={{ backgroundColor: 'var(--bg-card)' }}
+      >
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            {allDone
+              ? (
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="text-emerald-500">
+                    <circle cx="6.5" cy="6.5" r="6" stroke="currentColor" strokeWidth="1" />
+                    <path d="M4 6.5l2 2 3-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )
+              : (
+                  <div className="size-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+                )}
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              {allDone ? 'All tasks complete' : `${todos.filter(t => t.status !== 'done').length} task${todos.filter(t => t.status !== 'done').length === 1 ? '' : 's'} remaining`}
+            </span>
+          </div>
+          <button
+            onClick={onDismiss}
+            className="rounded p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            title="Dismiss"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <ul className="space-y-1">
+          {todos.map(item => (
+            <li key={item.id} className="flex items-start gap-2.5">
+              <span className="mt-0.5 shrink-0">
+                {item.status === 'done' && (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <circle cx="7" cy="7" r="6.5" fill="#22c55e" />
+                    <path d="M4.5 7l2 2 3-3" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+                {item.status === 'in_progress' && (
+                  <div className="size-3.5 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                )}
+                {item.status === 'pending' && (
+                  <div className="size-3.5 rounded-full border-2 border-gray-300 dark:border-gray-600" />
+                )}
+              </span>
+              <span className={`text-xs leading-5 ${item.status === 'done' ? 'text-gray-400 dark:text-gray-500 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                {item.task}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 function newConversation(): Conversation {
   return { id: crypto.randomUUID(), title: 'New task', messages: [], createdAt: Date.now() };
 }
@@ -459,6 +529,7 @@ export default function AppPage() {
   const [sandboxFiles, setSandboxFiles] = useState<string[]>([]);
   const [atMentionIndex, setAtMentionIndex] = useState(0);
   const [atMentionFetching, setAtMentionFetching] = useState(false);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -547,6 +618,12 @@ export default function AppPage() {
 
       if (data.events.length > 0 || data.done) {
         const lastId = data.events.at(-1)?.id ?? cursor;
+
+        // Handle todo_update events (outside setConversations since it's separate state)
+        const lastTodoEvent = [...data.events].reverse().find(ev => ev.type === 'todo_update');
+        if (lastTodoEvent && Array.isArray(lastTodoEvent.data.todos)) {
+          setTodos(lastTodoEvent.data.todos as TodoItem[]);
+        }
 
         setConversations(prev => {
           const conv = prev.find(c => c.id === convId);
@@ -763,6 +840,8 @@ export default function AppPage() {
   const activeConversation = conversations.find(c => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
 
+  useEffect(() => { setTodos([]); }, [activeId]);
+
   // Scroll to bottom using double-RAF so both React's DOM commit and the
   // browser's subsequent layout/paint pass have completed before we read
   // scrollHeight. Single-RAF can fire before the browser reflows new content
@@ -868,6 +947,7 @@ export default function AppPage() {
   const send = useCallback(async (text: string, imageDataUrl?: string) => {
     const trimmed = text.trim();
     if ((!trimmed && !imageDataUrl) || loading || !activeId) return;
+    setTodos([]);
 
     const userContent: ContentPart[] = [];
     if (trimmed) userContent.push({ type: 'text', text: trimmed });
@@ -1013,9 +1093,12 @@ export default function AppPage() {
               parentLabel?: string;
               step?: string;
               report?: string;
+              todos?: TodoItem[];
             };
 
-            if (json.type === 'job_id' && json.jobId) {
+            if (json.type === 'todo_update' && json.todos) {
+              setTodos(json.todos);
+            } else if (json.type === 'job_id' && json.jobId) {
               const jobId = json.jobId;
               currentJobId = jobId;
               setConversations(prev => prev.map(c =>
@@ -1684,6 +1767,9 @@ export default function AppPage() {
                   </div>
                 )}
           </div>
+
+          {/* ── Todo panel (ultrawork loop) ── */}
+          <TodoPanel todos={todos} onDismiss={() => setTodos([])} />
 
           {/* ── Input bar ── */}
           <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 px-3 py-3 sm:px-6 sm:py-4">
