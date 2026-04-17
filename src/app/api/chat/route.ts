@@ -812,8 +812,12 @@ export async function POST(req: NextRequest) {
       }
 
       if (conversationId && jobId) {
-        await db.insert(agentJobsSchema).values({ id: jobId, conversationId, status: 'running' });
-        emit({ type: 'job_id', jobId });
+        try {
+          await db.insert(agentJobsSchema).values({ id: jobId, conversationId, status: 'running' });
+          emit({ type: 'job_id', jobId });
+        } catch {
+          jobId = null;
+        }
       }
 
       const githubToken = await getGitHubToken();

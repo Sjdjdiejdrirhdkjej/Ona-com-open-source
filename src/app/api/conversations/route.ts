@@ -1,12 +1,19 @@
 import type { NextRequest } from 'next/server';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull, or } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { agentJobsSchema, conversationsSchema, messagesSchema } from '@/models/Schema';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const sessionId = req.nextUrl.searchParams.get('sessionId');
+
   const conversations = await db
     .select()
     .from(conversationsSchema)
+    .where(
+      sessionId
+        ? eq(conversationsSchema.sessionId, sessionId)
+        : or(isNull(conversationsSchema.sessionId), eq(conversationsSchema.sessionId, '')),
+    )
     .orderBy(desc(conversationsSchema.updatedAt));
 
   const result = await Promise.all(
@@ -20,9 +27,9 @@ export async function GET() {
       const runningJobs = await db
         .select()
         .from(agentJobsSchema)
-        .where(eq(agentJobsSchema.conversationId, conv.id));
+        .where(and(eq(agentJobsSchema.conversationId, conv.id), eq(agentJobsSchema.status, 'running')));
 
-      const activeJob = runningJobs.find(j => j.status === 'running') ?? null;
+      const activeJob = runningJobs[0] ?? null;
 
       return {
         ...conv,
@@ -45,12 +52,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { id, title } = await req.json() as { id: string; title: string };
+  const { id, title, sessionId } = await req.json() as { id: string; title: string; sessionId?: string };
 
   const [conv] = await db
     .insert(conversationsSchema)
-    .values({ id, title })
+    .values({ id, title, sessionId: sessionId ?? null })
+    .onConflictDoNothing()
     .returning();
 
-  return Response.json(conv, { status: 201 });
+  return Response.json(conv ?? { id, title }, { status: 201 });
 }

@@ -542,12 +542,26 @@ export default function AppPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const syncedIds = useRef<Set<string>>(new Set());
   const sandboxFilesCacheRef = useRef<Map<string, string[]>>(new Map());
+  const sessionIdRef = useRef<string>('');
+
+  // Initialize a per-tab session ID from sessionStorage so concurrent tabs are isolated
+  useEffect(() => {
+    let sid = sessionStorage.getItem('ona_session_id');
+    if (!sid) {
+      sid = crypto.randomUUID();
+      sessionStorage.setItem('ona_session_id', sid);
+    }
+    sessionIdRef.current = sid;
+  }, []);
 
   // Load conversation history from DB on mount
   useEffect(() => {
     async function loadHistory() {
+      // Wait a tick so sessionIdRef is populated by the effect above
+      await new Promise(r => setTimeout(r, 0));
+      const sid = sessionIdRef.current;
       try {
-        const res = await fetch('/api/conversations');
+        const res = await fetch(`/api/conversations${sid ? `?sessionId=${sid}` : ''}`);
         if (!res.ok) throw new Error('Failed to load history');
         const data = await res.json() as Array<{
           id: string;
@@ -781,7 +795,8 @@ export default function AppPage() {
 
   async function refreshConversationMessages(convId: string) {
     try {
-      const res = await fetch('/api/conversations');
+      const sid = sessionIdRef.current;
+      const res = await fetch(`/api/conversations${sid ? `?sessionId=${sid}` : ''}`);
       if (!res.ok) return;
       const data = await res.json() as Array<{
         id: string;
@@ -992,12 +1007,13 @@ export default function AppPage() {
 
     const convId = activeId;
     const convTitle = isFirstMessage ? title : currentConv.title;
+    const sessionId = sessionIdRef.current;
     if (!syncedIds.current.has(convId)) {
       try {
         await fetch('/api/conversations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: convId, title: convTitle }),
+          body: JSON.stringify({ id: convId, title: convTitle, sessionId }),
         });
         syncedIds.current.add(convId);
       } catch {}
