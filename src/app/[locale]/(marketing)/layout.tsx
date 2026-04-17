@@ -24,7 +24,7 @@ export default async function Layout(props: {
             </Link>
           </li>
           <li>
-            <Link href="/counter/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/about/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
               Resources
             </Link>
           </li>

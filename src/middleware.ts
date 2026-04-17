@@ -11,6 +11,9 @@ const isProtectedRoute = (pathname: string) =>
   || pathname === '/app'
   || pathname.startsWith('/app/');
 
+const isMarketingRoot = (pathname: string) =>
+  pathname === '/' || /^\/(en|fr)\/?$/.test(pathname);
+
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -19,11 +22,17 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isProtectedRoute(pathname)) {
-    const sessionCookie = req.cookies.get('replit_session');
-    if (!sessionCookie) {
-      return NextResponse.redirect(new URL('/api/login', req.url));
-    }
+  const sessionCookie = req.cookies.get('replit_session');
+
+  // Redirect already-authenticated users from the landing page straight to the app
+  if (isMarketingRoot(pathname) && sessionCookie) {
+    const locale = pathname.startsWith('/fr') ? 'fr' : 'en';
+    return NextResponse.redirect(new URL(`/${locale}/app`, req.url));
+  }
+
+  // Guard protected routes
+  if (isProtectedRoute(pathname) && !sessionCookie) {
+    return NextResponse.redirect(new URL('/api/login', req.url));
   }
 
   return handleI18nRouting(req);
