@@ -8,8 +8,14 @@ import { sessionOptions } from '@/libs/session';
 
 export const dynamic = 'force-dynamic';
 
+function getBaseUrl(req: Request): string {
+  const host = req.headers.get('host') ?? '';
+  const forwardedProto = req.headers.get('x-forwarded-proto');
+  const protocol = forwardedProto ?? (host.startsWith('localhost') ? 'http' : 'https');
+  return `${protocol}://${host}`;
+}
+
 export async function GET(req: Request) {
-  const url = new URL(req.url);
   const cookieStore = await cookies();
 
   const codeVerifier = cookieStore.get('oidc_code_verifier')?.value;
@@ -27,11 +33,13 @@ export async function GET(req: Request) {
     process.env.REPL_ID!,
   );
 
-  const host = req.headers.get('host') ?? '';
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const callbackUrl = `${protocol}://${host}/api/callback`;
+  const callbackUrl = `${getBaseUrl(req)}/api/callback`;
 
-  const tokens = await client.authorizationCodeGrant(config, url, {
+  const currentUrl = new URL(req.url);
+  const callbackRequest = new URL(callbackUrl);
+  callbackRequest.search = currentUrl.search;
+
+  const tokens = await client.authorizationCodeGrant(config, callbackRequest, {
     pkceCodeVerifier: codeVerifier,
     expectedState,
     redirectUri: callbackUrl,

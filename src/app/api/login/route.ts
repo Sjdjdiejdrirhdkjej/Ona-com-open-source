@@ -4,6 +4,13 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+function getBaseUrl(req: Request): string {
+  const host = req.headers.get('host') ?? '';
+  const forwardedProto = req.headers.get('x-forwarded-proto');
+  const protocol = forwardedProto ?? (host.startsWith('localhost') ? 'http' : 'https');
+  return `${protocol}://${host}`;
+}
+
 export async function GET(req: Request) {
   const config = await client.discovery(
     new URL('https://replit.com/oidc'),
@@ -14,9 +21,7 @@ export async function GET(req: Request) {
   const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
   const state = client.randomState();
 
-  const host = req.headers.get('host') ?? '';
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const callbackUrl = `${protocol}://${host}/api/callback`;
+  const callbackUrl = `${getBaseUrl(req)}/api/callback`;
 
   const authUrl = client.buildAuthorizationUrl(config, {
     redirect_uri: callbackUrl,
@@ -29,13 +34,13 @@ export async function GET(req: Request) {
   const cookieStore = await cookies();
   cookieStore.set('oidc_code_verifier', codeVerifier, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     maxAge: 60 * 10,
     path: '/',
   });
   cookieStore.set('oidc_state', state, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     maxAge: 60 * 10,
     path: '/',
   });

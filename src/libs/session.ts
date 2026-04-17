@@ -19,7 +19,7 @@ export const sessionOptions: SessionOptions = {
   cookieName: 'replit_session',
   password: process.env.SESSION_SECRET!,
   cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
     httpOnly: true,
     maxAge: 60 * 60 * 24 * 7,
   },
