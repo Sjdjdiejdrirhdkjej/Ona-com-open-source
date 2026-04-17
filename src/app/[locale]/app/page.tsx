@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { GitHubConnect } from '@/components/GitHubConnect';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserDropdown } from '@/components/UserDropdown';
 import ReactMarkdown from 'react-markdown';
@@ -1563,7 +1564,8 @@ export default function AppPage() {
             })()}
       </div>
 
-      <div className="shrink-0 border-t border-black/8 dark:border-white/8 px-3 py-3">
+      <div className="shrink-0 border-t border-black/8 dark:border-white/8 px-3 pb-3 pt-3 space-y-3">
+        <GitHubConnect />
         <p className="text-xs text-gray-400 dark:text-gray-500">Powered by Claude Opus 4.6</p>
       </div>
     </>

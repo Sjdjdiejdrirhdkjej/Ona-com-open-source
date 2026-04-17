@@ -1,9 +1,11 @@
-import { headers } from 'next/headers';
+import { getIronSession } from 'iron-session';
+import { cookies } from 'next/headers';
 import { execFile } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { auth } from './auth';
+import type { AppSession } from './session';
+import { sessionOptions } from './session';
 
 const execFileAsync = promisify(execFile);
 const GITHUB_API = 'https://api.github.com';
@@ -17,37 +19,17 @@ export type GitHubUser = {
 };
 
 export function isGitHubConfigured() {
-  return Boolean(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET);
+  return Boolean(process.env.GITHUB_CLIENT_ID);
 }
 
-// Reads the GitHub access token for the currently signed-in user from
-// Better Auth's account table. Returns undefined if unauthenticated or
-// the user has no linked GitHub account.
+// Reads the GitHub access token stored in the iron-session after device flow.
 export async function getGitHubToken(): Promise<string | undefined> {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    if (!session?.user?.id) return undefined;
-
-    const pool = (auth as any).options?.database as import('pg').Pool | undefined;
-    if (!pool) return undefined;
-
-    const result = await pool.query(
-      'SELECT access_token FROM "account" WHERE user_id = $1 AND provider_id = $2 LIMIT 1',
-      [session.user.id, 'github'],
-    );
-    return (result.rows[0] as { access_token?: string } | undefined)?.access_token ?? undefined;
+    const cookieStore = await cookies();
+    const session = await getIronSession<AppSession>(cookieStore, sessionOptions);
+    return session.githubToken;
   } catch {
     return undefined;
-  }
-}
-
-// Returns the Better Auth session user (name, email, image from GitHub profile).
-export async function getSessionUser() {
-  try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    return session?.user ?? null;
-  } catch {
-    return null;
   }
 }
 

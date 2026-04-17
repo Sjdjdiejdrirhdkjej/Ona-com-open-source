@@ -13,6 +13,7 @@ export type AppSession = {
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
+  githubToken?: string;
 };
 
 export const sessionOptions: SessionOptions = {
