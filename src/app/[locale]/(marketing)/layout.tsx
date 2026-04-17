@@ -48,7 +48,7 @@ export default async function Layout(props: {
       rightNav={(
         <>
           <Link
-            href="/sign-in"
+            href="/api/login"
             className="rounded-md border border-gray-900 px-3 py-1.5 text-gray-900 transition-colors hover:bg-gray-900 hover:text-white"
           >
             Get Started
