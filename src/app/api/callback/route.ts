@@ -17,12 +17,13 @@ function getBaseUrl(req: Request): string {
 
 export async function GET(req: Request) {
   const cookieStore = await cookies();
+  const base = getBaseUrl(req);
 
   const codeVerifier = cookieStore.get('oidc_code_verifier')?.value;
   const expectedState = cookieStore.get('oidc_state')?.value;
 
   if (!codeVerifier || !expectedState) {
-    return NextResponse.redirect(new URL('/api/login', req.url));
+    return NextResponse.redirect(`${base}/api/login`);
   }
 
   cookieStore.delete('oidc_code_verifier');
@@ -33,7 +34,7 @@ export async function GET(req: Request) {
     process.env.REPL_ID!,
   );
 
-  const callbackUrl = `${getBaseUrl(req)}/api/callback`;
+  const callbackUrl = `${base}/api/callback`;
 
   const currentUrl = new URL(req.url);
   const callbackRequest = new URL(callbackUrl);
@@ -47,7 +48,7 @@ export async function GET(req: Request) {
 
   const claims = tokens.claims();
   if (!claims) {
-    return NextResponse.redirect(new URL('/api/login', req.url));
+    return NextResponse.redirect(`${base}/api/login`);
   }
 
   const session = await getIronSession<AppSession>(cookieStore, sessionOptions);
@@ -64,5 +65,5 @@ export async function GET(req: Request) {
   await session.save();
 
   const locale = cookieStore.get('NEXT_LOCALE')?.value ?? 'en';
-  return NextResponse.redirect(new URL(`/${locale}/app`, req.url));
+  return NextResponse.redirect(`${base}/${locale}/app`);
 }

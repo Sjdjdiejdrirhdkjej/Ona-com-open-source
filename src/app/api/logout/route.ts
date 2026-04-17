@@ -8,6 +8,13 @@ import { sessionOptions } from '@/libs/session';
 
 export const dynamic = 'force-dynamic';
 
+function getBaseUrl(req: Request): string {
+  const host = req.headers.get('host') ?? '';
+  const forwardedProto = req.headers.get('x-forwarded-proto');
+  const protocol = forwardedProto ?? (host.startsWith('localhost') ? 'http' : 'https');
+  return `${protocol}://${host}`;
+}
+
 export async function GET(req: Request) {
   const cookieStore = await cookies();
   const session = await getIronSession<AppSession>(cookieStore, sessionOptions);
@@ -18,13 +25,9 @@ export async function GET(req: Request) {
     process.env.REPL_ID!,
   );
 
-  const host = req.headers.get('host') ?? '';
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const postLogoutUrl = `${protocol}://${host}`;
-
   const endSessionUrl = client.buildEndSessionUrl(config, {
     client_id: process.env.REPL_ID!,
-    post_logout_redirect_uri: postLogoutUrl,
+    post_logout_redirect_uri: getBaseUrl(req),
   });
 
   return NextResponse.redirect(endSessionUrl.href);
