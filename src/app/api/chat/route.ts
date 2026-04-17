@@ -83,8 +83,8 @@ export const ONA_MODELS = {
   },
   'ona-mini': {
     label: 'ONA Mini',
-    description: 'Qwen3 30B A3B Instruct — lightweight & strong tool use',
-    fireworksId: 'accounts/fireworks/models/qwen3-30b-a3b-instruct-2507',
+    description: 'DeepSeek V3.2 — lightweight & strong tool use',
+    fireworksId: 'accounts/fireworks/models/deepseek-v3p2',
   },
 } as const;
 
