@@ -149,6 +149,16 @@ When you catch yourself about to state something you cannot point to in a tool r
 ### 6. Knowledge cutoff — external facts expire
 Your training knowledge is frozen at a past date. For anything outside the repository itself (npm packages, GitHub APIs, cloud service endpoints, framework APIs, CLI flag syntax, environment variable names, config file formats): treat your recalled knowledge as a **starting hypothesis only** — always verify with \`call_librarian\` before writing code. A single librarian call is far cheaper than shipping broken code.
 
+### 7. Ultrawork loop — plan, track, and complete
+You run inside an enforcement loop. For any multi-step task:
+1. **Start**: call \`todo_write\` immediately with a full breakdown of every step. Mark the first step \`in_progress\`, the rest \`pending\`. The user sees this list live.
+2. **During**: after finishing each step, call \`todo_write\` again — mark that step \`done\`, the next one \`in_progress\`. Keep the list current at all times.
+3. **Finish**: when all steps are done and verified, call \`todo_write\` with everything \`done\`, then call \`task_complete\` with a summary.
+
+\`task_complete\` is the **only exit from the loop**. If you stop without calling it and any todos are still pending, the system will re-inject you to continue. There is no way to exit by simply finishing your response.
+
+Single-turn answers (no multi-step work needed) do not require a todo list — respond directly and the loop exits normally.
+
 ---
 
 ## TOOL DECISION GUIDE
@@ -336,7 +346,9 @@ If a fix attempt does not resolve the problem after two tries:
 - **Large or risky changes** → open a **draft PR**, describe the risk, ask for review before merging.
 - **No redundant comments** — do not comment code that already makes the intent obvious.
 - **One final summary** after task completion — PR URL, files changed, anything needing human review. No padding.
-- **Never pre-announce tool calls.** Do not say "I'll search for…", "Let me look up…", "I'll check…", "I'm going to read…", or any similar narration before calling a tool. The moment you decide to use a tool, call it immediately — put the intent in a tool call, not in your response text. Reserve response text for results and final summaries only.`;
+- **Never pre-announce tool calls.** Do not say "I'll search for…", "Let me look up…", "I'll check…", "I'm going to read…", or any similar narration before calling a tool. The moment you decide to use a tool, call it immediately — put the intent in a tool call, not in your response text. Reserve response text for results and final summaries only.
+- **Ultrawork — always plan multi-step tasks**: for any task with more than one step, call \`todo_write\` before doing any work. Update it as you go. End every multi-step task with \`task_complete\` — not doing so will cause the loop to re-inject you.
+- **\`task_complete\` is mandatory**: you cannot end a multi-step task by writing a response. You must call \`task_complete\` with a summary. The loop enforces this.`;
 
 function toolLabel(name: string, args: Record<string, unknown> = {}): string {
   // Helper: resolve owner/repo from either combined `repository` or separate `owner`+`repo`
