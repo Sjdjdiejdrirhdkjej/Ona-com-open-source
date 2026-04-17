@@ -20,8 +20,8 @@
  *     → precise iterative interaction instead of bundled single-shot scrape
  */
 
-import { chromium } from '@playwright/test';
-import type { Browser, Page } from '@playwright/test';
+import { chromium } from 'playwright';
+import type { Browser, Page } from 'playwright';
 
 const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completions';
 const BROWSER_USE_MODEL =

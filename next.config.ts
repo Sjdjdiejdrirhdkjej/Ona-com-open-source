@@ -18,6 +18,7 @@ const baseConfig: NextConfig = {
   ],
   poweredByHeader: false,
   reactStrictMode: true,
+  serverExternalPackages: ['@daytonaio/sdk', 'playwright', 'ws'],
 };
 
 const nextIntlConfig = createNextIntlPlugin('./src/libs/I18n.ts')(baseConfig);
