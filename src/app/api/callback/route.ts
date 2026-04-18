@@ -85,6 +85,19 @@ export async function GET(req: Request) {
     });
   }
 
+  const credits = await db
+    .select({ credits: userCreditsSchema.credits })
+    .from(userCreditsSchema)
+    .where(eq(userCreditsSchema.userId, userId))
+    .limit(1);
+
+  if ((credits[0]?.credits ?? 0) === 0) {
+    await db
+      .update(userCreditsSchema)
+      .set({ credits: STARTER_CREDITS + DAILY_CREDITS })
+      .where(eq(userCreditsSchema.userId, userId));
+  }
+
   const locale = cookieStore.get('NEXT_LOCALE')?.value ?? 'en';
   return NextResponse.redirect(`${base}/${locale}/app`);
 }
