@@ -51,12 +51,6 @@ type Conversation = {
 };
 
 
-const SUGGESTIONS = [
-  'Inspect my repos and suggest agent tasks',
-  'Clone a repo and open a docs sync PR',
-  'Review open pull requests in GitHub',
-  'Find and fix CVEs in my repos',
-];
 
 function relativeTime(ts: number) {
   const diff = Date.now() - ts;
@@ -1862,27 +1856,176 @@ export default function AppPage() {
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
             {isEmpty
               ? (
-                  <div className="flex h-full flex-col items-center justify-center text-center">
+                  <div className="flex h-full flex-col items-center justify-center px-4 py-8 sm:px-8">
                     <h1
-                      className="mb-3 text-2xl text-gray-900 dark:text-gray-100 sm:text-4xl"
+                      className="mb-3 text-2xl text-gray-900 dark:text-gray-100 sm:text-4xl text-center"
                       style={{ fontFamily: SERIF, fontWeight: 400 }}
                     >
-                      {`What should ${APP_NAME} do?`}
+                      {`What should Ona do?`}
                     </h1>
-                    <p className="mb-7 max-w-xs text-sm text-gray-500 dark:text-gray-400 sm:max-w-sm">
+                    <p className="mb-7 max-w-xs text-sm text-gray-500 dark:text-gray-400 sm:max-w-sm text-center">
                       Connect GitHub, describe a task, and a background agent can inspect repos, create a branch, commit changes, and open a pull request.
                     </p>
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {SUGGESTIONS.map(s => (
-                        <button
-                          key={s}
-                          onClick={() => send(s)}
-                          className="rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 transition-colors hover:border-gray-500 dark:hover:border-gray-500 hover:text-gray-950 dark:hover:text-gray-50 active:bg-gray-100 dark:active:bg-gray-800"
-                          style={{ backgroundColor: 'var(--bg)' }}
+                    <div className="relative w-full max-w-2xl">
+                      {/* @ mention file picker */}
+                      {atMention && (
+                        <div
+                          className="absolute bottom-full left-0 right-0 z-20 mb-1.5 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg"
+                          style={{ backgroundColor: 'var(--bg-card)' }}
                         >
-                          {s}
+                          <div className="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Sandbox files</span>
+                            {atMentionFetching && (
+                              <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>
+                            )}
+                          </div>
+                          {(() => {
+                            const filtered = sandboxFiles.filter(f => fuzzyMatch(atMention.query, f)).slice(0, 8);
+                            if (!atMentionFetching && filtered.length === 0) {
+                              return (
+                                <div className="px-3 py-2.5 text-xs text-gray-400 dark:text-gray-500">
+                                  {sandboxFiles.length === 0 ? 'No sandbox active for this task' : 'No matching files'}
+                                </div>
+                              );
+                            }
+                            return filtered.map((file, idx) => {
+                              const fileName = file.split('/').pop() ?? file;
+                              const dir = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '';
+                              return (
+                                <button
+                                  key={file}
+                                  type="button"
+                                  onMouseDown={(e) => { e.preventDefault(); selectAtFile(file); }}
+                                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${idx === atMentionIndex ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-50">
+                                    <rect x="1" y="2" width="10" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                                    <path d="M1 5h10" stroke="currentColor" strokeWidth="1.2" />
+                                  </svg>
+                                  <span className="font-medium">{fileName}</span>
+                                  {dir && <span className="ml-auto shrink-0 text-xs text-gray-400 dark:text-gray-500">{dir}</span>}
+                                </button>
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                      {pendingImage && (
+                        <div className="mb-2 flex items-center gap-2">
+                          <img src={pendingImage} alt="Pending" className="h-14 rounded-lg border border-gray-200 dark:border-gray-700 object-cover" />
+                          <button
+                            onClick={() => setPendingImage(null)}
+                            className="flex size-7 items-center justify-center rounded-full text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+                            aria-label="Remove image"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                      {/* Model selector */}
+                      {(() => {
+                        const MODEL_OPTIONS = [
+                          { key: 'ona-max', label: 'ONA Max' },
+                          { key: 'ona-max-fast', label: 'ONA Max Fast' },
+                          { key: 'ona-mini', label: 'ONA Mini' },
+                        ] as const;
+                        const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[1];
+                        return (
+                          <div ref={modelMenuRef} className="relative mb-1.5 flex">
+                            <button
+                              type="button"
+                              onClick={() => setModelMenuOpen(o => !o)}
+                              className="flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                            >
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-indigo-500">
+                                <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
+                                <path d="M5 3v2.5L6.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                              </svg>
+                              {current.label}
+                              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
+                                <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                            {modelMenuOpen && (
+                              <div className="absolute bottom-full left-0 mb-1.5 z-50 w-52 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-2)' }}>
+                                {MODEL_OPTIONS.map(opt => (
+                                  <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => { setSelectedModel(opt.key); setModelMenuOpen(false); }}
+                                    className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedModel === opt.key ? 'bg-gray-50 dark:bg-gray-800/60' : ''}`}
+                                  >
+                                    <span>
+                                      <span className="block text-xs font-medium text-gray-900 dark:text-gray-100">{opt.label}</span>
+                                    </span>
+                                    {selectedModel === opt.key && (
+                                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-indigo-500">
+                                        <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <div
+                        className="flex min-h-36 items-end gap-3 rounded-3xl border border-gray-300 dark:border-gray-700 px-4 py-4 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
+                        style={{ backgroundColor: 'var(--bg-input)' }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="flex size-10 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
+                          aria-label="Attach image"
+                        >
+                          <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                            <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                            <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
+                            <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
                         </button>
-                      ))}
+                        <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                        <textarea
+                          ref={textareaRef}
+                          rows={3}
+                          value={input}
+                          onChange={autoResize}
+                          onKeyDown={handleKey}
+                          onPaste={handlePaste}
+                          placeholder="Describe a task for your agent…"
+                          className="min-h-28 flex-1 resize-none bg-transparent py-2 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                          style={{ maxHeight: '240px' }}
+                        />
+                        {loading ? (
+                          <button
+                            onClick={stopGeneration}
+                            aria-label="Stop"
+                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => send(input, pendingImage ?? undefined)}
+                            disabled={!canSend}
+                            aria-label="Send"
+                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+                        Enter to send · Shift+Enter for new line · paste images · type @ to reference sandbox files
+                      </p>
                     </div>
                   </div>
                 )
@@ -1909,183 +2052,176 @@ export default function AppPage() {
           {/* ── Todo panel (ultrawork loop) ── */}
           <TodoPanel todos={todos} onDismiss={() => setTodos([])} />
 
-          {/* ── Input bar ── */}
-          <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 px-3 py-3 sm:px-6 sm:py-4">
-            <div className="relative">
-              {/* @ mention file picker */}
-              {atMention && (
-                <div
-                  className="absolute bottom-full left-0 right-0 z-20 mb-1.5 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg"
-                  style={{ backgroundColor: 'var(--bg-card)' }}
-                >
-                  <div className="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Sandbox files</span>
-                    {atMentionFetching && (
-                      <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>
-                    )}
-                  </div>
-                  {(() => {
-                    const filtered = sandboxFiles.filter(f => fuzzyMatch(atMention.query, f)).slice(0, 8);
-                    if (!atMentionFetching && filtered.length === 0) {
-                      return (
-                        <div className="px-3 py-2.5 text-xs text-gray-400 dark:text-gray-500">
-                          {sandboxFiles.length === 0 ? 'No sandbox active for this task' : 'No matching files'}
-                        </div>
-                      );
-                    }
-                    return filtered.map((file, idx) => {
-                      const fileName = file.split('/').pop() ?? file;
-                      const dir = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '';
-                      return (
-                        <button
-                          key={file}
-                          type="button"
-                          onMouseDown={(e) => { e.preventDefault(); selectAtFile(file); }}
-                          className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${idx === atMentionIndex ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'}`}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-50">
-                            <rect x="1" y="2" width="10" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                            <path d="M1 5h10" stroke="currentColor" strokeWidth="1.2" />
-                          </svg>
-                          <span className="font-medium">{fileName}</span>
-                          {dir && <span className="ml-auto shrink-0 text-xs text-gray-400 dark:text-gray-500">{dir}</span>}
-                        </button>
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-              {pendingImage && (
-                <div className="mb-2 flex items-center gap-2">
-                  <img src={pendingImage} alt="Pending" className="h-14 rounded-lg border border-gray-200 dark:border-gray-700 object-cover" />
-                  <button
-                    onClick={() => setPendingImage(null)}
-                    className="flex size-7 items-center justify-center rounded-full text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
-                    aria-label="Remove image"
+          {/* ── Input bar (shown only when there are messages) ── */}
+          {!isEmpty && (
+            <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 px-3 py-3 sm:px-6 sm:py-4">
+              <div className="relative">
+                {/* @ mention file picker */}
+                {atMention && (
+                  <div
+                    className="absolute bottom-full left-0 right-0 z-20 mb-1.5 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg"
+                    style={{ backgroundColor: 'var(--bg-card)' }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-
-              {/* Model selector */}
-              {(() => {
-                const MODEL_OPTIONS = [
-                  { key: 'ona-max', label: 'ONA Max' },
-                  { key: 'ona-max-fast', label: 'ONA Max Fast' },
-                  { key: 'ona-mini', label: 'ONA Mini' },
-                ] as const;
-                const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[1];
-                return (
-                  <div ref={modelMenuRef} className="relative mb-1.5 flex">
+                    <div className="px-3 py-1.5 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Sandbox files</span>
+                      {atMentionFetching && (
+                        <span className="text-xs text-gray-400 dark:text-gray-500">Loading…</span>
+                      )}
+                    </div>
+                    {(() => {
+                      const filtered = sandboxFiles.filter(f => fuzzyMatch(atMention.query, f)).slice(0, 8);
+                      if (!atMentionFetching && filtered.length === 0) {
+                        return (
+                          <div className="px-3 py-2.5 text-xs text-gray-400 dark:text-gray-500">
+                            {sandboxFiles.length === 0 ? 'No sandbox active for this task' : 'No matching files'}
+                          </div>
+                        );
+                      }
+                      return filtered.map((file, idx) => {
+                        const fileName = file.split('/').pop() ?? file;
+                        const dir = file.includes('/') ? file.slice(0, file.lastIndexOf('/')) : '';
+                        return (
+                          <button
+                            key={file}
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); selectAtFile(file); }}
+                            className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${idx === atMentionIndex ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 opacity-50">
+                              <rect x="1" y="2" width="10" height="9" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                              <path d="M1 5h10" stroke="currentColor" strokeWidth="1.2" />
+                            </svg>
+                            <span className="font-medium">{fileName}</span>
+                            {dir && <span className="ml-auto shrink-0 text-xs text-gray-400 dark:text-gray-500">{dir}</span>}
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
+                {pendingImage && (
+                  <div className="mb-2 flex items-center gap-2">
+                    <img src={pendingImage} alt="Pending" className="h-14 rounded-lg border border-gray-200 dark:border-gray-700 object-cover" />
                     <button
-                      type="button"
-                      onClick={() => setModelMenuOpen(o => !o)}
-                      className="flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                      onClick={() => setPendingImage(null)}
+                      className="flex size-7 items-center justify-center rounded-full text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300"
+                      aria-label="Remove image"
                     >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-indigo-500">
-                        <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
-                        <path d="M5 3v2.5L6.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                      </svg>
-                      {current.label}
-                      <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
-                        <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                       </svg>
                     </button>
-                    {modelMenuOpen && (
-                      <div className="absolute bottom-full left-0 mb-1.5 z-50 w-52 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-2)' }}>
-                        {MODEL_OPTIONS.map(opt => (
-                          <button
-                            key={opt.key}
-                            type="button"
-                            onClick={() => { setSelectedModel(opt.key); setModelMenuOpen(false); }}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedModel === opt.key ? 'bg-gray-50 dark:bg-gray-800/60' : ''}`}
-                          >
-                            <span>
-                              <span className="block text-xs font-medium text-gray-900 dark:text-gray-100">{opt.label}</span>
-                            </span>
-                            {selectedModel === opt.key && (
-                              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-indigo-500">
-                                <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                );
-              })()}
-
-            <div className="mx-auto w-full max-w-3xl">
-              <p className="mb-4 text-center text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
-                What should Ona do?
-              </p>
-              <div
-                className="flex min-h-56 items-end gap-3 rounded-3xl border border-gray-300 dark:border-gray-700 px-4 py-4 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
-                style={{ backgroundColor: 'var(--bg-input)' }}
-              >
-                {/* Image attach */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
-                  aria-label="Attach image"
-                >
-                  <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
-                    <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-                    <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-
-                <textarea
-                  ref={textareaRef}
-                  rows={3}
-                  value={input}
-                  onChange={autoResize}
-                  onKeyDown={handleKey}
-                  onPaste={handlePaste}
-                  placeholder="Describe a task for your agent…"
-                  className="min-h-40 flex-1 resize-none bg-transparent py-2 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
-                  style={{ maxHeight: '240px' }}
-                />
-
-                {/* Send / Stop */}
-                {loading ? (
-                  <button
-                    onClick={stopGeneration}
-                    aria-label="Stop"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
-                    </svg>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => send(input, pendingImage ?? undefined)}
-                    disabled={!canSend}
-                    aria-label="Send"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
                 )}
+
+                {/* Model selector */}
+                {(() => {
+                  const MODEL_OPTIONS = [
+                    { key: 'ona-max', label: 'ONA Max' },
+                    { key: 'ona-max-fast', label: 'ONA Max Fast' },
+                    { key: 'ona-mini', label: 'ONA Mini' },
+                  ] as const;
+                  const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[1];
+                  return (
+                    <div ref={modelMenuRef} className="relative mb-1.5 flex">
+                      <button
+                        type="button"
+                        onClick={() => setModelMenuOpen(o => !o)}
+                        className="flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2.5 py-1 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-indigo-500">
+                          <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
+                          <path d="M5 3v2.5L6.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                        {current.label}
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
+                          <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      {modelMenuOpen && (
+                        <div className="absolute bottom-full left-0 mb-1.5 z-50 w-52 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden" style={{ backgroundColor: 'var(--bg-2)' }}>
+                          {MODEL_OPTIONS.map(opt => (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={() => { setSelectedModel(opt.key); setModelMenuOpen(false); }}
+                              className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 ${selectedModel === opt.key ? 'bg-gray-50 dark:bg-gray-800/60' : ''}`}
+                            >
+                              <span>
+                                <span className="block text-xs font-medium text-gray-900 dark:text-gray-100">{opt.label}</span>
+                              </span>
+                              {selectedModel === opt.key && (
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-indigo-500">
+                                  <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <div
+                  className="flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-gray-700 px-3 py-2.5 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
+                  style={{ backgroundColor: 'var(--bg-input)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
+                    aria-label="Attach image"
+                  >
+                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                      <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                      <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                  <textarea
+                    ref={textareaRef}
+                    rows={1}
+                    value={input}
+                    onChange={autoResize}
+                    onKeyDown={handleKey}
+                    onPaste={handlePaste}
+                    placeholder="Describe a task for your agent…"
+                    className="flex-1 resize-none bg-transparent py-1 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                    style={{ maxHeight: '160px' }}
+                  />
+                  {loading ? (
+                    <button
+                      onClick={stopGeneration}
+                      aria-label="Stop"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => send(input, pendingImage ?? undefined)}
+                      disabled={!canSend}
+                      aria-label="Send"
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Hint — desktop only */}
+                <p className="mt-1.5 hidden text-center text-xs text-gray-400 dark:text-gray-500 sm:block">
+                  Enter to send · Shift+Enter for new line · paste images · type @ to reference sandbox files
+                </p>
               </div>
             </div>
-
-              {/* Hint — desktop only */}
-              <p className="mt-1.5 hidden text-center text-xs text-gray-400 dark:text-gray-500 sm:block">
-                Enter to send · Shift+Enter for new line · paste images · type @ to reference sandbox files
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
