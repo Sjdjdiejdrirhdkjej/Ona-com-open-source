@@ -11,16 +11,37 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/auth/user')
-      .then(res => (res.ok ? res.json() : null))
-      .then((data) => {
+    let active = true;
+
+    const loadUser = async () => {
+      try {
+        const res = await fetch('/api/auth/user', { cache: 'no-store' });
+        const data = res.ok ? await res.json() : null;
+        if (!active) return;
         setUser(data);
         setIsLoading(false);
-      })
-      .catch(() => {
+      } catch {
+        if (!active) return;
         setUser(null);
         setIsLoading(false);
-      });
+      }
+    };
+
+    loadUser();
+
+    const interval = window.setInterval(loadUser, 10000);
+
+    const handleFocus = () => {
+      loadUser();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   return {
