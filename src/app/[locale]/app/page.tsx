@@ -347,6 +347,49 @@ function BackgroundWorkingBanner() {
   );
 }
 
+function SandboxBootingBanner() {
+  return (
+    <div className="flex justify-start">
+      <OnaAvatar />
+      <div className="flex items-center gap-2 py-2">
+        <div className="size-3 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+        <span className="text-xs text-indigo-500 dark:text-indigo-400">Booting sandbox VM…</span>
+      </div>
+    </div>
+  );
+}
+
+function SandboxToast({ sandboxId, onDismiss }: { sandboxId: string; onDismiss: () => void }) {
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 px-4 py-3 shadow-xl">
+      <div className="flex items-center gap-2">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-emerald-500">
+            <circle cx="6" cy="6" r="5.5" stroke="currentColor" strokeWidth="1.1" />
+            <path d="M3.5 6l1.8 1.8 3.2-3.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">Sandbox ready</span>
+      </div>
+      <Link
+        href={`/sandbox-modify/${sandboxId}`}
+        className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-80"
+      >
+        Modify VM
+      </Link>
+      <button
+        onClick={onDismiss}
+        className="flex size-6 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        aria-label="Dismiss"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function TodoPanel({ todos, onDismiss }: { todos: TodoItem[]; onDismiss: () => void }) {
   if (todos.length === 0) return null;
   const allDone = todos.every(t => t.status === 'done');
@@ -475,6 +518,8 @@ export default function AppPage() {
   const [atMentionIndex, setAtMentionIndex] = useState(0);
   const [atMentionFetching, setAtMentionFetching] = useState(false);
   const [todos, setTodos] = useState<TodoItem[]>([]);
+  const [sandboxBooting, setSandboxBooting] = useState(false);
+  const [sandboxToastId, setSandboxToastId] = useState<string | null>(null);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
   // Tracks conversations where the SSE stream is confirmed to be delivering
@@ -1147,6 +1192,7 @@ export default function AppPage() {
               step?: string;
               report?: string;
               todos?: TodoItem[];
+              sandbox_id?: string;
             };
 
             if (json.type === 'todo_update' && json.todos) {
@@ -1375,6 +1421,11 @@ export default function AppPage() {
                   ),
                 };
               }));
+            } else if (json.type === 'sandbox_booting') {
+              setSandboxBooting(true);
+            } else if (json.type === 'sandbox_ready') {
+              setSandboxBooting(false);
+              if (json.sandbox_id) setSandboxToastId(json.sandbox_id);
             } else if (json.type === 'error' && json.message) {
               throw new Error(json.message);
             } else if (json.delta) {
@@ -1450,6 +1501,7 @@ export default function AppPage() {
         clearTimeout(t);
         sseTimeoutRef.current.delete(convId);
       }
+      setSandboxBooting(false);
       // Polling owns the loading state and will call setLoading(false) when
       // it sees the "done" event. But if SSE finished cleanly AND streaming
       // ended with a [DONE] marker, stop polling ourselves right away.
@@ -1465,6 +1517,7 @@ export default function AppPage() {
   }, [activeId, conversations, loading, selectedModel]);
 
   function stopGeneration() {
+    setSandboxBooting(false);
     // Abort the SSE fetch (if still in progress)
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
@@ -1793,23 +1846,11 @@ export default function AppPage() {
         className="flex h-14 shrink-0 items-center justify-between border-b border-black/8 dark:border-white/8 px-4"
         style={{ backgroundColor: 'var(--bg-header)', backdropFilter: 'blur(14px)' }}
       >
+        <Link href="/" className="text-base font-bold tracking-tight text-gray-950 dark:text-gray-50">
+          {APP_NAME}
+        </Link>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSidebarOpen(o => !o)}
-            className="flex size-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 transition-colors hover:bg-black/6 dark:hover:bg-white/8 hover:text-gray-900 dark:hover:text-gray-100 active:bg-black/10 dark:active:bg-white/10"
-            aria-label="Toggle sidebar"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="2" y="4" width="14" height="1.4" rx="0.7" fill="currentColor" />
-              <rect x="2" y="8.3" width="14" height="1.4" rx="0.7" fill="currentColor" />
-              <rect x="2" y="12.6" width="14" height="1.4" rx="0.7" fill="currentColor" />
-            </svg>
-          </button>
-          <Link href="/" className="text-base font-bold tracking-tight text-gray-950 dark:text-gray-50">
-            {APP_NAME}
-          </Link>
-        </div>
-        <div className="flex items-center gap-2">
+          <GitHubConnect />
           <ThemeToggle />
           <UserDropdown />
           <button
@@ -1826,29 +1867,6 @@ export default function AppPage() {
 
       {/* ── Body ── */}
       <div className="relative flex min-h-0 flex-1">
-
-        {/* Mobile: overlay backdrop */}
-        {isMobile && sidebarOpen && (
-          <div
-            className="absolute inset-0 z-20 bg-black/30 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-
-        {/* Sidebar — drawer on mobile, inline on desktop */}
-        {sidebarOpen && (
-          <aside
-            className={`flex shrink-0 flex-col overflow-hidden border-r border-black/8 dark:border-white/8 ${
-              isMobile
-                ? 'absolute left-0 top-0 z-30 h-full w-72 shadow-xl'
-                : 'relative w-64'
-            }`}
-            style={{ backgroundColor: 'var(--bg-sidebar)' }}
-          >
-            {sidebarContent}
-          </aside>
-        )}
 
         {/* ── Chat area ── */}
         <div className="flex min-w-0 flex-1 flex-col">
@@ -2038,6 +2056,9 @@ export default function AppPage() {
                           ? <ToolStepsBlock key={msg.id} steps={msg.content as ToolStep[]} />
                           : <MessageBubble key={msg.id} msg={msg} />
                       ))}
+                    {sandboxBooting && (
+                      <SandboxBootingBanner />
+                    )}
                     {showTypingIndicator && (
                       <TypingIndicator />
                     )}
@@ -2048,9 +2069,6 @@ export default function AppPage() {
                   </div>
                 )}
           </div>
-
-          {/* ── Todo panel (ultrawork loop) ── */}
-          <TodoPanel todos={todos} onDismiss={() => setTodos([])} />
 
           {/* ── Input bar (shown only when there are messages) ── */}
           {!isEmpty && (
@@ -2222,9 +2240,16 @@ export default function AppPage() {
               </div>
             </div>
           )}
+
+          {/* ── Todo panel (ultrawork loop) ── */}
+          <TodoPanel todos={todos} onDismiss={() => setTodos([])} />
         </div>
       </div>
 
+      {/* ── Sandbox ready toast ── */}
+      {sandboxToastId && (
+        <SandboxToast sandboxId={sandboxToastId} onDismiss={() => setSandboxToastId(null)} />
+      )}
     </div>
   );
 }
