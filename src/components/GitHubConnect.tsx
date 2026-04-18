@@ -125,52 +125,68 @@ export function GitHubConnect() {
 
   return (
     <>
-      {/* ── Sidebar trigger / connected state ── */}
+      {/* ── Trigger / connected state ── */}
       {status.type === 'connected'
         ? (
-            <div className="flex items-center gap-2.5 px-1">
-              {status.user.avatar_url
-                ? (
-                    <img
-                      src={status.user.avatar_url}
-                      alt={status.user.login}
-                      className="size-6 rounded-full ring-1 ring-black/10 dark:ring-white/10"
-                    />
-                  )
-                : (
-                    <div className="flex size-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                      {GH_ICON}
-                    </div>
-                  )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">
-                  {status.user.name ?? status.user.login}
-                </p>
-                <p className="truncate text-[10px] text-gray-400 dark:text-gray-500">
-                  @{status.user.login}
-                </p>
+            <div className="flex items-center gap-1.5">
+              {/* Mobile: avatar + disconnect icon only */}
+              <div className="flex items-center gap-1 sm:hidden">
+                {status.user.avatar_url
+                  ? <img src={status.user.avatar_url} alt={status.user.login} className="size-7 rounded-full ring-1 ring-black/10 dark:ring-white/10" />
+                  : <div className="flex size-7 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{GH_ICON}</div>}
+                <button
+                  onClick={disconnect}
+                  title="Disconnect GitHub"
+                  className="flex size-6 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  </svg>
+                </button>
               </div>
-              <button
-                onClick={disconnect}
-                title="Disconnect GitHub"
-                className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
+              {/* Desktop: avatar + name + disconnect */}
+              <div className="hidden sm:flex items-center gap-2 px-1">
+                {status.user.avatar_url
+                  ? <img src={status.user.avatar_url} alt={status.user.login} className="size-6 rounded-full ring-1 ring-black/10 dark:ring-white/10" />
+                  : <div className="flex size-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">{GH_ICON}</div>}
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">{status.user.name ?? status.user.login}</p>
+                  <p className="truncate text-[10px] text-gray-400 dark:text-gray-500">@{status.user.login}</p>
+                </div>
+                <button
+                  onClick={disconnect}
+                  title="Disconnect GitHub"
+                  className="shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )
         : (
-            <button
-              onClick={startDeviceFlow}
-              disabled={status.type === 'loading' || status.type === 'checking'}
-              className="flex w-full items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
-              style={{ backgroundColor: 'var(--bg-card)' }}
-            >
-              {GH_ICON}
-              Connect GitHub
-            </button>
+            <>
+              {/* Mobile: icon-only */}
+              <button
+                onClick={startDeviceFlow}
+                disabled={status.type === 'loading' || status.type === 'checking'}
+                title="Connect GitHub"
+                className="flex sm:hidden size-9 items-center justify-center rounded-lg text-gray-500 dark:text-gray-400 transition-colors hover:bg-black/6 dark:hover:bg-white/8 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
+              >
+                {GH_ICON}
+              </button>
+              {/* Desktop: full button */}
+              <button
+                onClick={startDeviceFlow}
+                disabled={status.type === 'loading' || status.type === 'checking'}
+                className="hidden sm:flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
+                style={{ backgroundColor: 'var(--bg-card)' }}
+              >
+                {GH_ICON}
+                Connect GitHub
+              </button>
+            </>
           )}
 
       {/* ── Overlay modal (device flow) ── */}

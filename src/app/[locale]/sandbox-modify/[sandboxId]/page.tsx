@@ -82,9 +82,9 @@ export default function SandboxModifyPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Modify sandbox VM</h1>
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 sm:px-6 py-8 sm:py-10">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">Modify sandbox VM</h1>
           <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
             Set environment variables that will be available to the AI agent inside this sandbox.
           </p>

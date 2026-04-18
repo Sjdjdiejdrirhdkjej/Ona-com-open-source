@@ -361,7 +361,7 @@ function SandboxBootingBanner() {
 
 function SandboxToast({ sandboxId, onDismiss }: { sandboxId: string; onDismiss: () => void }) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 px-4 py-3 shadow-xl">
+    <div className="fixed bottom-4 left-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 px-4 py-3 shadow-xl sm:left-auto sm:right-6 sm:bottom-6 sm:w-auto">
       <div className="flex items-center gap-2">
         <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-emerald-500">
@@ -520,7 +520,7 @@ export default function AppPage() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [sandboxBooting, setSandboxBooting] = useState(false);
   const [sandboxToastId, setSandboxToastId] = useState<string | null>(null);
-  const [taskListOpen, setTaskListOpen] = useState(true);
+  const [taskListOpen, setTaskListOpen] = useState(false);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
   // Tracks conversations where the SSE stream is confirmed to be delivering
@@ -1847,16 +1847,16 @@ export default function AppPage() {
         className="flex h-14 shrink-0 items-center justify-between border-b border-black/8 dark:border-white/8 px-4"
         style={{ backgroundColor: 'var(--bg-header)', backdropFilter: 'blur(14px)' }}
       >
-        <Link href="/" className="text-base font-bold tracking-tight text-gray-950 dark:text-gray-50">
+        <Link href="/" className="min-w-0 shrink text-sm sm:text-base font-bold tracking-tight text-gray-950 dark:text-gray-50 truncate mr-2">
           {APP_NAME}
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <GitHubConnect />
           <ThemeToggle />
           <UserDropdown />
           <button
             onClick={createNewChat}
-            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-black/6 dark:hover:bg-white/8 hover:text-gray-900 dark:hover:text-gray-100 active:bg-black/10"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 sm:px-3 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-black/6 dark:hover:bg-white/8 hover:text-gray-900 dark:hover:text-gray-100 active:bg-black/10"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -1992,16 +1992,16 @@ export default function AppPage() {
                         );
                       })()}
                       <div
-                        className="flex min-h-36 items-end gap-3 rounded-3xl border border-gray-300 dark:border-gray-700 px-4 py-4 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
+                        className="flex min-h-24 sm:min-h-36 items-end gap-2 sm:gap-3 rounded-2xl sm:rounded-3xl border border-gray-300 dark:border-gray-700 px-3 sm:px-4 py-3 sm:py-4 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
                         style={{ backgroundColor: 'var(--bg-input)' }}
                       >
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="flex size-10 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
+                          className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
                           aria-label="Attach image"
                         >
-                          <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
                             <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
                             <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -2016,16 +2016,16 @@ export default function AppPage() {
                           onKeyDown={handleKey}
                           onPaste={handlePaste}
                           placeholder="Describe a task for your agent…"
-                          className="min-h-28 flex-1 resize-none bg-transparent py-2 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
-                          style={{ maxHeight: '240px' }}
+                          className="min-h-16 sm:min-h-28 flex-1 resize-none bg-transparent py-1.5 sm:py-2 text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                          style={{ maxHeight: '180px' }}
                         />
                         {loading ? (
                           <button
                             onClick={stopGeneration}
                             aria-label="Stop"
-                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                            className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
                           >
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                               <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
                             </svg>
                           </button>
@@ -2034,15 +2034,15 @@ export default function AppPage() {
                             onClick={() => send(input, pendingImage ?? undefined)}
                             disabled={!canSend}
                             aria-label="Send"
-                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                            className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
                           >
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                               <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           </button>
                         )}
                       </div>
-                      <p className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+                      <p className="mt-2 hidden text-center text-xs text-gray-400 dark:text-gray-500 sm:block">
                         Enter to send · Shift+Enter for new line · paste images · type @ to reference sandbox files
                       </p>
                     </div>
@@ -2183,16 +2183,16 @@ export default function AppPage() {
                 })()}
 
                 <div
-                  className="flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-gray-700 px-3 py-2.5 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
+                  className="flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-gray-700 px-3 py-2 sm:py-2.5 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
                   style={{ backgroundColor: 'var(--bg-input)' }}
                 >
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex size-11 shrink-0 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
+                    className="flex size-9 sm:size-11 shrink-0 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
                     aria-label="Attach image"
                   >
-                    <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
                       <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
                       <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -2201,22 +2201,22 @@ export default function AppPage() {
                   <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                   <textarea
                     ref={textareaRef}
-                    rows={7}
+                    rows={3}
                     value={input}
                     onChange={autoResize}
                     onKeyDown={handleKey}
                     onPaste={handlePaste}
                     placeholder="Describe a task for your agent…"
-                    className="flex-1 resize-none bg-transparent py-3 text-lg text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
-                    style={{ maxHeight: '360px' }}
+                    className="flex-1 resize-none bg-transparent py-2 sm:py-3 text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                    style={{ maxHeight: '180px' }}
                   />
                   {loading ? (
                     <button
                       onClick={stopGeneration}
                       aria-label="Stop"
-                      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                      className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
                     >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                         <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
                       </svg>
                     </button>
@@ -2225,9 +2225,9 @@ export default function AppPage() {
                       onClick={() => send(input, pendingImage ?? undefined)}
                       disabled={!canSend}
                       aria-label="Send"
-                      className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                      className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
                     >
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                         <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </button>
@@ -2265,34 +2265,30 @@ export default function AppPage() {
                 style={{ backgroundColor: 'var(--bg)' }}
               >
                 <div className="mx-auto max-w-3xl px-3 sm:px-6">
-                  <button
-                    onClick={() => setTaskListOpen(o => !o)}
-                    className="flex w-full items-center justify-between py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-                  >
-                    <span className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between py-2">
+                    <button
+                      onClick={() => setTaskListOpen(o => !o)}
+                      className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                    >
                       <svg width="11" height="11" viewBox="0 0 11 11" fill="none" className={`transition-transform ${taskListOpen ? 'rotate-90' : ''}`}>
                         <path d="M3 2l4 3.5-4 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       Past tasks
                       <span className="rounded-full bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-500 dark:text-gray-400">{pastTasks.length}</span>
-                    </span>
+                    </button>
                     {taskListOpen && (
-                      <div className="relative">
-                        <input
-                          ref={searchInputRef}
-                          type="text"
-                          value={search}
-                          onChange={e => { e.stopPropagation(); setSearch(e.target.value); }}
-                          onClick={e => e.stopPropagation()}
-                          placeholder="Search…"
-                          className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 pl-2.5 pr-2 text-xs text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:border-gray-400 dark:focus:border-gray-600 transition-colors"
-                          style={{ width: '120px' }}
-                        />
-                      </div>
+                      <input
+                        ref={searchInputRef}
+                        type="text"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search…"
+                        className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 pl-2.5 pr-2 text-xs text-gray-800 dark:text-gray-200 placeholder-gray-400 outline-none focus:border-gray-400 dark:focus:border-gray-600 transition-colors w-24 sm:w-32"
+                      />
                     )}
-                  </button>
+                  </div>
                   {taskListOpen && (
-                    <div className="max-h-56 overflow-y-auto pb-3 space-y-0.5">
+                    <div className="max-h-40 sm:max-h-56 overflow-y-auto pb-3 space-y-0.5">
                       {filtered.length === 0
                         ? (
                             <p className="px-1 py-2 text-xs text-gray-400 dark:text-gray-500">
