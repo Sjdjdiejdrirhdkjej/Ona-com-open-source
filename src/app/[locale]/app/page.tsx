@@ -1872,61 +1872,17 @@ export default function AppPage() {
                     <p className="mb-7 max-w-xs text-sm text-gray-500 dark:text-gray-400 sm:max-w-sm">
                       Connect GitHub, describe a task, and a background agent can inspect repos, create a branch, commit changes, and open a pull request.
                     </p>
-                    <div className="w-full max-w-3xl">
-                      <p className="mb-4 text-center text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
-                        What should Ona do?
-                      </p>
-                      <div
-                        className="flex min-h-56 items-end gap-3 rounded-3xl border border-gray-300 dark:border-gray-700 px-4 py-4 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
-                        style={{ backgroundColor: 'var(--bg-input)' }}
-                      >
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {SUGGESTIONS.map(s => (
                         <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          className="flex size-10 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
-                          aria-label="Attach image"
+                          key={s}
+                          onClick={() => send(s)}
+                          className="rounded-full border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 transition-colors hover:border-gray-500 dark:hover:border-gray-500 hover:text-gray-950 dark:hover:text-gray-50 active:bg-gray-100 dark:active:bg-gray-800"
+                          style={{ backgroundColor: 'var(--bg)' }}
                         >
-                          <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
-                            <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
-                            <circle cx="5.5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.3" />
-                            <path d="M1.5 11l3.5-3 2.5 2.5 2-2 4.5 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          {s}
                         </button>
-                        <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                        <textarea
-                          ref={textareaRef}
-                          rows={3}
-                          value={input}
-                          onChange={autoResize}
-                          onKeyDown={handleKey}
-                          onPaste={handlePaste}
-                          placeholder="Describe a task for your agent…"
-                          className="min-h-40 flex-1 resize-none bg-transparent py-2 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
-                          style={{ maxHeight: '240px' }}
-                        />
-                        {loading ? (
-                          <button
-                            onClick={stopGeneration}
-                            aria-label="Stop"
-                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
-                          >
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
-                            </svg>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => send(input, pendingImage ?? undefined)}
-                            disabled={!canSend}
-                            aria-label="Send"
-                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
-                          >
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                              <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )
