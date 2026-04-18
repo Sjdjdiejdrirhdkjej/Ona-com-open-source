@@ -131,7 +131,7 @@ function MessageBubble({ msg }: { msg: Message }) {
   return (
     <div className={`group flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       {!isUser && <OnaAvatar />}
-      <div className="max-w-[85%] space-y-2 sm:max-w-[80%]">
+      <div className={`space-y-2 ${isUser ? 'max-w-[85%] sm:max-w-[80%]' : 'min-w-0 flex-1'}`}>
         {msg.imagePreview && (
           <img
             src={msg.imagePreview}
@@ -139,16 +139,17 @@ function MessageBubble({ msg }: { msg: Message }) {
             className="max-h-48 w-full rounded-xl border border-gray-200 dark:border-gray-700 object-cover"
           />
         )}
-        <div
-          className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-            isUser
-              ? 'rounded-tr-sm bg-gray-900 text-white whitespace-pre-wrap'
-              : 'rounded-tl-sm border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
-          }`}
-          style={!isUser ? { backgroundColor: 'var(--bg-2)' } : {}}
-        >
-          {isUser ? text : <AssistantMarkdownLazy text={text} />}
-        </div>
+        {isUser
+          ? (
+              <div className="rounded-2xl rounded-tr-sm bg-gray-900 px-4 py-3 text-sm leading-relaxed text-white whitespace-pre-wrap">
+                {text}
+              </div>
+            )
+          : (
+              <div className="text-sm leading-relaxed text-gray-800 dark:text-gray-200">
+                <AssistantMarkdownLazy text={text} />
+              </div>
+            )}
         {!isUser && text && <CopyButton text={text} />}
       </div>
     </div>
@@ -220,10 +221,7 @@ function ToolStepsBlock({ steps }: { steps: ToolStep[] }) {
   return (
     <div className="flex justify-start">
       <OnaAvatar />
-      <div
-        className="rounded-2xl rounded-tl-sm border border-gray-200 dark:border-gray-700 px-4 py-3 space-y-1.5"
-        style={{ backgroundColor: 'var(--bg-2)' }}
-      >
+      <div className="min-w-0 flex-1 space-y-1.5 py-1">
         {steps.map((step, i) => {
           const hasSubSteps = !!(step.subSteps && step.subSteps.length > 0);
           const hasReport = !!step.librarianReport;
@@ -327,10 +325,7 @@ function TypingIndicator() {
   return (
     <div className="flex justify-start">
       <OnaAvatar />
-      <div
-        className="flex items-center gap-1.5 rounded-2xl rounded-tl-sm border border-gray-200 dark:border-gray-700 px-4 py-3"
-        style={{ backgroundColor: 'var(--bg-2)' }}
-      >
+      <div className="flex items-center gap-1.5 py-2">
         {[0, 1, 2].map(i => (
           <span
             key={i}
@@ -347,10 +342,7 @@ function BackgroundWorkingBanner() {
   return (
     <div className="flex justify-start">
       <OnaAvatar />
-      <div
-        className="flex items-center gap-2 rounded-2xl rounded-tl-sm border border-indigo-200 dark:border-indigo-800 px-4 py-3"
-        style={{ backgroundColor: 'var(--bg-2)' }}
-      >
+      <div className="flex items-center gap-2 py-2">
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-indigo-400" style={{ animation: 'ona-spin 1s linear infinite' }}>
           <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.25" />
           <path d="M6 1.5A4.5 4.5 0 0110.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
