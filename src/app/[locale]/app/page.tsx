@@ -2019,15 +2019,19 @@ export default function AppPage() {
                 );
               })()}
 
+            <div className="mx-auto w-full max-w-3xl">
+              <p className="mb-4 text-center text-3xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">
+                What should Ona do?
+              </p>
               <div
-                className="flex items-end gap-2 rounded-2xl border border-gray-300 dark:border-gray-700 px-3 py-2.5 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
+                className="flex min-h-56 items-end gap-3 rounded-3xl border border-gray-300 dark:border-gray-700 px-4 py-4 transition-shadow focus-within:border-gray-400 dark:focus-within:border-gray-500 focus-within:shadow-sm"
                 style={{ backgroundColor: 'var(--bg-input)' }}
               >
                 {/* Image attach */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex size-9 shrink-0 items-center justify-center rounded-lg text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-xl text-gray-400 dark:text-gray-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 active:bg-gray-100 dark:active:bg-gray-800"
                   aria-label="Attach image"
                 >
                   <svg width="17" height="17" viewBox="0 0 16 16" fill="none">
@@ -2040,14 +2044,14 @@ export default function AppPage() {
 
                 <textarea
                   ref={textareaRef}
-                  rows={1}
+                  rows={3}
                   value={input}
                   onChange={autoResize}
                   onKeyDown={handleKey}
                   onPaste={handlePaste}
                   placeholder="Describe a task for your agent…"
-                  className="flex-1 resize-none bg-transparent py-1 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
-                  style={{ maxHeight: '160px' }}
+                  className="min-h-40 flex-1 resize-none bg-transparent py-2 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                  style={{ maxHeight: '240px' }}
                 />
 
                 {/* Send / Stop */}
@@ -2055,7 +2059,7 @@ export default function AppPage() {
                   <button
                     onClick={stopGeneration}
                     aria-label="Stop"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                       <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
@@ -2066,7 +2070,7 @@ export default function AppPage() {
                     onClick={() => send(input, pendingImage ?? undefined)}
                     disabled={!canSend}
                     aria-label="Send"
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                       <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -2074,6 +2078,7 @@ export default function AppPage() {
                   </button>
                 )}
               </div>
+            </div>
 
               {/* Hint — desktop only */}
               <p className="mt-1.5 hidden text-center text-xs text-gray-400 dark:text-gray-500 sm:block">
