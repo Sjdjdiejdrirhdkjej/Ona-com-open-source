@@ -722,6 +722,7 @@ const chatRequestSchema = z.object({
   })).min(1, 'At least one message is required'),
   conversationId: z.string().uuid().optional(),
   assistantMessageId: z.string().uuid().optional(),
+  jobId: z.string().uuid().optional(),
   model: z.string().optional(),
 });
 
@@ -752,8 +753,9 @@ export async function POST(req: NextRequest) {
 
   const headers = {
     'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
+    'Cache-Control': 'no-cache, no-transform',
     Connection: 'keep-alive',
+    'X-Accel-Buffering': 'no',
   };
 
   (async () => {
@@ -776,12 +778,12 @@ export async function POST(req: NextRequest) {
         return;
       }
 
-      const { messages, conversationId, assistantMessageId, model } = parsed.data;
+      const { messages, conversationId, assistantMessageId, jobId: clientJobId, model } = parsed.data;
       const fireworksModelId = model && model in ONA_MODELS
         ? ONA_MODELS[model as OnaModelKey].fireworksId
         : undefined;
 
-      jobId = conversationId ? crypto.randomUUID() : null;
+      jobId = conversationId ? (clientJobId ?? crypto.randomUUID()) : null;
       let pendingContentEvent = '';
       let contentFlushTimer: ReturnType<typeof setTimeout> | null = null;
 

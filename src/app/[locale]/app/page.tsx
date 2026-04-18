@@ -491,6 +491,11 @@ export default function AppPage() {
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Tracks conversations where the SSE stream is confirmed to be delivering
+  // events in real-time. Polling skips applying content/tool events for these
+  // conversations to avoid doubling updates with the live SSE stream.
+  const activeSseFetchRef = useRef<Set<string>>(new Set());
+  const sseTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -586,7 +591,9 @@ export default function AppPage() {
     const existing = bgPollTimersRef.current.get(convId);
     if (existing) clearTimeout(existing);
 
-    const delay = cursor === 0 && rebuild ? 0 : 3000;
+    // Use 0ms for the very first poll (immediate), 1 500ms between subsequent
+    // polls (fast enough for a good UX when SSE is buffered by the proxy).
+    const delay = cursor === 0 ? 0 : 1500;
     const timer = setTimeout(() => pollBackgroundJob(convId, jobId, cursor, rebuild), delay);
     bgPollTimersRef.current.set(convId, timer);
   }
@@ -606,6 +613,29 @@ export default function AppPage() {
 
       if (data.events.length > 0 || data.done) {
         const lastId = data.events.at(-1)?.id ?? cursor;
+
+        // When SSE is confirmed to be streaming events in real-time for this
+        // conversation, skip applying events to the UI here — SSE already did
+        // it. We still need to advance the cursor so we don't reprocess stale
+        // events once SSE ends and polling takes over fully.
+        const sseActive = activeSseFetchRef.current.has(convId);
+
+        if (data.done) {
+          // Always handle job completion regardless of SSE status
+          stopBackgroundPoll(convId);
+          setLoading(false);
+          setConversations(prev => prev.map(c =>
+            c.id === convId ? { ...c, activeJobId: null } : c,
+          ));
+          refreshConversationMessages(convId);
+          return;
+        }
+
+        if (sseActive) {
+          // SSE is delivering — just advance cursor and re-schedule
+          scheduleBackgroundPoll(convId, jobId, lastId, false);
+          return;
+        }
 
         // Handle todo_update events (outside setConversations since it's separate state)
         const lastTodoEvent = [...data.events].reverse().find(ev => ev.type === 'todo_update');
@@ -733,26 +763,13 @@ export default function AppPage() {
             }
           }
 
-          if (data.done) {
-            const updatedConv = { ...conv, messages, activeJobId: null };
-            return prev.map(c => c.id === convId ? updatedConv : c);
-          }
           return prev.map(c => c.id === convId ? { ...c, messages } : c);
         });
 
-        if (!data.done) {
-          scheduleBackgroundPoll(convId, jobId, lastId, false);
-        } else {
-          stopBackgroundPoll(convId);
-          refreshConversationMessages(convId);
-        }
+        scheduleBackgroundPoll(convId, jobId, lastId, false);
       } else {
-        if (!data.done) {
-          scheduleBackgroundPoll(convId, jobId, cursor, false);
-        } else {
-          stopBackgroundPoll(convId);
-          refreshConversationMessages(convId);
-        }
+        // No new events yet — keep polling
+        scheduleBackgroundPoll(convId, jobId, cursor, false);
       }
     } catch {
       scheduleBackgroundPoll(convId, jobId, cursor, false);
@@ -1043,10 +1060,17 @@ export default function AppPage() {
 
     // Tracks which assistant message is being filled with deltas
     let currentAssistantId = assistantId;
-    let currentJobId: string | null = null;
+    // Generate the job ID client-side so we can start polling immediately,
+    // before the SSE stream delivers the first event. The server will use
+    // this ID so polling and SSE refer to the same job.
+    const pregenJobId = crypto.randomUUID();
+    let currentJobId: string = pregenJobId;
     let streamFinished = false;
     let keepBackgroundJob = false;
     const replayGeneratedMessageIds = new Set<string>([assistantId]);
+    // True once SSE starts delivering text deltas — used to skip duplicate
+    // content that already arrived via SSE when processing polling events.
+    let sseDeliveredContent = false;
 
     function prepareBackgroundReplay() {
       setConversations(prev => prev.map(c => {
@@ -1060,8 +1084,29 @@ export default function AppPage() {
       }));
     }
 
+    // Register the job ID in the conversation so the header/badge shows "working"
+    setConversations(prev => prev.map(c =>
+      c.id === convId ? { ...c, activeJobId: pregenJobId } : c,
+    ));
+
+    // Start polling immediately — this is the primary update path when the
+    // Replit proxy buffers the SSE stream. Polling will show progress every
+    // ~1.5 s even if SSE events never arrive during the request.
+    scheduleBackgroundPoll(convId, pregenJobId, 0, false);
+
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
+
+    // Mark this conversation as having an active SSE fetch so pollBackgroundJob
+    // knows to skip applying events that SSE will deliver in real-time.
+    // If no SSE delta arrives within 3 seconds, we assume the proxy is
+    // buffering and remove the marker so polling takes over as primary UI updater.
+    activeSseFetchRef.current.add(convId);
+    const sseActivityTimeout = setTimeout(() => {
+      activeSseFetchRef.current.delete(convId);
+      sseTimeoutRef.current.delete(convId);
+    }, 3000);
+    sseTimeoutRef.current.set(convId, sseActivityTimeout);
 
     try {
       const res = await fetch('/api/chat', {
@@ -1071,6 +1116,7 @@ export default function AppPage() {
           messages: historyMessages.map(m => ({ role: m.role, content: m.content })),
           conversationId: convId,
           assistantMessageId: assistantId,
+          jobId: pregenJobId,
           model: selectedModel,
         }),
         signal: abortController.signal,
@@ -1347,6 +1393,17 @@ export default function AppPage() {
               throw new Error(json.message);
             } else if (json.delta) {
               const delta = json.delta;
+              if (!sseDeliveredContent) {
+                // First delta proves SSE is not buffered. Cancel the timeout that
+                // would have handed control back to polling, so polling keeps
+                // deferring to SSE for the rest of this request.
+                const t = sseTimeoutRef.current.get(convId);
+                if (t) {
+                  clearTimeout(t);
+                  sseTimeoutRef.current.delete(convId);
+                }
+              }
+              sseDeliveredContent = true;
               const targetId = currentAssistantId;
               setConversations(prev =>
                 prev.map(c =>
@@ -1372,48 +1429,73 @@ export default function AppPage() {
       streamFinished = true;
     } catch (err) {
       if ((err as Error).name === 'AbortError') {
-        keepBackgroundJob = !!currentJobId;
-        if (currentJobId) {
-          prepareBackgroundReplay();
-          scheduleBackgroundPoll(convId, currentJobId, 0);
-        }
+        // SSE was aborted — polling (already running) will continue delivering updates
+        keepBackgroundJob = true;
       } else {
         const errText = `Something went wrong: ${(err as Error).message}`;
-        keepBackgroundJob = !!currentJobId && !streamFinished;
-        if (keepBackgroundJob && currentJobId) {
-          prepareBackgroundReplay();
-          scheduleBackgroundPoll(convId, currentJobId, 0);
+        // If we never got any content at all via SSE, show the error in the message bubble.
+        // If polling is already delivering content, leave it alone.
+        if (!sseDeliveredContent) {
+          const targetId = currentAssistantId;
+          setConversations(prev =>
+            prev.map(c =>
+              c.id === convId
+                ? {
+                    ...c,
+                    messages: c.messages.map(m =>
+                      m.id === targetId
+                        ? { ...m, content: errText }
+                        : m,
+                    ),
+                  }
+                : c,
+            ),
+          );
         }
-        const targetId = currentAssistantId;
-        setConversations(prev =>
-          prev.map(c =>
-            c.id === convId
-              ? {
-                  ...c,
-                  messages: c.messages.map(m =>
-                    m.id === targetId
-                      ? { ...m, content: errText }
-                      : m,
-                  ),
-                }
-              : c,
-          ),
-        );
+        keepBackgroundJob = true;
       }
     } finally {
       abortControllerRef.current = null;
-      setLoading(false);
+      // Always unmark SSE as active for this conversation and cancel the
+      // timeout — either SSE finished naturally or it errored/aborted.
+      activeSseFetchRef.current.delete(convId);
+      const t = sseTimeoutRef.current.get(convId);
+      if (t) {
+        clearTimeout(t);
+        sseTimeoutRef.current.delete(convId);
+      }
+      // Polling owns the loading state and will call setLoading(false) when
+      // it sees the "done" event. But if SSE finished cleanly AND streaming
+      // ended with a [DONE] marker, stop polling ourselves right away.
       if (streamFinished && !keepBackgroundJob) {
+        stopBackgroundPoll(convId);
+        setLoading(false);
         setConversations(prev => prev.map(c =>
           c.id === convId ? { ...c, activeJobId: null } : c,
         ));
+        refreshConversationMessages(convId);
       }
     }
   }, [activeId, conversations, loading, selectedModel]);
 
   function stopGeneration() {
+    // Abort the SSE fetch (if still in progress)
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    // Stop background polling for the active conversation
+    if (activeId) {
+      stopBackgroundPoll(activeId);
+      // Clear the SSE-active marker and any pending timeout
+      activeSseFetchRef.current.delete(activeId);
+      const t = sseTimeoutRef.current.get(activeId);
+      if (t) {
+        clearTimeout(t);
+        sseTimeoutRef.current.delete(activeId);
+      }
+      setConversations(prev => prev.map(c =>
+        c.id === activeId ? { ...c, activeJobId: null } : c,
+      ));
+    }
     setLoading(false);
   }
 
