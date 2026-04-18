@@ -16,13 +16,14 @@ type GitHubUser = {
 
 type Status =
   | { type: 'idle' }
-  | { type: 'loading' }
+  | { type: 'checking' }   // silently checking existing connection — no overlay
+  | { type: 'loading' }    // user started device flow — shows overlay
   | { type: 'pending'; deviceCode: string; userCode: string; verificationUri: string; interval: number }
   | { type: 'connected'; user: GitHubUser }
   | { type: 'error'; message: string };
 
 export function GitHubConnect() {
-  const [status, setStatus] = useState<Status>({ type: 'loading' });
+  const [status, setStatus] = useState<Status>({ type: 'checking' });
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -119,6 +120,7 @@ export function GitHubConnect() {
     setStatus({ type: 'idle' });
   }
 
+  // 'checking' is the silent initial load — never block the UI with an overlay for it
   const showOverlay = status.type === 'pending' || status.type === 'error' || status.type === 'loading';
 
   return (
@@ -162,7 +164,7 @@ export function GitHubConnect() {
         : (
             <button
               onClick={startDeviceFlow}
-              disabled={status.type === 'loading'}
+              disabled={status.type === 'loading' || status.type === 'checking'}
               className="flex w-full items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 transition-colors hover:border-gray-400 dark:hover:border-gray-500 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50"
               style={{ backgroundColor: 'var(--bg-card)' }}
             >
