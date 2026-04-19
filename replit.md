@@ -15,9 +15,9 @@ An open-source platform for AI background software engineering agents. The landi
 
 ## Replit Configuration
 - **Port**: 5000, bound to `0.0.0.0` (required for Replit preview)
-- **Workflow**: "Start application" runs `npm run start` (pre-built production server on port 5000)
-  - Server starts in ~620ms; all pages load instantly (~80ms) because they are pre-compiled
-  - After any code change, run `npm run build` once and restart the workflow to apply changes
+- **Workflow**: "Start application" runs `npm run dev` on port 5000 with host `0.0.0.0`
+  - The development server is used for Replit preview compatibility during active building
+  - After any code or dependency change, restart the workflow to apply changes
 - **Preview compatibility**: `next.config.ts` allows Replit dev origins including the current `REPLIT_DEV_DOMAIN` so proxied `_next` assets load correctly.
 - **Hydration compatibility**: theme preference is applied after client mount via `src/components/ThemeInitializer.tsx`, avoiding server/client HTML attribute mismatches in the Replit preview.
 - **Auth**: Better Auth with GitHub OAuth — replaces Clerk. Session cookie: `better-auth.session_token`
@@ -74,14 +74,14 @@ An open-source platform for AI background software engineering agents. The landi
 
 ## Development
 ```bash
-npm run build        # Build for production (required after any code change)
-npm run start        # Serve pre-built app on port 5000 (used by workflow)
-npm run dev          # Dev server with Turbopack (first page load ~5s, not used by default workflow)
+npm run build        # Build for production
+npm run start        # Serve pre-built app on port 5000
+npm run dev          # Dev server with Turbopack on port 5000 (used by workflow)
 npm run db:generate  # Generate Drizzle migrations
 npm run db:studio    # Open Drizzle Studio
 ```
 
-> **After changing code**: run `npm run build`, then restart the "Start application" workflow.
+> **After changing code**: restart the "Start application" workflow.
 
 ## Replit Installation (for new sessions)
 
