@@ -47,7 +47,8 @@ An open-source platform for AI background software engineering agents. The landi
 - `src/libs/Env.ts` — Environment variable validation
 
 ## Design Constants
-- Background: `#f7f6f2`
+- Landing page direction: ampcode.com-inspired editorial layout with pale grid background, oversized serif typography, thin divider lines, compact black CTAs, and terminal-style dark visual panels while preserving existing ONA copy
+- Background: `#e4e4cb`
 - Serif font: `Georgia, "Times New Roman", serif`
 - Dark navy (announcement bar): `#18182a`
 - Agent avatar gradient: `linear-gradient(135deg,#7b68ee,#9370db)`

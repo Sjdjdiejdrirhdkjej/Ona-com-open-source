@@ -30,7 +30,7 @@ export function MobileMenu() {
       <button
         onClick={() => setOpen(prev => !prev)}
         aria-label="Toggle menu"
-        className="flex size-9 items-center justify-center rounded-md text-gray-700 dark:text-gray-300 transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+        className="flex size-9 items-center justify-center rounded-[4px] text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
       >
         {open
           ? (
@@ -47,7 +47,7 @@ export function MobileMenu() {
 
       {open && (
         <div
-          className="absolute left-0 right-0 top-14 z-40 border-b border-gray-200 dark:border-gray-800 px-5 pb-5 pt-4 shadow-sm"
+          className="amp-grid absolute left-0 right-0 top-14 z-40 border-b border-black/8 px-5 pb-5 pt-4 shadow-sm dark:border-white/10"
           style={{ backgroundColor: 'var(--bg-header)' }}
         >
           <nav>
@@ -57,7 +57,7 @@ export function MobileMenu() {
                   <Link
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="block rounded-md px-3 py-2.5 text-base font-medium text-gray-700 dark:text-gray-300 transition-colors hover:bg-black/5 dark:hover:bg-white/8"
+                    className="block rounded-[4px] px-3 py-2.5 text-base font-medium text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
                   >
                     {link.label}
                   </Link>
@@ -65,13 +65,13 @@ export function MobileMenu() {
               ))}
             </ul>
 
-            <div className="mt-4 flex flex-col gap-2 border-t border-gray-200 dark:border-gray-800 pt-4">
+            <div className="mt-4 flex flex-col gap-2 border-t border-black/8 pt-4 dark:border-white/10">
               <a
                 href={loginHref}
                 target="_top"
                 rel="noreferrer"
                 onClick={() => setOpen(false)}
-                className="rounded-md bg-gray-950 dark:bg-gray-100 dark:text-gray-900 px-3 py-2.5 text-center text-base font-medium text-white transition-opacity hover:opacity-80"
+                className="rounded-[4px] bg-gray-950 px-3 py-2.5 text-center text-base font-medium text-white transition-opacity hover:opacity-80 dark:bg-gray-100 dark:text-gray-900"
               >
                 Get Started
               </a>

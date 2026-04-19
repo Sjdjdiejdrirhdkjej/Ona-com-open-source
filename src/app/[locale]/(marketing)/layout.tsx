@@ -21,32 +21,32 @@ export default async function Layout(props: {
       leftNav={(
         <>
           <li>
-            <Link href="/about/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/about/" className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5">
               Platform
             </Link>
           </li>
           <li>
-            <Link href="/portfolio/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/portfolio/" className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5">
               Use cases
             </Link>
           </li>
           <li>
-            <Link href="/about/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/about/" className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5">
               Resources
             </Link>
           </li>
           <li>
-            <Link href="/about/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/about/" className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5">
               Blog
             </Link>
           </li>
           <li>
-            <Link href="/about/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/about/" className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5">
               Docs
             </Link>
           </li>
           <li>
-            <Link href="/about/" className="rounded-md px-3 py-1.5 transition-colors hover:bg-black/5">
+            <Link href="/about/" className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5">
               Pricing
             </Link>
           </li>
@@ -58,7 +58,7 @@ export default async function Layout(props: {
             href={loginHref}
             target="_top"
             rel="noreferrer"
-            className="rounded-md border border-gray-900 px-3 py-1.5 text-gray-900 transition-colors hover:bg-gray-900 hover:text-white"
+            className="rounded-[4px] bg-neutral-950 px-3 py-1.5 text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Get Started
           </a>

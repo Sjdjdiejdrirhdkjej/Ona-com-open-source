@@ -35,18 +35,24 @@ export const BaseTemplate = (props: {
     <div className="min-h-screen antialiased" style={{ backgroundColor: 'var(--bg)', color: 'var(--text,#111)' }}>
       <header
         className="fixed left-0 right-0 top-0 z-50 border-b border-black/8 dark:border-white/8"
-        style={{ backgroundColor: 'var(--bg-header)', backdropFilter: 'blur(14px)' }}
+        style={{
+          backgroundColor: 'var(--bg-header)',
+          backdropFilter: 'blur(14px)',
+          backgroundImage:
+            'linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)',
+          backgroundSize: '92px 92px',
+        }}
       >
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between border-x border-black/8 px-6 dark:border-white/10 sm:px-8">
           <Link href="/" className="flex-shrink-0">
-            <span className="text-lg font-bold tracking-tight text-gray-950 dark:text-gray-50">
+            <span className="text-lg font-semibold italic tracking-[-0.08em] text-gray-950 dark:text-gray-50">
               {AppConfig.name}
             </span>
           </Link>
 
           {/* Desktop nav */}
           <nav aria-label="Main navigation" className="hidden md:flex">
-            <ul className="flex items-center gap-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <ul className="flex items-center gap-1 text-sm font-medium text-neutral-800 dark:text-neutral-300">
               {props.leftNav}
             </ul>
           </nav>
@@ -67,11 +73,8 @@ export const BaseTemplate = (props: {
 
       <main className="pt-14">{props.children}</main>
 
-      <footer
-        className="border-t border-gray-200 dark:border-gray-800 px-4 pt-12 sm:px-6"
-        style={{ backgroundColor: 'var(--bg)' }}
-      >
-        <div className="mx-auto max-w-6xl">
+      <footer className="amp-grid border-t border-black/8 px-6 pt-12 dark:border-white/10 sm:px-8">
+        <div className="mx-auto max-w-7xl border-x border-black/8 dark:border-white/10">
           <div className="mb-10 grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-5">
             {footerLinks.map(col => (
               <div key={col.heading}>

@@ -6,14 +6,14 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --bg: #f7f6f2;
-  --bg-2: #eceae4;
-  --bg-3: #e5e4e0;
-  --bg-sidebar: #edecea;
-  --bg-header: rgba(247,246,242,0.88);
-  --bg-card: rgba(255,255,255,0.92);
+  --bg: #e4e4cb;
+  --bg-2: #d7d7be;
+  --bg-3: #cacaaf;
+  --bg-sidebar: #dcdcc3;
+  --bg-header: rgba(228, 228, 203, 0.88);
+  --bg-card: rgba(244, 244, 223, 0.92);
   --bg-input: #fff;
-  --bg-logo: #d1cfc9;
+  --bg-logo: #c2c2a7;
   color-scheme: light;
 }
 
@@ -32,6 +32,20 @@
 html,
 body {
   background-color: var(--bg);
+}
+
+.amp-grid {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+  background-size: 92px 92px;
+}
+
+.dark .amp-grid {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
 }
 
 html {

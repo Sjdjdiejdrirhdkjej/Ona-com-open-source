@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
@@ -15,329 +16,266 @@ export async function generateMetadata(props: IIndexProps) {
 }
 
 const SERIF = 'Georgia, "Times New Roman", serif';
+const MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
+
+const featureCards = [
+  {
+    tag: 'Background agents',
+    title: 'Task in, pull request out.',
+    body: 'ONA but OPEN SOURCE executes end-to-end in the background. Keep momentum from any device.',
+    cta: 'See how agents work',
+  },
+  {
+    tag: 'Automations',
+    title: 'Agent fleets at scale.',
+    body: 'Triggered across your codebase with repeatable workflows that run on PRs, schedules, or webhooks.',
+    cta: 'Explore automations',
+  },
+  {
+    tag: 'Connected environments',
+    title: 'More than a sandbox.',
+    body: 'Each agent gets a full cloud environment with your tools, network access, and permissions.',
+    cta: 'Explore environments',
+  },
+  {
+    tag: 'Governance with guarantees',
+    title: 'Runs in your VPC.',
+    body: 'Complete network control. Audit trails, scoped credentials, and kernel-level policy enforcement.',
+    cta: 'Learn about governance',
+  },
+];
+
+const useCases = [
+  {
+    title: 'Code migration & modernization',
+    body: 'Migrate hundreds of repos in parallel — COBOL, Java & framework upgrades, CI pipelines. ONA but OPEN SOURCE does the work. You review the PRs.',
+    cta: 'Learn more about code migration',
+  },
+  {
+    title: 'AI code review',
+    body: "ONA but OPEN SOURCE doesn't just scan patterns — it compiles, runs tests, and reviews in a real environment.",
+    cta: 'Learn more about code review',
+  },
+  {
+    title: 'Automated CVE remediation',
+    body: 'Remediates what your scanner finds — across hundreds of repos, in isolated environments. Tested, with PRs ready for review.',
+    cta: 'Learn more about CVE remediation',
+  },
+];
+
+const blogPosts = [
+  {
+    tag: 'Security',
+    date: 'March 3, 2026',
+    author: 'Leonardo Di Donato',
+    title: 'How Claude Code escapes its own denylist and sandbox',
+    body: "The adversary can reason now, and our security tools weren't built for that.",
+  },
+  {
+    tag: 'AI',
+    date: 'February 19, 2026',
+    author: 'Johannes Landgraf',
+    title: 'ONA but OPEN SOURCE Automations: proactive background agents',
+    body: 'Background agents that write, test, and ship code on a schedule.',
+  },
+  {
+    tag: 'AI',
+    date: 'February 13, 2026',
+    author: 'Johannes Landgraf',
+    title: 'The last year of localhost',
+    body: "The companies winning with background agents didn't start with better models.",
+  },
+];
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="mb-5 text-[11px] uppercase tracking-[0.28em] text-neutral-800 dark:text-neutral-300" style={{ fontFamily: MONO }}>
+      {children}
+    </p>
+  );
+}
+
+function ArrowLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-2 text-sm font-medium text-neutral-950 transition-opacity hover:opacity-70 dark:text-neutral-100">
+      {children}
+      <span>→</span>
+    </Link>
+  );
+}
 
 export default async function Index(props: IIndexProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
   return (
-    <div style={{ backgroundColor: 'var(--bg)' }}>
-
-      {/* ── HERO ─────────────────────────────────────────── */}
-      <section className="flex flex-col items-center px-4 pb-0 pt-14 text-center sm:px-6 sm:pt-20">
-        <h1
-          className="max-w-3xl text-4xl leading-tight text-gray-950 dark:text-gray-50 sm:text-5xl md:text-6xl lg:text-7xl"
-          style={{ fontFamily: SERIF, fontWeight: 400 }}
-        >
-          The platform for
-          <br />
-          background agents
-        </h1>
-        <p className="mt-5 max-w-md text-base leading-relaxed text-gray-500 dark:text-gray-400 sm:mt-6 sm:max-w-lg sm:text-lg">
-          Run a team of AI software engineers in the cloud.
-          <br className="hidden sm:block" />
-          {' '}
-          Orchestrated, governed, secured at the kernel.
-        </p>
-        <div className="mt-6 flex w-full flex-col items-center gap-3 sm:mt-8 sm:w-auto sm:flex-row">
-          <Link
-            href="/app"
-            className="w-full rounded-md bg-gray-950 dark:bg-gray-100 dark:text-gray-900 px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80 sm:w-auto sm:px-5 sm:py-2.5"
+    <div className="amp-grid min-h-screen text-neutral-950 dark:text-neutral-100">
+      <section className="mx-auto grid min-h-[calc(100vh-3.5rem)] max-w-7xl grid-cols-1 border-x border-black/8 px-6 pb-12 pt-16 dark:border-white/10 sm:px-8 md:grid-cols-12 md:items-center md:gap-8 md:pt-10">
+        <div className="md:col-span-8 md:col-start-4">
+          <h1
+            className="max-w-5xl text-[clamp(3.8rem,9vw,9rem)] leading-[0.82] tracking-[-0.075em] text-neutral-950 dark:text-neutral-50"
+            style={{ fontFamily: SERIF, fontWeight: 400 }}
           >
-            Start for free
-          </Link>
-          <Link
-            href="/about/"
-            className="w-full rounded-md border border-gray-300 dark:border-gray-700 px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors hover:border-gray-500 dark:hover:border-gray-500 sm:w-auto sm:px-5 sm:py-2.5"
-          >
-            Request a demo
-          </Link>
+            <span className="block italic tracking-[-0.085em]">The platform for</span>
+            <span className="block">background agents</span>
+          </h1>
+          <div className="mt-10 grid gap-7 md:grid-cols-[minmax(0,26rem)_auto] md:items-start">
+            <p className="max-w-xl text-xl leading-snug tracking-[-0.03em] text-neutral-900 dark:text-neutral-200 sm:text-2xl">
+              Run a team of AI software engineers in the cloud.
+              <br className="hidden sm:block" />
+              {' '}
+              Orchestrated, governed, secured at the kernel.
+            </p>
+            <div className="flex flex-col items-start gap-3 sm:flex-row md:pt-1">
+              <Link
+                href="/app"
+                className="inline-flex rounded-[4px] bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
+              >
+                Start for free
+              </Link>
+              <Link
+                href="/about/"
+                className="inline-flex rounded-[4px] border border-black/20 px-5 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:border-black/60 dark:border-white/25 dark:text-neutral-100 dark:hover:border-white/70"
+              >
+                Request a demo
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── GRADIENT VISUAL ──────────────────────────────── */}
-      <section className="mx-auto mt-10 max-w-6xl px-4 sm:mt-14 sm:px-6">
-        <div
-          className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl"
-          style={{ minHeight: '300px', height: 'clamp(300px, 50vw, 520px)' }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(135deg,#c8d8f0 0%,#d4c8e8 30%,#e8d0c0 60%,#f0dcc8 100%)',
-            }}
-          />
-          <div
-            className="absolute"
-            style={{
-              top: '5%', left: '10%', width: '45%', height: '65%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle,rgba(100,140,210,0.45) 0%,rgba(100,140,210,0.1) 55%,transparent 70%)',
-            }}
-          />
-          <div
-            className="absolute"
-            style={{
-              top: '15%', right: '5%', width: '40%', height: '55%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle,rgba(200,145,110,0.4) 0%,rgba(200,145,110,0.08) 55%,transparent 70%)',
-            }}
-          />
-          <div
-            className="absolute"
-            style={{
-              bottom: '5%', left: '28%', width: '35%', height: '45%',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle,rgba(150,120,195,0.35) 0%,rgba(150,120,195,0.07) 55%,transparent 70%)',
-            }}
-          />
-
-          <div className="absolute bottom-6 left-1/2 w-[min(18rem,calc(100%-2rem))] -translate-x-1/2 space-y-2 sm:bottom-10 sm:w-80">
-            {[
-              { color: '#4ade80', label: 'Weekly digest', sub: 'Identify files with most change...' },
-              { color: '#fb923c', label: 'Implement prompts API', sub: 'Working...' },
-              { color: '#fb923c', label: 'Add command palette', sub: 'Queued' },
-            ].map(item => (
-              <div
-                key={item.label}
-                className="flex items-start gap-3 rounded-xl px-3 py-2.5 sm:px-4 sm:py-3"
-                style={{ backgroundColor: 'rgba(255,255,255,0.95)' }}
-              >
-                <span
-                  className="mt-1.5 size-2 flex-shrink-0 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <div className="min-w-0 text-left">
-                  <p className="truncate text-sm font-semibold text-gray-900">{item.label}</p>
-                  <p className="truncate text-xs text-gray-500">{item.sub}</p>
-                </div>
+      <section className="mx-auto grid max-w-7xl grid-cols-1 border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8 lg:grid-cols-12 lg:gap-8">
+        <div className="lg:col-span-3">
+          <SectionLabel>Background Agents virtual summit. RSVP now</SectionLabel>
+          <h2 className="max-w-xs text-4xl leading-[0.9] tracking-[-0.06em] sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            The AI engineering workforce.
+          </h2>
+        </div>
+        <div className="mt-10 lg:col-span-6 lg:mt-0">
+          <div className="relative min-h-[360px] overflow-hidden bg-[#20211f] p-5 text-[#d8d6b8] shadow-[0_20px_80px_rgba(0,0,0,0.18)] sm:min-h-[460px] sm:p-8">
+            <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'radial-gradient(circle at center, rgba(18,180,95,0.8) 0 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
+            <div className="relative grid min-h-[300px] place-items-center sm:min-h-[380px]">
+              <pre className="select-none text-center text-[10px] leading-[1.05] text-emerald-500/80 sm:text-xs" style={{ fontFamily: MONO }}>
+                {`           ..............           
+       ....::::::::::::....       
+    ...:::::----------:::::...    
+  ..::::----++++++++----::::..  
+ ..:::---+++++****+++++---:::.. 
+ ..:::---+++++****+++++---:::.. 
+  ..::::----++++++++----::::..  
+    ...:::::----------:::::...    
+       ....::::::::::::....       
+           ..............           `}
+              </pre>
+              <div className="absolute right-6 top-8 space-y-8 text-xs sm:right-10 sm:top-16" style={{ fontFamily: MONO }}>
+                <p><span className="text-emerald-400">Weekly digest</span></p>
+                <p className="text-neutral-500">Implement prompts API</p>
+                <p className="text-neutral-500">Add command palette</p>
               </div>
+              <div className="absolute bottom-5 left-3 right-3 border border-[#d8d6b8]/70 bg-[#20211f]/95 p-3 sm:bottom-8 sm:left-5 sm:right-5 sm:p-4">
+                <p className="text-xs text-emerald-400" style={{ fontFamily: MONO }}>Background agents</p>
+                <p className="mt-1 text-sm text-[#f0efd9] sm:text-base" style={{ fontFamily: MONO }}>Task in, pull request out.</p>
+                <p className="mt-5 text-right text-xs text-[#d8d6b8]/60" style={{ fontFamily: MONO }}>27% of 168k</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-10 flex flex-col justify-center lg:col-span-3 lg:mt-0">
+          <SectionLabel>Start for free</SectionLabel>
+          <p className="max-w-sm text-base leading-relaxed text-neutral-700 dark:text-neutral-300">
+            Set the direction. ONA but OPEN SOURCE runs the execution. Continuously and autonomously.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {['Since 2025', 'Since 2024', 'Since 2026', 'Since 2024', 'Since 2023', 'Since 2024'].map((label, index) => (
+              <span key={`${label}-${index}`} className="border border-black/12 px-3 py-1.5 text-xs text-neutral-600 dark:border-white/15 dark:text-neutral-400" style={{ fontFamily: MONO }}>
+                {label}
+              </span>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── ANNOUNCEMENT BANNER ───────────────────────────── */}
-      <div className="flex justify-center px-4 pb-4 pt-6 sm:px-6 sm:pt-8">
-        <div
-          className="flex cursor-pointer items-center gap-2 rounded-full px-4 py-2.5 text-xs text-white transition-opacity hover:opacity-90 sm:gap-3 sm:px-5 sm:py-3 sm:text-sm"
-          style={{ backgroundColor: '#18182a' }}
-        >
-          <span
-            className="size-4 flex-shrink-0 rounded-full sm:size-5"
-            style={{ background: 'linear-gradient(135deg,#7b68ee,#9370db)' }}
-          />
-          <span>Background Agents virtual summit. RSVP now</span>
-          <span className="font-medium">→</span>
-        </div>
-      </div>
-
-      {/* ── CUSTOMER LOGOS ───────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
-          {['Since 2025', 'Since 2024', 'Since 2026', 'Since 2024', 'Since 2023', 'Since 2024'].map(
-            (label, i) => (
-              <div key={i} className="flex flex-col items-center gap-1">
-                <div
-                  className="h-5 w-20 rounded sm:h-6 sm:w-24"
-                  style={{ backgroundColor: 'var(--bg-logo)' }}
-                />
-                <span className="text-xs text-gray-400 dark:text-gray-500">{label}</span>
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+        <div className="grid border border-black/8 bg-black/8 dark:border-white/10 dark:bg-white/10 md:grid-cols-2">
+          {featureCards.map(item => (
+            <div key={item.tag} className="min-h-72 border-black/8 bg-[var(--bg)] p-6 dark:border-white/10 sm:p-8 md:border-r md:border-b md:even:border-r-0">
+              <p className="mb-12 text-[11px] uppercase tracking-[0.28em] text-neutral-600 dark:text-neutral-400" style={{ fontFamily: MONO }}>
+                {item.tag}
+              </p>
+              <h3 className="max-w-sm text-4xl leading-[0.9] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                {item.title}
+              </h3>
+              <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{item.body}</p>
+              <div className="mt-8">
+                <ArrowLink href="/about/">{item.cta}</ArrowLink>
               </div>
-            ),
-          )}
-        </div>
-      </section>
-
-      {/* ── FEATURES ─────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-10 max-w-2xl sm:mb-14">
-          <h2
-            className="text-3xl leading-tight text-gray-950 dark:text-gray-50 sm:text-4xl md:text-5xl"
-            style={{ fontFamily: SERIF, fontWeight: 400 }}
-          >
-            The AI engineering workforce.
-          </h2>
-          <p className="mt-3 text-base text-gray-500 dark:text-gray-400 sm:mt-4 sm:text-lg">
-            Set the direction. ONA but OPEN SOURCE runs the execution. Continuously and autonomously.
-          </p>
-        </div>
-
-        <div
-          className="grid gap-px overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 sm:rounded-2xl md:grid-cols-2"
-          style={{ backgroundColor: 'var(--bg-3)' }}
-        >
-          {[
-            {
-              tag: 'Background agents',
-              title: 'Task in, pull request out.',
-              body: 'ONA but OPEN SOURCE executes end-to-end in the background. Keep momentum from any device.',
-              cta: 'See how agents work',
-            },
-            {
-              tag: 'Automations',
-              title: 'Agent fleets at scale.',
-              body: 'Triggered across your codebase with repeatable workflows that run on PRs, schedules, or webhooks.',
-              cta: 'Explore automations',
-            },
-            {
-              tag: 'Connected environments',
-              title: 'More than a sandbox.',
-              body: 'Each agent gets a full cloud environment with your tools, network access, and permissions.',
-              cta: 'Explore environments',
-            },
-            {
-              tag: 'Governance with guarantees',
-              title: 'Runs in your VPC.',
-              body: 'Complete network control. Audit trails, scoped credentials, and kernel-level policy enforcement.',
-              cta: 'Learn about governance',
-            },
-          ].map(item => (
-            <div
-              key={item.tag}
-              className="flex flex-col justify-between p-6 sm:p-8"
-              style={{ backgroundColor: 'var(--bg)' }}
-            >
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 sm:mb-3">
-                  {item.tag}
-                </p>
-                <h3
-                  className="mb-2 text-xl text-gray-950 dark:text-gray-50 sm:mb-3 sm:text-2xl"
-                  style={{ fontFamily: SERIF, fontWeight: 400 }}
-                >
-                  {item.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{item.body}</p>
-              </div>
-              <Link
-                href="/about/"
-                className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline sm:mt-6"
-              >
-                {item.cta}
-                {' '}
-                →
-              </Link>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── USE CASES ─────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <div
-          className="space-y-px overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 sm:rounded-2xl"
-          style={{ backgroundColor: 'var(--bg-3)' }}
-        >
-          {[
-            {
-              title: 'Code migration & modernization',
-              body: 'Migrate hundreds of repos in parallel — COBOL, Java & framework upgrades, CI pipelines. ONA but OPEN SOURCE does the work. You review the PRs.',
-              cta: 'Learn more about code migration',
-            },
-            {
-              title: 'AI code review',
-              body: "ONA but OPEN SOURCE doesn't just scan patterns — it compiles, runs tests, and reviews in a real environment.",
-              cta: 'Learn more about code review',
-            },
-            {
-              title: 'Automated CVE remediation',
-              body: 'Remediates what your scanner finds — across hundreds of repos, in isolated environments. Tested, with PRs ready for review.',
-              cta: 'Learn more about CVE remediation',
-            },
-          ].map(item => (
-            <div
-              key={item.title}
-              className="flex flex-col gap-3 p-6 sm:flex-row sm:items-start sm:justify-between sm:p-8"
-              style={{ backgroundColor: 'var(--bg)' }}
-            >
-              <div className="max-w-xl">
-                <h3
-                  className="mb-2 text-lg text-gray-950 dark:text-gray-50 sm:text-xl"
-                  style={{ fontFamily: SERIF, fontWeight: 400 }}
-                >
-                  {item.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{item.body}</p>
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+        <SectionLabel>Use cases</SectionLabel>
+        <div className="divide-y divide-black/8 border-y border-black/8 dark:divide-white/10 dark:border-white/10">
+          {useCases.map(item => (
+            <div key={item.title} className="grid gap-5 py-8 md:grid-cols-12 md:items-start">
+              <h3 className="text-3xl leading-[0.92] tracking-[-0.05em] text-neutral-950 dark:text-neutral-50 md:col-span-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                {item.title}
+              </h3>
+              <p className="max-w-2xl text-base leading-relaxed text-neutral-700 dark:text-neutral-300 md:col-span-5">{item.body}</p>
+              <div className="md:col-span-3 md:text-right">
+                <ArrowLink href="/about/">{item.cta}</ArrowLink>
               </div>
-              <Link
-                href="/about/"
-                className="flex-shrink-0 text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline sm:mt-1"
-              >
-                {item.cta}
-                {' '}
-                →
-              </Link>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── TESTIMONIAL ───────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <div
-          className="overflow-hidden rounded-xl p-6 sm:rounded-2xl sm:p-10"
-          style={{ backgroundColor: 'var(--bg-2)' }}
-        >
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-            Top 100 global company
-          </p>
-          <blockquote
-            className="mb-6 text-xl leading-relaxed text-gray-900 dark:text-gray-100 sm:mb-8 sm:text-2xl md:text-3xl"
-            style={{ fontFamily: SERIF, fontWeight: 400 }}
-          >
-            "90–95% of migration work is done by ONA but OPEN SOURCE Automations. We just have to do the final
-            push commands."
-          </blockquote>
-          <Link href="/about/" className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:underline">
-            Read more customer stories →
-          </Link>
-
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:mt-10 sm:grid-cols-3 sm:gap-6">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+        <div className="grid gap-8 bg-[#20211f] p-6 text-[#f0efd9] sm:p-10 lg:grid-cols-12">
+          <div className="lg:col-span-7">
+            <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-[#d8d6b8]/60" style={{ fontFamily: MONO }}>
+              Top 100 global company
+            </p>
+            <blockquote className="text-4xl leading-[0.95] tracking-[-0.06em] sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              "90–95% of migration work is done by ONA but OPEN SOURCE Automations. We just have to do the final push commands."
+            </blockquote>
+            <div className="mt-8">
+              <Link href="/about/" className="text-sm font-medium text-[#f0efd9] transition-opacity hover:opacity-70">
+                Read more customer stories →
+              </Link>
+            </div>
+          </div>
+          <div className="grid gap-5 lg:col-span-5 lg:border-l lg:border-[#d8d6b8]/20 lg:pl-8">
             {[
               { stat: '4x', label: 'productivity increase' },
               { stat: '83%', label: 'of PRs co-authored by ONA but OPEN SOURCE' },
               { stat: '400+', label: 'Python repos modernized in 6 months' },
             ].map(item => (
-              <div key={item.stat} className="border-t border-gray-300 dark:border-gray-700 pt-5 sm:border-t-0 sm:pt-0 first:border-t-0 first:pt-0">
-                <p
-                  className="text-4xl text-gray-950 dark:text-gray-50 sm:text-5xl"
-                  style={{ fontFamily: SERIF, fontWeight: 400 }}
-                >
+              <div key={item.stat} className="border-t border-[#d8d6b8]/20 pt-5 first:border-t-0 first:pt-0">
+                <p className="text-6xl leading-none tracking-[-0.08em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                   {item.stat}
                 </p>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
+                <p className="mt-1 text-sm text-[#d8d6b8]/70">{item.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── ENTERPRISE ────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <div
-          className="flex flex-col gap-5 rounded-xl p-6 sm:flex-row sm:items-center sm:justify-between sm:rounded-2xl sm:p-10"
-          style={{ backgroundColor: 'var(--bg-2)' }}
-        >
-          <div>
-            <h2
-              className="text-2xl text-gray-950 dark:text-gray-50 md:text-3xl"
-              style={{ fontFamily: SERIF, fontWeight: 400 }}
-            >
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+        <div className="grid gap-8 border border-black/8 p-6 dark:border-white/10 sm:p-8 md:grid-cols-12 md:items-center">
+          <div className="md:col-span-7">
+            <h2 className="text-5xl leading-[0.9] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               Enterprise-ready.
             </h2>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-4 text-base text-neutral-700 dark:text-neutral-300">
               Compliant, certified, and trusted by Fortune 500 companies.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 md:col-span-5 md:justify-end">
             {['SOC 2', 'Fortune 500'].map(badge => (
-              <div
-                key={badge}
-                className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300"
-                style={{ backgroundColor: 'var(--bg)' }}
-              >
+              <div key={badge} className="border border-black/12 px-4 py-2 text-sm font-medium text-neutral-800 dark:border-white/15 dark:text-neutral-300" style={{ fontFamily: MONO }}>
                 {badge}
               </div>
             ))}
@@ -345,93 +283,49 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      {/* ── BLOG ──────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <h2
-          className="mb-6 text-2xl text-gray-950 dark:text-gray-50 sm:mb-8"
-          style={{ fontFamily: SERIF, fontWeight: 400 }}
-        >
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+        <h2 className="mb-8 max-w-2xl text-5xl leading-[0.9] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
           Recent highlights from our blog
         </h2>
-        <div
-          className="grid gap-px overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 sm:rounded-2xl md:grid-cols-3"
-          style={{ backgroundColor: 'var(--bg-3)' }}
-        >
-          {[
-            {
-              tag: 'Security',
-              date: 'March 3, 2026',
-              author: 'Leonardo Di Donato',
-              title: 'How Claude Code escapes its own denylist and sandbox',
-              body: "The adversary can reason now, and our security tools weren't built for that.",
-            },
-            {
-              tag: 'AI',
-              date: 'February 19, 2026',
-              author: 'Johannes Landgraf',
-              title: 'ONA but OPEN SOURCE Automations: proactive background agents',
-              body: 'Background agents that write, test, and ship code on a schedule.',
-            },
-            {
-              tag: 'AI',
-              date: 'February 13, 2026',
-              author: 'Johannes Landgraf',
-              title: 'The last year of localhost',
-              body: "The companies winning with background agents didn't start with better models.",
-            },
-          ].map(post => (
-            <Link
-              key={post.title}
-              href="/about/"
-              className="flex flex-col justify-between p-6 transition-opacity hover:opacity-75 sm:p-8"
-              style={{ backgroundColor: 'var(--bg)' }}
-            >
+        <div className="grid border border-black/8 dark:border-white/10 md:grid-cols-3">
+          {blogPosts.map(post => (
+            <Link key={post.title} href="/about/" className="flex min-h-80 flex-col justify-between border-b border-black/8 p-6 transition-colors hover:bg-black/[0.03] dark:border-white/10 dark:hover:bg-white/[0.04] md:border-b-0 md:border-r md:last:border-r-0 sm:p-8">
               <div>
-                <div className="mb-3 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 sm:mb-4">
-                  <span className="rounded-full border border-gray-200 dark:border-gray-700 px-2.5 py-0.5 font-medium">
-                    {post.tag}
-                  </span>
+                <div className="mb-10 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-neutral-500 dark:text-neutral-400" style={{ fontFamily: MONO }}>
+                  <span>{post.tag}</span>
                   <span>{post.date}</span>
                 </div>
-                <h3
-                  className="mb-2 text-base leading-snug text-gray-950 dark:text-gray-50 sm:text-lg"
-                  style={{ fontFamily: SERIF, fontWeight: 400 }}
-                >
+                <h3 className="text-3xl leading-[0.92] tracking-[-0.05em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                   {post.title}
                 </h3>
-                <p className="text-sm leading-relaxed text-gray-500 dark:text-gray-400">{post.body}</p>
+                <p className="mt-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{post.body}</p>
               </div>
-              <p className="mt-5 text-xs text-gray-400 dark:text-gray-500 sm:mt-6">{post.author}</p>
+              <p className="mt-8 text-xs text-neutral-500 dark:text-neutral-400" style={{ fontFamily: MONO }}>{post.author}</p>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* ── FINAL CTA ─────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 py-12 text-center sm:px-6 sm:py-16">
-        <h2
-          className="mb-2 text-3xl text-gray-950 dark:text-gray-50 sm:text-4xl md:text-5xl"
-          style={{ fontFamily: SERIF, fontWeight: 400 }}
-        >
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-20 text-center dark:border-white/10 sm:px-8">
+        <h2 className="mx-auto max-w-4xl text-[clamp(3.6rem,10vw,8.5rem)] leading-[0.78] tracking-[-0.08em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
           Start shipping with ONA but OPEN SOURCE
         </h2>
-        <p className="mb-6 text-gray-500 dark:text-gray-400 sm:mb-8">No commitment. No setup. Just start.</p>
-        <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:flex-row sm:justify-center">
+        <p className="mx-auto mt-8 max-w-md text-lg text-neutral-700 dark:text-neutral-300">No commitment. No setup. Just start.</p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             href="/app"
-            className="w-full rounded-md bg-gray-950 dark:bg-gray-100 dark:text-gray-900 px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-80 sm:w-auto sm:px-5 sm:py-2.5"
+            className="inline-flex rounded-[4px] bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Start for free
           </Link>
           <Link
             href="/about/"
-            className="w-full rounded-md border border-gray-300 dark:border-gray-700 px-6 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors hover:border-gray-500 dark:hover:border-gray-500 sm:w-auto sm:px-5 sm:py-2.5"
+            className="inline-flex rounded-[4px] border border-black/20 px-5 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:border-black/60 dark:border-white/25 dark:text-neutral-100 dark:hover:border-white/70"
           >
             Request a demo
           </Link>
         </div>
       </section>
-
     </div>
   );
 }
