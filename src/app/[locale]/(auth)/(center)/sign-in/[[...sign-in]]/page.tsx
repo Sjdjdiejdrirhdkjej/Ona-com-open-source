@@ -76,6 +76,7 @@ export default async function SignInPage(props: ISignInPageProps) {
         href={retryHref}
         returnTo={returnTo}
         label={errorMessage ? 'Try again' : 'Continue with Replit'}
+        showContinue={!!errorMessage}
       />
     </div>
   );

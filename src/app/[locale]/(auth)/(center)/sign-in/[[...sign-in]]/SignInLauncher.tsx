@@ -7,6 +7,7 @@ type SignInLauncherProps = {
   href: string;
   label: string;
   returnTo: string;
+  showContinue?: boolean;
 };
 
 type SignInStatus = 'idle' | 'waiting' | 'blocked' | 'timeout' | 'checking';
@@ -14,7 +15,7 @@ type SignInStatus = 'idle' | 'waiting' | 'blocked' | 'timeout' | 'checking';
 const MAX_SESSION_CHECKS = 45;
 const SESSION_CHECK_INTERVAL_MS = 2000;
 
-export function SignInLauncher({ href, label, returnTo }: SignInLauncherProps) {
+export function SignInLauncher({ href, label, returnTo, showContinue = false }: SignInLauncherProps) {
   const [status, setStatus] = useState<SignInStatus>('idle');
   const [attempts, setAttempts] = useState(0);
   const attemptsRef = useRef(0);
@@ -170,35 +171,39 @@ export function SignInLauncher({ href, label, returnTo }: SignInLauncherProps) {
         {progressText}
       </p>
 
-      {(status === 'blocked' || status === 'timeout') && (
+      {(status === 'blocked' || status === 'timeout' || showContinue) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
-          <a
-            href={href}
-            target="_blank"
-            onClick={startWaiting}
-            style={{ color: '#18182a', fontSize: '14px', fontWeight: 600 }}
-          >
-            Open Replit sign-in
-          </a>
-          <button
-            type="button"
-            onClick={() => {
-              setStatus('checking');
-              void checkSession(false);
-            }}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              color: '#18182a',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-              padding: 0,
-              textDecoration: 'underline',
-            }}
-          >
-            I finished sign-in
-          </button>
+          {(status === 'blocked' || status === 'timeout') && (
+            <>
+              <a
+                href={href}
+                target="_blank"
+                onClick={startWaiting}
+                style={{ color: '#18182a', fontSize: '14px', fontWeight: 600 }}
+              >
+                Open Replit sign-in
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setStatus('checking');
+                  void checkSession(false);
+                }}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#18182a',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  padding: 0,
+                  textDecoration: 'underline',
+                }}
+              >
+                I finished sign-in
+              </button>
+            </>
+          )}
           <a href={returnTo} target="_top" style={{ color: '#18182a', fontSize: '14px', fontWeight: 600 }}>
             Continue in current tab
           </a>
