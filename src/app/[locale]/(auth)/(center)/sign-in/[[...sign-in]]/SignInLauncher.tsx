@@ -101,25 +101,6 @@ export function SignInLauncher({ errorMessage, href, label, returnTo, showContin
   }
 
   useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-
-      if (event.data?.type === 'ona-auth-complete') {
-        const nextPath = getSafeBrowserReturnPath(
-          typeof event.data.returnTo === 'string' ? event.data.returnTo : returnTo,
-          returnTo,
-        );
-        navigateTopLevel(nextPath);
-      }
-    }
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [returnTo]);
-
-  useEffect(() => {
     const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(AUTH_EVENT_CHANNEL) : null;
 
     function handleAuthComplete(nextReturnTo: string) {

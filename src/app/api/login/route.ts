@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     session.codeVerifier = codeVerifier;
     session.returnTo = returnTo;
     session.authOrigin = baseUrl;
+    session.authHandoff = request.nextUrl.searchParams.get('handoff') === '1';
     await session.save();
 
     return NextResponse.redirect(url);

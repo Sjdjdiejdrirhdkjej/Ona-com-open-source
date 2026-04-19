@@ -20,6 +20,7 @@ async function clearAuthAttempt(session: Awaited<ReturnType<typeof getSession>>)
   delete session.codeVerifier;
   delete session.returnTo;
   delete session.authOrigin;
+  delete session.authHandoff;
   await session.save();
 }
 
@@ -33,7 +34,7 @@ function escapeHtml(value: string) {
   })[char] || char);
 }
 
-function authCompleteResponse(baseUrl: string, returnTo: string) {
+function authCompleteResponse(baseUrl: string, returnTo: string, authHandoff: boolean) {
   const destination = new URL(returnTo, baseUrl).toString();
   const origin = new URL(baseUrl).origin;
   const body = `<!doctype html>
@@ -66,6 +67,7 @@ function authCompleteResponse(baseUrl: string, returnTo: string) {
     const platform = navigator.platform || '';
     const hasTouch = navigator.maxTouchPoints > 1;
     const isMobileBrowser = /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(userAgent) || (hasTouch && /Mac/i.test(platform));
+    const isHandoff = ${JSON.stringify(authHandoff)};
 
     function navigateCurrentTab() {
       try {
@@ -92,11 +94,11 @@ function authCompleteResponse(baseUrl: string, returnTo: string) {
 
     try {
       notifyWaitingTab();
-      if (!isMobileBrowser) {
+      if (!isMobileBrowser && !isHandoff) {
         window.setTimeout(navigateCurrentTab, 1500);
       }
     } catch {
-      if (!isMobileBrowser) {
+      if (!isMobileBrowser && !isHandoff) {
         window.setTimeout(navigateCurrentTab, 1500);
       }
     }
@@ -118,7 +120,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const session = await getSession();
-    const { oidcState, oidcNonce, codeVerifier, authOrigin } = session;
+    const { oidcState, oidcNonce, codeVerifier, authOrigin, authHandoff } = session;
     const baseUrl = authOrigin || requestBaseUrl;
     const returnTo = getSafeReturnPath(session.returnTo, baseUrl);
 
@@ -161,9 +163,10 @@ export async function GET(request: NextRequest) {
     delete session.codeVerifier;
     delete session.returnTo;
     delete session.authOrigin;
+    delete session.authHandoff;
     await session.save();
 
-    return authCompleteResponse(baseUrl, returnTo);
+    return authCompleteResponse(baseUrl, returnTo, !!authHandoff);
   } catch (err) {
     console.error('OIDC callback error:', err);
     const session = await getSession();

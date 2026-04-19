@@ -29,6 +29,7 @@ export type OidcSessionData = {
   codeVerifier?: string;
   returnTo?: string;
   authOrigin?: string;
+  authHandoff?: boolean;
 };
 
 const SESSION_OPTIONS = {
