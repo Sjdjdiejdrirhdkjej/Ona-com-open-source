@@ -60,6 +60,7 @@ type Conversation = {
   messages: Message[];
   createdAt: number;
   activeJobId?: string | null;
+  sandboxId?: string | null;
 };
 
 
@@ -471,7 +472,7 @@ function TodoPanel({ todos, onDismiss }: { todos: TodoItem[]; onDismiss: () => v
 }
 
 function newConversation(): Conversation {
-  return { id: createBrowserId(), title: 'New task', messages: [], createdAt: Date.now() };
+  return { id: createBrowserId(), title: 'New task', messages: [], createdAt: Date.now(), sandboxId: null };
 }
 
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -593,6 +594,7 @@ export default function AppPage() {
           title: string;
           createdAt: string;
           activeJobId: string | null;
+          sandboxId: string | null;
           messages: Array<{ id: string; role: string; content: unknown }>;
         }>;
 
@@ -602,6 +604,7 @@ export default function AppPage() {
             title: c.title,
             createdAt: new Date(c.createdAt).getTime(),
             activeJobId: c.activeJobId,
+            sandboxId: c.sandboxId,
             messages: c.messages.map(m => ({
               id: m.id,
               role: m.role as Message['role'],
@@ -811,7 +814,10 @@ export default function AppPage() {
               setSandboxBooting(false);
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const sandboxId = ev.data.sandbox_id as string | undefined;
-              if (sandboxId) setSandboxToastId(sandboxId);
+              if (sandboxId) {
+                setSandboxToastId(sandboxId);
+                setConversations(prev => prev.map(c => c.id === convId ? { ...c, sandboxId } : c));
+              }
             } else if (ev.type === 'content') {
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const text = ev.data.text as string ?? '';
@@ -907,6 +913,7 @@ export default function AppPage() {
 
   const activeConversation = conversations.find(c => c.id === activeId);
   const messages = activeConversation?.messages ?? [];
+  const activeSandboxId = activeConversation?.sandboxId;
 
   useEffect(() => { setTodos([]); }, [activeId]);
 
@@ -1475,7 +1482,10 @@ export default function AppPage() {
             } else if (json.type === 'sandbox_ready') {
               setSandboxBooting(false);
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
-              if (json.sandbox_id) setSandboxToastId(json.sandbox_id);
+              if (json.sandbox_id) {
+                setSandboxToastId(json.sandbox_id);
+                setConversations(prev => prev.map(c => c.id === convId ? { ...c, sandboxId: json.sandbox_id! } : c));
+              }
             } else if (json.type === 'error' && json.message) {
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               throw new Error(json.message);
@@ -1913,6 +1923,36 @@ export default function AppPage() {
         </nav>
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <GitHubConnect />
+          {activeSandboxId
+            ? (
+                <Link
+                  href={`/sandbox-modify/${activeSandboxId}`}
+                  className="flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100 sm:px-3"
+                  style={{ backgroundColor: 'var(--bg-card)' }}
+                  title="Modify VM"
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <rect x="2" y="3" width="10" height="7.5" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M5 12h4M7 10.5V12M4.5 6h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  <span className="hidden sm:inline">Modify VM</span>
+                </Link>
+              )
+            : (
+                <button
+                  type="button"
+                  disabled
+                  className="flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-400 opacity-60 dark:border-gray-700 dark:text-gray-500 sm:px-3"
+                  style={{ backgroundColor: 'var(--bg-card)' }}
+                  title="Start a task to create a VM before modifying it"
+                >
+                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <rect x="2" y="3" width="10" height="7.5" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M5 12h4M7 10.5V12M4.5 6h5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  <span className="hidden sm:inline">Modify VM</span>
+                </button>
+              )}
           <ThemeToggle />
           <UserDropdown />
           <button
