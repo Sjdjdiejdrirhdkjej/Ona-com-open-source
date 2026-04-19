@@ -80,6 +80,26 @@ export function SignInLauncher({ errorMessage, href, label, returnTo, showContin
     void checkSession(true);
   }, [checkSession]);
 
+  function startAuth() {
+    const authWindow = window.open('about:blank', 'ona-replit-auth', 'popup=yes,width=520,height=720');
+
+    if (!authWindow) {
+      setStatus('blocked');
+      return;
+    }
+
+    try {
+      authWindow.opener = null;
+      authWindow.location.replace(href);
+      authWindow.focus();
+    } catch {
+      setStatus('blocked');
+      return;
+    }
+
+    startWaiting();
+  }
+
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) {
@@ -195,11 +215,9 @@ export function SignInLauncher({ errorMessage, href, label, returnTo, showContin
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={startWaiting}
+      <button
+        type="button"
+        onClick={startAuth}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -216,7 +234,7 @@ export function SignInLauncher({ errorMessage, href, label, returnTo, showContin
         }}
       >
         {status === 'waiting' ? 'Replit sign-in is open…' : label}
-      </a>
+      </button>
 
       <p aria-live="polite" style={{ color: '#666', fontSize: '14px', lineHeight: 1.5, margin: 0, maxWidth: '380px' }}>
         {progressText}
