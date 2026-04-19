@@ -915,9 +915,11 @@ export async function POST(req: NextRequest) {
       const isFirstMessage = messages.length === 1;
       if (isFirstMessage && process.env.DAYTONA_API_KEY) {
         emit({ type: 'sandbox_booting' });
+        if (jobId) await persistJobEvent(jobId, 'sandbox_booting', {});
         const booted = await prebootSandbox();
         if (booted) {
           emit({ type: 'sandbox_ready', sandbox_id: booted.sandbox_id });
+          if (jobId) await persistJobEvent(jobId, 'sandbox_ready', { sandbox_id: booted.sandbox_id });
           if (conversationId) {
             await db.update(conversationsSchema).set({ sandboxId: booted.sandbox_id }).where(eq(conversationsSchema.id, conversationId));
           }

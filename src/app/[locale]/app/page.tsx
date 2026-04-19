@@ -519,6 +519,7 @@ export default function AppPage() {
   const [atMentionFetching, setAtMentionFetching] = useState(false);
   const [todos, setTodos] = useState<TodoItem[]>([]);
   const [sandboxBooting, setSandboxBooting] = useState(false);
+  const [initialSandboxGate, setInitialSandboxGate] = useState<{ conversationId: string } | null>(null);
   const [sandboxToastId, setSandboxToastId] = useState<string | null>(null);
   const [taskListOpen, setTaskListOpen] = useState(false);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -713,6 +714,7 @@ export default function AppPage() {
 
           for (const ev of data.events) {
             if (ev.type === 'tool_call') {
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const tools = (ev.data.tools as string[]) ?? [];
               const toolStepsMsgId = ev.data.toolStepsMsgId as string ?? crypto.randomUUID();
               const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? crypto.randomUUID();
@@ -787,7 +789,15 @@ export default function AppPage() {
               const parentLabel = ev.data.parentLabel as string;
               const report = ev.data.report as string;
               messages = applyStepUpdate(messages, s => s.label === parentLabel, s => ({ ...s, browserReport: report }));
+            } else if (ev.type === 'sandbox_booting') {
+              setSandboxBooting(true);
+            } else if (ev.type === 'sandbox_ready') {
+              setSandboxBooting(false);
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
+              const sandboxId = ev.data.sandbox_id as string | undefined;
+              if (sandboxId) setSandboxToastId(sandboxId);
             } else if (ev.type === 'content') {
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const text = ev.data.text as string ?? '';
               const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant');
               if (lastAssistant) {
@@ -1063,6 +1073,9 @@ export default function AppPage() {
           }
         : c,
     ));
+    if (isFirstMessage) {
+      setInitialSandboxGate({ conversationId: activeId });
+    }
 
     const convId = activeId;
     const convTitle = isFirstMessage ? title : currentConv.title;
@@ -1223,6 +1236,7 @@ export default function AppPage() {
                 };
               }));
             } else if (json.type === 'tool_call' && json.tools?.length) {
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const toolStepsMsgId = json.toolStepsMsgId ?? crypto.randomUUID();
               const nextAssistantMsgId = json.nextAssistantMsgId ?? crypto.randomUUID();
               currentAssistantId = nextAssistantMsgId;
@@ -1434,10 +1448,13 @@ export default function AppPage() {
               setSandboxBooting(true);
             } else if (json.type === 'sandbox_ready') {
               setSandboxBooting(false);
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               if (json.sandbox_id) setSandboxToastId(json.sandbox_id);
             } else if (json.type === 'error' && json.message) {
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               throw new Error(json.message);
             } else if (json.delta) {
+              setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const delta = json.delta;
               if (!sseDeliveredContent) {
                 // First delta proves SSE is not buffered. Cancel the timeout that
@@ -1511,6 +1528,7 @@ export default function AppPage() {
         sseTimeoutRef.current.delete(convId);
       }
       setSandboxBooting(false);
+      setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
       // Polling owns the loading state and will call setLoading(false) when
       // it sees the "done" event. But if SSE finished cleanly AND streaming
       // ended with a [DONE] marker, stop polling ourselves right away.
@@ -1527,6 +1545,7 @@ export default function AppPage() {
 
   function stopGeneration() {
     setSandboxBooting(false);
+    setInitialSandboxGate(null);
     // Abort the SSE fetch (if still in progress)
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
@@ -1682,7 +1701,9 @@ export default function AppPage() {
   }
 
   const isEmpty = messages.length === 0;
-  const canSend = !!(input.trim() || pendingImage) && !loading;
+  const waitingForInitialSandbox = initialSandboxGate?.conversationId === activeId;
+  const showEmptyPrompt = isEmpty || waitingForInitialSandbox;
+  const canSend = !!(input.trim() || pendingImage) && !loading && !waitingForInitialSandbox;
   const isBackgroundRunning = !loading && !!activeConversation?.activeJobId;
   const visibleAgentMsgs = messages.filter(m =>
     m.role === 'tool_steps' || (m.role === 'assistant' && !!m.content),
@@ -1881,7 +1902,7 @@ export default function AppPage() {
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Messages / empty state */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-            {isEmpty
+            {showEmptyPrompt
               ? (
                   <div className="flex h-full flex-col items-center justify-center px-4 py-8 sm:px-8">
                     <h1
@@ -2027,7 +2048,19 @@ export default function AppPage() {
                           className="min-h-16 sm:min-h-28 flex-1 resize-none bg-transparent py-1.5 sm:py-2 text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                           style={{ maxHeight: '180px' }}
                         />
-                        {loading ? (
+                        {waitingForInitialSandbox ? (
+                          <button
+                            type="button"
+                            disabled
+                            aria-label="Booting Daytona VM"
+                            className="flex size-9 sm:size-10 shrink-0 cursor-not-allowed items-center justify-center rounded-full bg-gray-950 text-white opacity-80"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="animate-spin">
+                              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25" />
+                              <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        ) : loading ? (
                           <button
                             onClick={stopGeneration}
                             aria-label="Stop"
@@ -2080,7 +2113,7 @@ export default function AppPage() {
           </div>
 
           {/* ── Input bar (shown only when there are messages) ── */}
-          {!isEmpty && (
+          {!showEmptyPrompt && (
             <div className="shrink-0 border-t border-gray-200 dark:border-gray-800 px-3 py-3 sm:px-6 sm:py-4">
               <div className="relative">
                 {/* @ mention file picker */}

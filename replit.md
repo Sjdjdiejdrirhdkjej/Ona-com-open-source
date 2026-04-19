@@ -52,6 +52,7 @@ An open-source platform for AI background software engineering agents. The landi
 ## Chat Interface (/app)
 - Real streaming AI responses via `src/app/api/chat/route.ts`
 - Image upload (file picker button) and paste-from-clipboard support
+- First-message sends stay on the prompt screen with a disabled spinner while Daytona pre-boots; persisted `sandbox_booting`/`sandbox_ready` events clear the gate and reveal the chat UI once the VM is ready.
 - Credits are cent-denominated: 1 credit equals 1 cent. Each successful AI provider call deducts credits from `user_credits` using `CREDITS_PER_1000_TOKENS` if set, otherwise 1 credit per 1,000 estimated tokens with a 1-credit minimum.
 - System prompt positions ONA but OPEN SOURCE as a background software engineering agent platform
 - GitHub tools support branch creation, file writes on feature branches, and pull request creation; `src/libs/GitHub.ts` prevents accidental direct writes to the default branch.
@@ -71,7 +72,7 @@ An open-source platform for AI background software engineering agents. The landi
 - `conversations` — conversation records
 - `messages` — chat messages; `role` can be `user`, `assistant`, or `tool_steps` (JSON array of ToolStep)
 - `agent_jobs` — one per `/api/chat` call; status: `running | done | error`
-- `agent_events` — sequential event log per job (tool_call, tool_start, tool_complete, tool_done, next_assistant_msg, content, error, done)
+- `agent_events` — sequential event log per job (sandbox_booting, sandbox_ready, tool_call, tool_start, tool_complete, tool_done, next_assistant_msg, content, error, done)
 
 ## Development
 ```bash
