@@ -1,13 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
+import { GetStartedLink } from '@/components/GetStartedLink';
 import { BaseTemplate } from '@/templates/BaseTemplate';
-import { AppConfig } from '@/utils/AppConfig';
-
-function getSignInHref(locale: string) {
-  const returnTo = locale === AppConfig.defaultLocale ? '/app' : `/${locale}/app`;
-  const signInPath = locale === AppConfig.defaultLocale ? '/sign-in' : `/${locale}/sign-in`;
-  return `${signInPath}?returnTo=${encodeURIComponent(returnTo)}`;
-}
 
 export default async function Layout(props: {
   children: React.ReactNode;
@@ -15,7 +9,6 @@ export default async function Layout(props: {
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  const loginHref = getSignInHref(locale);
 
   return (
     <BaseTemplate
@@ -55,14 +48,12 @@ export default async function Layout(props: {
       )}
       rightNav={(
         <>
-          <a
-            href={loginHref}
-            target="_top"
-            rel="noreferrer"
+          <GetStartedLink
             className="rounded-[4px] bg-neutral-950 px-3 py-1.5 text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
+            locale={locale}
           >
             Get Started
-          </a>
+          </GetStartedLink>
         </>
       )}
     >

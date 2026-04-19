@@ -82,6 +82,14 @@ export function getSafeBrowserReturnPath(returnTo: string | null | undefined, fa
   }
 }
 
+export function isMobileBrowser(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  return /Android|iPhone|iPad|iPod|Mobile|IEMobile|Opera Mini/i.test(navigator.userAgent || '');
+}
+
 export function navigateTopLevel(destination: string, mode: 'assign' | 'replace' = 'assign') {
   const targetUrl = new URL(destination, window.location.origin).toString();
   const navigate = mode === 'replace' ? 'replace' : 'assign';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getSafeBrowserReturnPath, navigateTopLevel } from '@/utils/browserCompat';
+import { getSafeBrowserReturnPath, isMobileBrowser, navigateTopLevel } from '@/utils/browserCompat';
 import { AppConfig } from '@/utils/AppConfig';
 
 export type SessionUser = {
@@ -49,9 +49,10 @@ function getLocalizedSignInPath(locale: string) {
 export function signIn(returnTo?: string) {
   const locale = getLocaleFromPath(returnTo || window.location.pathname);
   const safeReturnTo = getSafeBrowserReturnPath(returnTo, getLocalizedAppPath(locale));
-  const url = new URL(getLocalizedSignInPath(locale), window.location.origin);
-  url.searchParams.set('returnTo', safeReturnTo);
+  const path = isMobileBrowser() ? getLocalizedSignInPath(locale) : '/api/login';
+  const url = new URL(path, window.location.origin);
 
+  url.searchParams.set('returnTo', safeReturnTo);
   navigateTopLevel(url.toString());
 }
 
