@@ -1251,6 +1251,7 @@ export default function AppPage() {
               replayGeneratedMessageIds.add(json.nextAssistantMsgId);
               setConversations(prev => prev.map(c => {
                 if (c.id !== convId) return c;
+                if (c.messages.some(m => m.id === json.nextAssistantMsgId)) return c;
                 return {
                   ...c,
                   messages: [...c.messages, { id: json.nextAssistantMsgId!, role: 'assistant', content: '' }],
@@ -1266,6 +1267,7 @@ export default function AppPage() {
 
               setConversations(prev => prev.map(c => {
                 if (c.id !== convId) return c;
+                if (c.messages.some(m => m.id === toolStepsMsgId || m.id === nextAssistantMsgId)) return c;
                 const newSteps: Message = {
                   id: toolStepsMsgId,
                   role: 'tool_steps',
