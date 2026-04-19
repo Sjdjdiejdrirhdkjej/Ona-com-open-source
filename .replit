@@ -1,4 +1,4 @@
-modules = ["web", "bash", "nodejs-22"]
+modules = ["nodejs-20", "web", "bash"]
 [agent]
 expertMode = true
 integrations = ["javascript_log_in_with_replit:2.0.0"]
@@ -37,16 +37,10 @@ externalPort = 80
 [userenv]
 
 [userenv.shared]
-NEXT_PUBLIC_CLERK_SIGN_IN_URL = "/sign-in"
-NEXT_PUBLIC_CLERK_SIGN_UP_URL = "/sign-up"
-NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL = "/app/"
-NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL = "/app/"
 
 [userenv.development]
-BETTER_AUTH_SECRET = "DlJtemODYEl5cmCFmNonObmj1/rO82pSpLQq9vsPTbo="
 
 [userenv.production]
-NEXTAUTH_URL = "https://ona-com-open-source--j88905251.replit.app"
 
 [deployment]
 deploymentTarget = "autoscale"
