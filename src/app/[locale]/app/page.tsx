@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GitHubConnect } from '@/components/GitHubConnect';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserDropdown } from '@/components/UserDropdown';
+import { copyTextToClipboard, createBrowserId, observeElementSize } from '@/utils/browserCompat';
 
 const AssistantMarkdownLazy = dynamic(() => import('@/components/AssistantMarkdown'), {
   ssr: false,
@@ -78,11 +79,12 @@ function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(text);
+    const didCopy = await copyTextToClipboard(text);
+
+    if (didCopy) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {}
+    }
   }
 
   return (
@@ -458,7 +460,7 @@ function TodoPanel({ todos, onDismiss }: { todos: TodoItem[]; onDismiss: () => v
 }
 
 function newConversation(): Conversation {
-  return { id: crypto.randomUUID(), title: 'New task', messages: [], createdAt: Date.now() };
+  return { id: createBrowserId(), title: 'New task', messages: [], createdAt: Date.now() };
 }
 
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -547,7 +549,7 @@ export default function AppPage() {
   useEffect(() => {
     let sid = sessionStorage.getItem('ona_session_id');
     if (!sid) {
-      sid = crypto.randomUUID();
+      sid = createBrowserId();
       sessionStorage.setItem('ona_session_id', sid);
     }
     sessionIdRef.current = sid;
@@ -690,7 +692,7 @@ export default function AppPage() {
           let messages: Message[] = rebuild
             ? [
                 ...conv.messages.filter(m => m.role === 'user'),
-                { id: crypto.randomUUID(), role: 'assistant', content: '' },
+                { id: createBrowserId(), role: 'assistant', content: '' },
               ]
             : [...conv.messages];
 
@@ -716,8 +718,8 @@ export default function AppPage() {
             if (ev.type === 'tool_call') {
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const tools = (ev.data.tools as string[]) ?? [];
-              const toolStepsMsgId = ev.data.toolStepsMsgId as string ?? crypto.randomUUID();
-              const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? crypto.randomUUID();
+              const toolStepsMsgId = ev.data.toolStepsMsgId as string ?? createBrowserId();
+              const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? createBrowserId();
               messages = messages.filter(m => !(m.role === 'assistant' && m.content === ''));
               messages.push({ id: toolStepsMsgId, role: 'tool_steps', content: tools.map(l => ({ label: l, status: 'running' as const })) });
               messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
@@ -735,7 +737,7 @@ export default function AppPage() {
                   : m,
               );
             } else if (ev.type === 'next_assistant_msg') {
-              const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? crypto.randomUUID();
+              const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? createBrowserId();
               messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
             } else if (ev.type === 'librarian_step_start') {
               const parentLabel = ev.data.parentLabel as string;
@@ -917,14 +919,12 @@ export default function AppPage() {
   useEffect(() => {
     const content = messagesContentRef.current;
     if (!content) return;
-    const ro = new ResizeObserver(() => {
+    return observeElementSize(content, () => {
       if (!userScrolledUpRef.current) {
         const el = scrollContainerRef.current;
         if (el) el.scrollTop = el.scrollHeight;
       }
     });
-    ro.observe(content);
-    return () => ro.disconnect();
   });
 
   // Detect when the user manually scrolls up so we stop auto-scrolling.
@@ -1038,7 +1038,7 @@ export default function AppPage() {
     if (imageDataUrl) userContent.push({ type: 'image_url', image_url: { url: imageDataUrl } });
 
     const userMsg: Message = {
-      id: crypto.randomUUID(),
+      id: createBrowserId(),
       role: 'user',
       content: userContent.length === 1 && userContent[0]!.type === 'text' ? trimmed : userContent,
       imagePreview: imageDataUrl,
@@ -1058,7 +1058,7 @@ export default function AppPage() {
     scrollToBottom(true);
     setLoading(true);
 
-    const assistantId = crypto.randomUUID();
+    const assistantId = createBrowserId();
     const historyMessages = [
       ...currentConv.messages.filter(m => m.role === 'user' || (m.role === 'assistant' && !!m.content)),
       userMsg,
@@ -1113,7 +1113,7 @@ export default function AppPage() {
     // Generate the job ID client-side so we can start polling immediately,
     // before the SSE stream delivers the first event. The server will use
     // this ID so polling and SSE refer to the same job.
-    const pregenJobId = crypto.randomUUID();
+    const pregenJobId = createBrowserId();
     let currentJobId: string = pregenJobId;
     let streamFinished = false;
     let keepBackgroundJob = false;
@@ -1237,8 +1237,8 @@ export default function AppPage() {
               }));
             } else if (json.type === 'tool_call' && json.tools?.length) {
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
-              const toolStepsMsgId = json.toolStepsMsgId ?? crypto.randomUUID();
-              const nextAssistantMsgId = json.nextAssistantMsgId ?? crypto.randomUUID();
+              const toolStepsMsgId = json.toolStepsMsgId ?? createBrowserId();
+              const nextAssistantMsgId = json.nextAssistantMsgId ?? createBrowserId();
               currentAssistantId = nextAssistantMsgId;
               replayGeneratedMessageIds.add(toolStepsMsgId);
               replayGeneratedMessageIds.add(nextAssistantMsgId);

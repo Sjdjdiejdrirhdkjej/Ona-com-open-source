@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { copyTextToClipboard } from '@/utils/browserCompat';
 
 const GH_ICON = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -111,11 +112,13 @@ export function GitHubConnect() {
     setStatus({ type: 'idle' });
   }
 
-  function copyCode(code: string) {
-    navigator.clipboard.writeText(code).then(() => {
+  async function copyCode(code: string) {
+    const didCopy = await copyTextToClipboard(code);
+
+    if (didCopy) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    }
   }
 
   function cancelFlow() {

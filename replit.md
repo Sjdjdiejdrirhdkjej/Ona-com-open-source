@@ -5,6 +5,7 @@ An open-source platform for AI background software engineering agents. The landi
 
 ## Architecture
 - **Framework**: Next.js 15 with App Router and Turbopack
+- **Browser support**: Explicit browserslist targets current Chrome, Edge, Firefox, Safari, iOS, Android, and Firefox ESR; TypeScript targets ES2022 for modern browser output.
 - **Database**: PostgreSQL using Drizzle ORM; Vercel-style env vars are preferred in this order: `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_DATABASE_URL`, then `DATABASE_URL`
 - **ORM**: Drizzle ORM
 - **Styling**: Tailwind CSS v4
@@ -19,6 +20,7 @@ An open-source platform for AI background software engineering agents. The landi
   - The development server is used for Replit preview compatibility during active building
   - After any code or dependency change, restart the workflow to apply changes
 - **Preview compatibility**: `next.config.ts` allows Replit dev origins including the current `REPLIT_DEV_DOMAIN` so proxied `_next` assets load correctly.
+- **Browser compatibility helpers**: `src/utils/browserCompat.ts` centralizes safe fallbacks for clipboard copying, browser-generated IDs, and resize observation.
 - **Hydration compatibility**: theme preference is applied after client mount via `src/components/ThemeInitializer.tsx`, avoiding server/client HTML attribute mismatches in the Replit preview.
 - **Auth**: Replit OIDC with PKCE via `openid-client` and `iron-session`. Login/callback routes derive the callback origin from the active request host so preview, mobile, and deployed domains keep the session cookie on the same host. Primary Get Started entry points navigate top-level directly to `/api/login?returnTo=...` for deterministic same-tab mobile auth; `/sign-in?returnTo=...` remains the visible retry/recovery page for redirects and errors. The callback saves the session, returns a small "continue to ONA" handoff page, immediately navigates the current tab back to the intended app path, and only sends a desktop popup opener message after that with a manual fallback link for mobile auth tabs. Session cookie: `replit_auth_session`
 - **Secrets**: `FIREWORKS_API_KEY` (Fireworks AI), `SESSION_SECRET` (32+ char secret)

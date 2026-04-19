@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { createBrowserId } from '@/utils/browserCompat';
 
 type EnvVar = { key: string; value: string; id: string };
 
@@ -36,7 +37,7 @@ export default function SandboxModifyPage() {
   }, [sandboxId]);
 
   function addRow() {
-    setEnvVars(prev => [...prev, { key: '', value: '', id: crypto.randomUUID() }]);
+    setEnvVars(prev => [...prev, { key: '', value: '', id: createBrowserId() }]);
     setSaved(false);
   }
 

@@ -18,6 +18,9 @@ const baseConfig: NextConfig = {
   ],
   poweredByHeader: false,
   reactStrictMode: true,
+  images: {
+    formats: ['image/avif', 'image/webp'],
+  },
   serverExternalPackages: ['@daytonaio/sdk', 'playwright', 'ws'],
 };
 

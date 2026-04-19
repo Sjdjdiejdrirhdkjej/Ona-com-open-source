@@ -14,6 +14,7 @@
   --bg-card: rgba(255,255,255,0.92);
   --bg-input: #fff;
   --bg-logo: #d1cfc9;
+  color-scheme: light;
 }
 
 .dark {
@@ -31,6 +32,11 @@
 html,
 body {
   background-color: var(--bg);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 .hljs {
