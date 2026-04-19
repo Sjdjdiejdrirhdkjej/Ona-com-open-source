@@ -39,9 +39,12 @@ export function SignInLauncher({ href, label, returnTo }: SignInLauncherProps) {
       });
 
       if (response.ok) {
-        const nextPath = getSafeBrowserReturnPath(returnTo, returnTo);
-        navigateTopLevel(nextPath, 'replace');
-        return;
+        const user = await response.json();
+        if (user) {
+          const nextPath = getSafeBrowserReturnPath(returnTo, returnTo);
+          navigateTopLevel(nextPath, 'replace');
+          return;
+        }
       }
     } catch {
     }
