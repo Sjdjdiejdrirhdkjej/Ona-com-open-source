@@ -590,7 +590,7 @@ export async function runGitHubTool(token: string, name: string, args: Record<st
   if (name === 'github_list_repositories') {
     const visibility = typeof args.visibility === 'string' ? args.visibility : 'all';
     const affiliation = typeof args.affiliation === 'string' ? args.affiliation : 'owner,collaborator,organization_member';
-    const perPage = Math.min(Number(args.per_page ?? 30), 100);
+    const perPage = Math.min(Number(args.per_page ?? 100), 100);
     const repos = await githubFetch<Array<Record<string, unknown>>>(token, `/user/repos?sort=updated&visibility=${encodeURIComponent(visibility)}&affiliation=${encodeURIComponent(affiliation)}&per_page=${perPage}`);
     return repos.map(repo => ({
       name: repo.name,

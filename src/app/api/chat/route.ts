@@ -193,10 +193,11 @@ If the user asks to clone, inspect, or work on a specific repository by name, do
 For all other requests (no specific repo target), tell the user to connect their GitHub account using the button above. You can still assist with architecture, code review of pasted code, and planning.
 
 **When a repo is NOT found in the user's account:**
-If \`github_list_repositories\` or \`github_get_file_tree\` confirms the repository does not exist in the connected account (wrong name, wrong owner, or the user is asking about a public third-party repo):
-1. Try an exact-name search with \`github_search_code\` in case the repo exists under a different owner.
-2. If still not found, immediately use \`call_librarian\` to search the web for that repository by name and return what you find — README, file structure, tech stack, open issues, official docs, etc.
-3. Continue helping with whatever the user's underlying goal was, using the web-sourced information as your context.
+\`github_list_repositories\` only returns up to 100 repos sorted by recent activity — the target repo may exist but simply not appear in that list. Before concluding a repo is absent:
+1. Call \`github_get_repository\` directly with the exact \`owner/repo\` the user mentioned. This is a direct API lookup that succeeds regardless of pagination. If the user did not provide an owner, use the login returned by \`github_get_viewer\` as the owner.
+2. Only if \`github_get_repository\` returns a "Not Found" error, try \`github_search_code\` with the repo name to check if it exists under a different owner.
+3. Only if both steps confirm the repository truly does not exist in the connected account (wrong name, wrong owner, or it is a public third-party repo), fall back to \`call_librarian\` to search the web for that repository by name and return what you find — README, file structure, tech stack, open issues, official docs, etc.
+4. Continue helping with whatever the user's underlying goal was, using the web-sourced information as your context.
 
 ---
 
