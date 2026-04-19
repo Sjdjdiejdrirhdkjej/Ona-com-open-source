@@ -1,18 +1,31 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { signOut, useAuth } from '@/libs/auth-client';
 
 export function UserDropdown() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [liveCredits, setLiveCredits] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleCreditsUpdated(event: Event) {
+      const detail = (event as CustomEvent<{ credits?: number }>).detail;
+      if (typeof detail?.credits === 'number') {
+        setLiveCredits(detail.credits);
+      }
+    }
+
+    window.addEventListener('credits-updated', handleCreditsUpdated);
+    return () => window.removeEventListener('credits-updated', handleCreditsUpdated);
+  }, []);
 
   if (!user) return null;
 
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
   const initial = (name ?? 'U')[0]?.toUpperCase() ?? 'U';
-  const credits = user.credits ?? 0;
+  const credits = liveCredits ?? user.credits ?? 0;
 
   return (
     <>

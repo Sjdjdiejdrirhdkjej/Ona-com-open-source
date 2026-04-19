@@ -1,9 +1,10 @@
 import type { NextRequest } from 'next/server';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod/v4';
 import { db } from '@/libs/DB';
 import { logger } from '@/libs/Logger';
-import { agentEventsSchema, agentJobsSchema, conversationsSchema, messagesSchema } from '@/models/Schema';
+import { getUser } from '@/libs/auth';
+import { agentEventsSchema, agentJobsSchema, conversationsSchema, messagesSchema, userCreditsSchema } from '@/models/Schema';
 import { getGitHubToken, githubToolDefinitions, runGitHubTool } from '@/libs/GitHub';
 import { daytonaToolDefinitions, isDaytonaTool, prebootSandbox, runDaytonaTool } from '@/libs/Daytona';
 import { callLibrarianToolDefinition, isCallLibrarianTool, runLibrarianSubagent } from '@/libs/Librarian';
@@ -536,8 +537,15 @@ type FireworksResponse = {
     delta?: FireworksDelta;
     finish_reason?: string | null;
   }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  } | null;
   error?: { message?: string };
 };
+
+type FireworksUsage = NonNullable<FireworksResponse['usage']>;
 
 function normalizeMessages(messages: ApiMessage[]) {
   return messages.map((m) => {
@@ -597,13 +605,14 @@ async function streamFireworksCall(
   body: Record<string, unknown>,
   onDelta: (delta: string) => void,
   modelOverride?: string,
-): Promise<{ content: string; toolCalls: ToolCall[]; finishReason: FinishReason }> {
+): Promise<{ content: string; toolCalls: ToolCall[]; finishReason: FinishReason; usage?: FireworksUsage }> {
   const res = await callFireworks({ ...body, stream: true }, modelOverride);
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
   let content = '';
   let finishReason: FinishReason = null;
+  let usage: FireworksUsage | undefined;
   let inThinkBlock = false;
   const toolCallsMap = new Map<number, { id: string; type: 'function'; function: { name: string; arguments: string } }>();
 
@@ -621,6 +630,9 @@ async function streamFireworksCall(
         if (raw === '[DONE]') break outer;
         try {
           const json = JSON.parse(raw) as FireworksResponse;
+          if (json.usage) {
+            usage = json.usage;
+          }
           const choice = json.choices?.[0];
           const delta = choice?.delta as FireworksDelta | undefined;
           if (!delta) continue;
@@ -672,7 +684,52 @@ async function streamFireworksCall(
     reader.releaseLock();
   }
 
-  return { content, toolCalls: [...toolCallsMap.values()], finishReason };
+  return { content, toolCalls: [...toolCallsMap.values()], finishReason, usage };
+}
+
+function estimateContentTokens(content: ApiMessage['content']): number {
+  if (Array.isArray(content)) {
+    return content.reduce((sum, part) => {
+      if (part.type === 'text') return sum + Math.ceil((part.text ?? '').length / 4);
+      return sum + 850;
+    }, 0);
+  }
+  return Math.ceil(content.length / 4);
+}
+
+function estimateMessagesTokens(messages: ApiMessage[]): number {
+  return messages.reduce((sum, message) => {
+    const toolCallTokens = message.tool_calls?.reduce((toolSum, toolCall) => (
+      toolSum + Math.ceil((toolCall.function.name.length + toolCall.function.arguments.length) / 4)
+    ), 0) ?? 0;
+    return sum + estimateContentTokens(message.content) + toolCallTokens + 4;
+  }, 0);
+}
+
+function creditsForUsage(usage: FireworksUsage | undefined, inputTokens: number, outputText: string) {
+  const totalTokens = usage?.total_tokens
+    ?? ((usage?.prompt_tokens ?? inputTokens) + (usage?.completion_tokens ?? Math.ceil(outputText.length / 4)));
+  const creditsPerThousandTokens = Number.parseFloat(process.env.CREDITS_PER_1000_TOKENS ?? '1');
+  const safeRate = Number.isFinite(creditsPerThousandTokens) && creditsPerThousandTokens > 0 ? creditsPerThousandTokens : 1;
+  return Math.max(1, Math.ceil((Math.max(1, totalTokens) / 1000) * safeRate));
+}
+
+async function getCreditBalance(userId: string) {
+  const rows = await db
+    .select({ credits: userCreditsSchema.credits })
+    .from(userCreditsSchema)
+    .where(eq(userCreditsSchema.userId, userId))
+    .limit(1);
+  return rows[0]?.credits ?? 0;
+}
+
+async function deductCredits(userId: string, amount: number) {
+  const rows = await db
+    .update(userCreditsSchema)
+    .set({ credits: sql`greatest(0, ${userCreditsSchema.credits} - ${amount})` })
+    .where(eq(userCreditsSchema.userId, userId))
+    .returning({ credits: userCreditsSchema.credits });
+  return rows[0]?.credits ?? 0;
 }
 
 function parseToolArgs(value: string): Record<string, unknown> {
@@ -782,6 +839,16 @@ export async function POST(req: NextRequest) {
       const fireworksModelId = model && model in ONA_MODELS
         ? ONA_MODELS[model as OnaModelKey].fireworksId
         : undefined;
+      const user = await getUser();
+
+      if (user) {
+        const currentCredits = await getCreditBalance(user.id);
+        if (currentCredits <= 0) {
+          emit({ type: 'error', message: 'You are out of credits. Add more credits to continue using ONA.' });
+          close();
+          return;
+        }
+      }
 
       jobId = conversationId ? (clientJobId ?? crypto.randomUUID()) : null;
       let pendingContentEvent = '';
@@ -811,6 +878,21 @@ export async function POST(req: NextRequest) {
             flushContentEvent().catch(() => {});
           }, 750);
         }
+      }
+
+      async function streamChargedFireworksCall(body: Record<string, unknown>, onDelta: (delta: string) => void) {
+        const apiMessages = Array.isArray(body.messages) ? body.messages as ApiMessage[] : [];
+        const inputTokens = estimateMessagesTokens(apiMessages);
+        const result = await streamFireworksCall(body, onDelta, fireworksModelId);
+        if (user) {
+          const creditsSpent = creditsForUsage(result.usage, inputTokens, result.content);
+          const remainingCredits = await deductCredits(user.id, creditsSpent);
+          emit({ type: 'credit_update', credits: remainingCredits, creditsSpent });
+          if (jobId) {
+            await persistJobEvent(jobId, 'credit_update', { credits: remainingCredits, creditsSpent });
+          }
+        }
+        return result;
       }
 
       if (conversationId && jobId) {
@@ -867,7 +949,7 @@ export async function POST(req: NextRequest) {
 
         for (;;) {
           let iterText = '';
-          const { content, toolCalls, finishReason } = await streamFireworksCall(
+          const { content, toolCalls, finishReason } = await streamChargedFireworksCall(
             { messages: conversation, tools: noGhTools, tool_choice: 'auto', max_tokens: 8192, temperature: 0.15, reasoning_effort: 'high' },
             (delta) => {
               emit({ delta });
@@ -875,7 +957,6 @@ export async function POST(req: NextRequest) {
               noGhAssistantText += delta;
               queueContentEvent(delta);
             },
-            fireworksModelId,
           );
 
           if (finishReason === 'length') {
@@ -1023,7 +1104,7 @@ export async function POST(req: NextRequest) {
 
       for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
         let iterText = '';
-        const { content, toolCalls, finishReason } = await streamFireworksCall(
+        const { content, toolCalls, finishReason } = await streamChargedFireworksCall(
           {
             messages: conversation,
             tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition, ...ULTRAWORK_TOOLS],
@@ -1038,7 +1119,6 @@ export async function POST(req: NextRequest) {
             currentAssistantText += delta;
             queueContentEvent(delta);
           },
-          fireworksModelId,
         );
 
         if (finishReason === 'length') {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const GH_ICON = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -25,6 +26,7 @@ type Status =
 export function GitHubConnect() {
   const [status, setStatus] = useState<Status>({ type: 'checking' });
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const checkConnection = useCallback(async () => {
@@ -42,6 +44,7 @@ export function GitHubConnect() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     checkConnection();
     return () => { if (pollRef.current) clearTimeout(pollRef.current); };
   }, [checkConnection]);
@@ -122,6 +125,135 @@ export function GitHubConnect() {
 
   // 'checking' is the silent initial load — never block the UI with an overlay for it
   const showOverlay = status.type === 'pending' || status.type === 'error' || status.type === 'loading';
+  const overlay = showOverlay && mounted
+    ? createPortal(
+        <div
+          className="fixed left-0 top-0 z-[2147483647] flex h-[100dvh] w-screen items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
+          onMouseDown={cancelFlow}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-gray-700 p-8 shadow-2xl"
+            style={{ backgroundColor: 'var(--bg)' }}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            {status.type === 'loading' && (
+              <div className="flex flex-col items-center gap-4 py-4">
+                <div className="size-8 rounded-full border-2 border-gray-200 border-t-gray-700 dark:border-gray-700 dark:border-t-gray-300 animate-spin" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">Connecting to GitHub…</p>
+              </div>
+            )}
+
+            {status.type === 'error' && (
+              <div className="flex flex-col items-center gap-5 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-500">
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <circle cx="11" cy="11" r="9.5" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M11 7v5M11 15v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">Connection failed</p>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{status.message}</p>
+                </div>
+                <div className="flex w-full gap-3">
+                  <button
+                    onClick={cancelFlow}
+                    className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 py-2.5 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={startDeviceFlow}
+                    className="flex-1 rounded-xl bg-gray-900 dark:bg-gray-100 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-80"
+                  >
+                    Try again
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {status.type === 'pending' && (
+              <div className="flex flex-col items-center gap-6 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
+                  {GH_ICON}
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Connect GitHub
+                  </h2>
+                  <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                    Open GitHub and enter the code below to authorize access.
+                  </p>
+                </div>
+
+                <div
+                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-5 py-4"
+                  style={{ backgroundColor: 'var(--bg-2)' }}
+                >
+                  <p className="mb-2 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                    Your code
+                  </p>
+                  <p className="text-3xl font-bold font-mono tracking-[0.25em] text-gray-900 dark:text-gray-100">
+                    {status.userCode}
+                  </p>
+                  <button
+                    onClick={() => copyCode(status.userCode)}
+                    className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    {copied
+                      ? (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            Copied!
+                          </>
+                        )
+                      : (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <rect x="4" y="1" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" />
+                              <path d="M1 4v6a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                            </svg>
+                            Copy code
+                          </>
+                        )}
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+                  <div className="size-2.5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
+                  Waiting for authorization…
+                </div>
+
+                <div className="flex w-full flex-col gap-2.5">
+                  <a
+                    href={status.verificationUri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 dark:bg-gray-100 px-5 py-3 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-80"
+                  >
+                    Open GitHub
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                  <button
+                    onClick={cancelFlow}
+                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 py-2.5 text-sm text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body,
+      )
+    : null;
 
   return (
     <>
@@ -189,136 +321,7 @@ export function GitHubConnect() {
             </>
           )}
 
-      {/* ── Overlay modal (device flow) ── */}
-      {showOverlay && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-gray-200 dark:border-gray-700 p-8 shadow-2xl"
-            style={{ backgroundColor: 'var(--bg)' }}
-          >
-            {/* Loading */}
-            {status.type === 'loading' && (
-              <div className="flex flex-col items-center gap-4 py-4">
-                <div className="size-8 rounded-full border-2 border-gray-200 border-t-gray-700 dark:border-gray-700 dark:border-t-gray-300 animate-spin" />
-                <p className="text-sm text-gray-500 dark:text-gray-400">Connecting to GitHub…</p>
-              </div>
-            )}
-
-            {/* Error */}
-            {status.type === 'error' && (
-              <div className="flex flex-col items-center gap-5 text-center">
-                <div className="flex size-12 items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10 text-red-500">
-                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                    <circle cx="11" cy="11" r="9.5" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M11 7v5M11 15v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-gray-100">Connection failed</p>
-                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{status.message}</p>
-                </div>
-                <div className="flex w-full gap-3">
-                  <button
-                    onClick={cancelFlow}
-                    className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 py-2.5 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={startDeviceFlow}
-                    className="flex-1 rounded-xl bg-gray-900 dark:bg-gray-100 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-80"
-                  >
-                    Try again
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Pending — show code */}
-            {status.type === 'pending' && (
-              <div className="flex flex-col items-center gap-6 text-center">
-                <div className="flex size-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                  {GH_ICON}
-                </div>
-
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Connect GitHub
-                  </h2>
-                  <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-                    Open GitHub and enter the code below to authorize access.
-                  </p>
-                </div>
-
-                {/* Code box */}
-                <div
-                  className="w-full rounded-xl border border-gray-200 dark:border-gray-700 px-5 py-4"
-                  style={{ backgroundColor: 'var(--bg-2)' }}
-                >
-                  <p className="mb-2 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                    Your code
-                  </p>
-                  <p className="text-3xl font-bold font-mono tracking-[0.25em] text-gray-900 dark:text-gray-100">
-                    {status.userCode}
-                  </p>
-                  <button
-                    onClick={() => copyCode(status.userCode)}
-                    className="mt-3 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
-                    {copied
-                      ? (
-                          <>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                            Copied!
-                          </>
-                        )
-                      : (
-                          <>
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <rect x="4" y="1" width="7" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" />
-                              <path d="M1 4v6a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                            </svg>
-                            Copy code
-                          </>
-                        )}
-                  </button>
-                </div>
-
-                {/* Polling indicator */}
-                <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                  <div className="size-2.5 rounded-full border-2 border-indigo-400 border-t-transparent animate-spin" />
-                  Waiting for authorization…
-                </div>
-
-                <div className="flex w-full flex-col gap-2.5">
-                  <a
-                    href={status.verificationUri}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 dark:bg-gray-100 px-5 py-3 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-80"
-                  >
-                    Open GitHub
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </a>
-                  <button
-                    onClick={cancelFlow}
-                    className="w-full rounded-xl border border-gray-200 dark:border-gray-700 py-2.5 text-sm text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {overlay}
     </>
   );
 }

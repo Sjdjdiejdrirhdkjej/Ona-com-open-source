@@ -52,6 +52,7 @@ An open-source platform for AI background software engineering agents. The landi
 ## Chat Interface (/app)
 - Real streaming AI responses via `src/app/api/chat/route.ts`
 - Image upload (file picker button) and paste-from-clipboard support
+- Credits are cent-denominated: 1 credit equals 1 cent. Each successful AI provider call deducts credits from `user_credits` using `CREDITS_PER_1000_TOKENS` if set, otherwise 1 credit per 1,000 estimated tokens with a 1-credit minimum.
 - System prompt positions ONA but OPEN SOURCE as a background software engineering agent platform
 - GitHub tools support branch creation, file writes on feature branches, and pull request creation; `src/libs/GitHub.ts` prevents accidental direct writes to the default branch.
 - Suggestion chips: Inspect repos, Clone a repo, Review PRs, Find CVEs

@@ -675,6 +675,11 @@ export default function AppPage() {
           setTodos(lastTodoEvent.data.todos as TodoItem[]);
         }
 
+        const lastCreditEvent = [...data.events].reverse().find(ev => ev.type === 'credit_update');
+        if (lastCreditEvent && typeof lastCreditEvent.data.credits === 'number') {
+          window.dispatchEvent(new CustomEvent('credits-updated', { detail: { credits: lastCreditEvent.data.credits } }));
+        }
+
         setConversations(prev => {
           const conv = prev.find(c => c.id === convId);
           if (!conv) return prev;
@@ -1194,10 +1199,13 @@ export default function AppPage() {
               report?: string;
               todos?: TodoItem[];
               sandbox_id?: string;
+              credits?: number;
             };
 
             if (json.type === 'todo_update' && json.todos) {
               setTodos(json.todos);
+            } else if (json.type === 'credit_update' && typeof json.credits === 'number') {
+              window.dispatchEvent(new CustomEvent('credits-updated', { detail: { credits: json.credits } }));
             } else if (json.type === 'job_id' && json.jobId) {
               const jobId = json.jobId;
               currentJobId = jobId;
