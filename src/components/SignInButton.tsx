@@ -1,13 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { signIn } from '@/libs/auth-client';
 
 export function SignInButton() {
-  const router = useRouter();
   return (
     <button
       type="button"
-      onClick={() => router.push('/app')}
+      onClick={() => signIn()}
       style={{
         display: 'flex',
         alignItems: 'center',

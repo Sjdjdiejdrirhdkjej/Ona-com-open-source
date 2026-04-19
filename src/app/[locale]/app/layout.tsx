@@ -1,4 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
+import { redirect } from 'next/navigation';
+import { getUser } from '@/libs/auth';
 
 export default async function AppLayout(props: {
   children: React.ReactNode;
@@ -6,6 +8,11 @@ export default async function AppLayout(props: {
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
+
+  const user = await getUser();
+  if (!user) {
+    redirect(`/${locale}/sign-in`);
+  }
 
   return (
     <div style={{ height: '100dvh', backgroundColor: 'var(--bg)' }}>
