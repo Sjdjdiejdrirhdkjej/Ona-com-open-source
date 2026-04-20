@@ -536,8 +536,8 @@ function TodoPanel({ todos, onDismiss }: { todos: TodoItem[]; onDismiss: () => v
           </button>
         </div>
         <ul className="space-y-1">
-          {todos.map(item => (
-            <li key={item.id} className="flex items-start gap-2.5">
+          {todos.map((item, index) => (
+            <li key={`${item.id}:${index}`} className="flex items-start gap-2.5">
               <span className="mt-0.5 shrink-0">
                 {item.status === 'done' && (
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -565,6 +565,24 @@ function TodoPanel({ todos, onDismiss }: { todos: TodoItem[]; onDismiss: () => v
 
 function newConversation(): Conversation {
   return { id: createBrowserId(), title: 'New task', messages: [], createdAt: Date.now(), sandboxId: null };
+}
+
+function uniqueMessages(messages: Message[]): Message[] {
+  const seen = new Set<string>();
+  return messages.filter((message) => {
+    if (seen.has(message.id)) return false;
+    seen.add(message.id);
+    return true;
+  });
+}
+
+function uniqueConversations(conversations: Conversation[]): Conversation[] {
+  const seen = new Set<string>();
+  return conversations.filter((conversation) => {
+    if (seen.has(conversation.id)) return false;
+    seen.add(conversation.id);
+    return true;
+  });
 }
 
 function HighlightText({ text, query }: { text: string; query: string }) {
@@ -691,20 +709,20 @@ export default function AppPage() {
         }>;
 
         if (data.length > 0) {
-          const loaded: Conversation[] = data.map(c => ({
+          const loaded: Conversation[] = uniqueConversations(data.map(c => ({
             id: c.id,
             title: c.title,
             createdAt: new Date(c.createdAt).getTime(),
             activeJobId: c.activeJobId,
             sandboxId: c.sandboxId,
-            messages: c.messages.map(m => ({
+            messages: uniqueMessages(c.messages.map(m => ({
               id: m.id,
               role: m.role as Message['role'],
               content: m.content as Message['content'],
-            })),
-          }));
+            }))),
+          })));
           loaded.forEach(c => syncedIds.current.add(c.id));
-          setConversations([newConversation(), ...loaded]);
+          setConversations(uniqueConversations([newConversation(), ...loaded]));
 
           loaded.forEach(c => {
             if (c.activeJobId) {
@@ -830,8 +848,12 @@ export default function AppPage() {
               const toolStepsMsgId = ev.data.toolStepsMsgId as string ?? createBrowserId();
               const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? createBrowserId();
               messages = messages.filter(m => !(m.role === 'assistant' && m.content === ''));
-              messages.push({ id: toolStepsMsgId, role: 'tool_steps', content: tools.map(l => ({ label: l, status: 'running' as const })) });
-              messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
+              if (!messages.some(m => m.id === toolStepsMsgId)) {
+                messages.push({ id: toolStepsMsgId, role: 'tool_steps', content: tools.map(l => ({ label: l, status: 'running' as const })) });
+              }
+              if (!messages.some(m => m.id === nextAssistantMsgId)) {
+                messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
+              }
             } else if (ev.type === 'tool_start') {
               const tool = ev.data.tool as string;
               messages = applyStepUpdate(messages, s => s.label === tool, s => ({ ...s, status: 'running' as const }));
@@ -848,7 +870,9 @@ export default function AppPage() {
               );
             } else if (ev.type === 'next_assistant_msg') {
               const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? createBrowserId();
-              messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
+              if (!messages.some(m => m.id === nextAssistantMsgId)) {
+                messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
+              }
             } else if (ev.type === 'librarian_step_start') {
               const parentLabel = ev.data.parentLabel as string;
               const step = ev.data.step as string;
@@ -951,7 +975,7 @@ export default function AppPage() {
             }
           }
 
-          return prev.map(c => c.id === convId ? { ...c, messages } : c);
+          return uniqueConversations(prev.map(c => c.id === convId ? { ...c, messages: uniqueMessages(messages) } : c));
         });
 
         scheduleBackgroundPoll(convId, jobId, lastId, false);
@@ -991,11 +1015,11 @@ export default function AppPage() {
           ? {
               ...c,
               activeJobId: null,
-              messages: found.messages.map(m => ({
+              messages: uniqueMessages(found.messages.map(m => ({
                 id: m.id,
                 role: m.role as Message['role'],
                 content: m.content as Message['content'],
-              })),
+              }))),
             }
           : c,
       ));
@@ -1143,7 +1167,7 @@ export default function AppPage() {
         }
         setActiveId(next[0]!.id);
       }
-      return next;
+      return uniqueConversations(next);
     });
   }
 
@@ -2013,7 +2037,7 @@ export default function AppPage() {
                 const showSnippet = snippet && !titleMatchesQuery;
                 return (
                   <div
-                    key={c.id}
+                    key={`${c.id}:sidebar`}
                     className={`group flex w-full items-stretch overflow-hidden rounded-xl text-left transition-colors ${
                       c.id === activeId
                         ? 'bg-black/8 dark:bg-white/10 text-gray-900 dark:text-gray-100'
@@ -2364,10 +2388,10 @@ export default function AppPage() {
                   <div key={activeId} ref={messagesContentRef} className="mx-auto max-w-3xl space-y-5">
                     {messages
                       .filter(m => m.role === 'tool_steps' || m.role === 'user' || !!m.content)
-                      .map(msg => (
+                      .map((msg, index) => (
                         msg.role === 'tool_steps'
-                          ? <ToolStepsBlock key={msg.id} steps={msg.content as ToolStep[]} />
-                          : <MessageBubble key={msg.id} msg={msg} />
+                          ? <ToolStepsBlock key={`${msg.id}:${index}`} steps={msg.content as ToolStep[]} />
+                          : <MessageBubble key={`${msg.id}:${index}`} msg={msg} />
                       ))}
                     {sandboxBooting && (
                       <SandboxBootingBanner />
@@ -2600,9 +2624,9 @@ export default function AppPage() {
                               {q ? 'No tasks match your search.' : 'No past tasks.'}
                             </p>
                           )
-                        : filtered.map(c => (
+                        : filtered.map((c, index) => (
                             <div
-                              key={c.id}
+                              key={`${c.id}:past:${index}`}
                               className={`group flex w-full items-stretch overflow-hidden rounded-xl text-left transition-colors ${
                                 c.id === activeId
                                   ? 'bg-black/8 dark:bg-white/10 text-gray-900 dark:text-gray-100'
