@@ -15,10 +15,8 @@ const AssistantMarkdownLazy = dynamic(() => import('@/components/AssistantMarkdo
 
 const SERIF = 'Georgia, "Times New Roman", serif';
 const APP_NAME = 'ONA but OPEN SOURCE';
-const MODEL_OPTIONS = [
-  { key: 'ona-max', label: 'ONA Max' },
-  { key: 'ona-max-fast', label: 'ONA Max Fast' },
-  { key: 'ona-mini', label: 'ONA Mini' },
+const AUTONOMY_OPTIONS = [
+  { key: 'ona-max', label: 'Hands on experience' },
 ] as const;
 const PROMPT_SUGGESTIONS = [
   { label: 'Backlog sweep', prompt: 'Inspect connected backlog items, identify one well-scoped engineering task, implement it in a branch, run checks, and prepare a pull request summary.' },
@@ -2262,9 +2260,9 @@ export default function AppPage() {
                           </button>
                         </div>
                       )}
-                      {/* Model selector */}
+                      {/* Autonomy level selector */}
                       {(() => {
-                        const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[0];
+                        const current = AUTONOMY_OPTIONS.find(m => m.key === selectedModel) ?? AUTONOMY_OPTIONS[0];
                         return (
                           <div ref={modelMenuRef} className="relative mb-2 flex justify-center sm:justify-start">
                             <button
@@ -2274,16 +2272,20 @@ export default function AppPage() {
                             >
                               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-indigo-500">
                                 <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
-                                <path d="M5 3v2.5L6.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                                <path d="M3 5h4M5 3v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                               </svg>
+                              <span className="text-gray-400 dark:text-gray-500">Autonomy level:</span>
                               {current.label}
                               <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
                                 <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
                             </button>
                             {modelMenuOpen && (
-                              <div className="absolute bottom-full left-0 mb-1.5 z-50 w-52 overflow-hidden rounded-2xl border border-black/8 shadow-lg dark:border-white/10" style={{ backgroundColor: 'var(--bg-card)' }}>
-                                {MODEL_OPTIONS.map(opt => (
+                              <div className="absolute bottom-full left-0 mb-1.5 z-50 w-56 overflow-hidden rounded-2xl border border-black/8 shadow-lg dark:border-white/10" style={{ backgroundColor: 'var(--bg-card)' }}>
+                                <div className="px-3 py-2 border-b border-black/6 dark:border-white/8">
+                                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Autonomy level</span>
+                                </div>
+                                {AUTONOMY_OPTIONS.map(opt => (
                                   <button
                                     key={opt.key}
                                     type="button"
@@ -2469,9 +2471,9 @@ export default function AppPage() {
                   </div>
                 )}
 
-                {/* Model selector */}
+                {/* Autonomy level selector */}
                 {(() => {
-                  const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[0];
+                  const current = AUTONOMY_OPTIONS.find(m => m.key === selectedModel) ?? AUTONOMY_OPTIONS[0];
                   return (
                     <div ref={modelMenuRef} className="relative mb-1.5 flex">
                       <button
@@ -2481,16 +2483,20 @@ export default function AppPage() {
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-indigo-500">
                           <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
-                          <path d="M5 3v2.5L6.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                          <path d="M3 5h4M5 3v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                         </svg>
+                        <span className="text-gray-400 dark:text-gray-500">Autonomy level:</span>
                         {current.label}
                         <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
                           <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                       {modelMenuOpen && (
-                        <div className="absolute bottom-full left-0 mb-1.5 z-50 w-52 overflow-hidden rounded-2xl border border-black/8 shadow-lg dark:border-white/10" style={{ backgroundColor: 'var(--bg-card)' }}>
-                          {MODEL_OPTIONS.map(opt => (
+                        <div className="absolute bottom-full left-0 mb-1.5 z-50 w-56 overflow-hidden rounded-2xl border border-black/8 shadow-lg dark:border-white/10" style={{ backgroundColor: 'var(--bg-card)' }}>
+                          <div className="px-3 py-2 border-b border-black/6 dark:border-white/8">
+                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Autonomy level</span>
+                          </div>
+                          {AUTONOMY_OPTIONS.map(opt => (
                             <button
                               key={opt.key}
                               type="button"
