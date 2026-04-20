@@ -176,6 +176,18 @@ export function UserDropdown() {
               Settings
             </Link>
             <Link
+              href="/app/api-docs"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <rect x="2" y="1.5" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M4.5 4.5h5M4.5 7h5M4.5 9.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              API docs
+            </Link>
+            <Link
               href="/dashboard"
               role="menuitem"
               onClick={() => setOpen(false)}
