@@ -16,8 +16,8 @@ const AssistantMarkdownLazy = dynamic(() => import('@/components/AssistantMarkdo
 const SERIF = 'Georgia, "Times New Roman", serif';
 const APP_NAME = 'ONA but OPEN SOURCE';
 const AUTONOMY_OPTIONS = [
-  { key: 'ona-max', label: 'Hands on experience' },
-  { key: 'ona-hands-off', label: 'Hands off experience' },
+  { key: 'ona-max', label: 'Hands on experience', description: 'GLM 5.1 · fast, collaborative' },
+  { key: 'ona-hands-off', label: 'Hands off experience', description: 'Qwen3 Coder 480B · agentic, 262K ctx' },
 ] as const;
 const PROMPT_SUGGESTIONS = [
   { label: 'Backlog sweep', prompt: 'Inspect connected backlog items, identify one well-scoped engineering task, implement it in a branch, run checks, and prepare a pull request summary.' },
@@ -2525,6 +2525,7 @@ export default function AppPage() {
                                   >
                                     <span>
                                       <span className="block text-xs font-medium text-gray-900 dark:text-gray-100">{opt.label}</span>
+                                      <span className="block text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{opt.description}</span>
                                     </span>
                                     {selectedModel === opt.key && (
                                       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-indigo-500">
@@ -2736,6 +2737,7 @@ export default function AppPage() {
                             >
                               <span>
                                 <span className="block text-xs font-medium text-gray-900 dark:text-gray-100">{opt.label}</span>
+                                <span className="block text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{opt.description}</span>
                               </span>
                               {selectedModel === opt.key && (
                                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-indigo-500">
