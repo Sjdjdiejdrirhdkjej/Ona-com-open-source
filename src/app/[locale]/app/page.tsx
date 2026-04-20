@@ -777,6 +777,9 @@ export default function AppPage() {
   const [superAgentHeartbeat, setSuperAgentHeartbeat] = useState(String(DEFAULT_SUPER_AGENT_HEARTBEAT_MINUTES));
   const [superAgentPrompt, setSuperAgentPrompt] = useState(DEFAULT_SUPER_AGENT_PROMPT);
   const [superAgentModel, setSuperAgentModel] = useState(DEFAULT_SUPER_AGENT_MODEL);
+  const [superAgentError, setSuperAgentError] = useState<string | null>(null);
+  const [superAgentWakeSuccess, setSuperAgentWakeSuccess] = useState(false);
+  const [superAgentUrlCopied, setSuperAgentUrlCopied] = useState(false);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   // Generation counter per conversation. Incremented by stopBackgroundPoll so
   // that any poll fetch already in-flight when polling is stopped can detect
@@ -1286,6 +1289,7 @@ export default function AppPage() {
     if (!activeId) return;
     const heartbeatMinutes = Math.max(1, Number.parseInt(superAgentHeartbeat, 10) || DEFAULT_SUPER_AGENT_HEARTBEAT_MINUTES);
 
+    setSuperAgentError(null);
     setSuperAgentSaving(true);
     try {
       const res = await fetch(`/api/conversations/${activeId}/super-agent`, {
@@ -1307,7 +1311,7 @@ export default function AppPage() {
       )));
       setSuperAgentOpen(false);
     } catch {
-      window.alert('Could not save super agent settings.');
+      setSuperAgentError('Could not save settings. Please try again.');
     } finally {
       setSuperAgentSaving(false);
     }
@@ -1315,6 +1319,8 @@ export default function AppPage() {
 
   async function wakeSuperAgentNow() {
     if (!activeId) return;
+    setSuperAgentError(null);
+    setSuperAgentWakeSuccess(false);
     setSuperAgentWaking(true);
     try {
       const res = await fetch('/api/super-agent/heartbeat', {
@@ -1332,9 +1338,20 @@ export default function AppPage() {
           c.id === activeId ? { ...c, activeJobId: jobId } : c,
         ));
         scheduleBackgroundPoll(activeId, jobId, 0, false);
+        setSuperAgentWakeSuccess(true);
+        setTimeout(() => {
+          setSuperAgentOpen(false);
+          setSuperAgentWakeSuccess(false);
+        }, 1200);
+      } else {
+        setSuperAgentWakeSuccess(true);
+        setTimeout(() => {
+          setSuperAgentOpen(false);
+          setSuperAgentWakeSuccess(false);
+        }, 1200);
       }
     } catch {
-      window.alert('Could not wake the super agent.');
+      setSuperAgentError('Could not wake the super agent. Please try again.');
     } finally {
       setSuperAgentWaking(false);
     }
@@ -2640,7 +2657,7 @@ export default function AppPage() {
           </div>
           <button
             type="button"
-            onClick={() => setSuperAgentOpen(true)}
+            onClick={() => { setSuperAgentOpen(true); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
             disabled={!canConfigureSuperAgent}
             className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex sm:px-3 ${
               activeConversation?.superAgent?.enabled
@@ -3233,7 +3250,7 @@ export default function AppPage() {
           <button
             type="button"
             className="absolute inset-0 bg-black/25 backdrop-blur-[1px] dark:bg-black/45"
-            onClick={() => setSuperAgentOpen(false)}
+            onClick={() => { setSuperAgentOpen(false); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
             aria-label="Close super agent settings"
           />
           <div
@@ -3244,12 +3261,12 @@ export default function AppPage() {
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Super agent</p>
                 <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                  Runs this conversation on a heartbeat. Point a cron job or scheduler at `/api/super-agent/heartbeat` with `x-ona-heartbeat-secret`.
+                  Wakes this conversation autonomously on a schedule to continue working. Use <strong className="font-medium text-gray-700 dark:text-gray-300">Wake Now</strong> to trigger it instantly, or enable the heartbeat and point a cron job at your deployment.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setSuperAgentOpen(false)}
+                onClick={() => { setSuperAgentOpen(false); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
                 className="flex size-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-black/5 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/8 dark:hover:text-gray-300"
                 aria-label="Close super agent settings"
               >
@@ -3259,23 +3276,84 @@ export default function AppPage() {
               </button>
             </div>
 
+            {superAgentError && (
+              <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800/50 dark:bg-red-950/30">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0 text-red-500">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M7 4.5v3M7 9.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <p className="text-xs text-red-700 dark:text-red-300">{superAgentError}</p>
+              </div>
+            )}
+
+            {superAgentWakeSuccess && (
+              <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/30">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-emerald-500">
+                  <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M4.5 7l2 2 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">Super agent woke up — working in the background.</p>
+              </div>
+            )}
+
             <div className="mt-5 space-y-4">
               <label className="flex items-center justify-between rounded-2xl border border-gray-200 px-4 py-3 dark:border-gray-800">
                 <div>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Enable heartbeat</p>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Let the scheduler wake this conversation up automatically.</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Let a cron job wake this conversation automatically on a schedule.</p>
                 </div>
                 <input
                   type="checkbox"
                   checked={superAgentEnabled}
-                  onChange={e => setSuperAgentEnabled(e.target.checked)}
+                  onChange={e => { setSuperAgentEnabled(e.target.checked); setSuperAgentError(null); }}
                   className="size-4"
                 />
               </label>
 
+              {superAgentEnabled && (
+                <div className="rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-white/3">
+                  <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Heartbeat endpoint</p>
+                  <div className="flex items-center gap-2">
+                    <code className="min-w-0 flex-1 truncate rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-[11px] font-mono text-gray-700 dark:text-gray-300">
+                      POST /api/super-agent/heartbeat
+                    </code>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const url = `${window.location.origin}/api/super-agent/heartbeat`;
+                        const ok = await copyTextToClipboard(url);
+                        if (ok) {
+                          setSuperAgentUrlCopied(true);
+                          setTimeout(() => setSuperAgentUrlCopied(false), 2000);
+                        }
+                      }}
+                      className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1.5 text-[11px] text-gray-500 dark:text-gray-400 transition-colors hover:border-gray-400 hover:text-gray-900 dark:hover:border-gray-500 dark:hover:text-gray-100"
+                      title="Copy URL"
+                    >
+                      {superAgentUrlCopied
+                        ? (
+                            <>
+                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 5.5l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                              Copied
+                            </>
+                          )
+                        : (
+                            <>
+                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="3.5" y="1" width="6.5" height="7.5" rx="1" stroke="currentColor" strokeWidth="1.2" /><path d="M1 3.5v6a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
+                              Copy
+                            </>
+                          )}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">
+                    Authenticate with header <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-px font-mono">x-ona-heartbeat-secret: &lt;your secret&gt;</code>. Set the <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-px font-mono">SUPER_AGENT_HEARTBEAT_SECRET</code> env var to configure the secret.
+                  </p>
+                </div>
+              )}
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Heartbeat Minutes</span>
+                  <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Heartbeat interval (minutes)</span>
                   <input
                     type="number"
                     min={1}
@@ -3302,22 +3380,36 @@ export default function AppPage() {
               </div>
 
               <label className="block">
-                <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Wake Prompt</span>
+                <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Wake prompt</span>
                 <textarea
                   value={superAgentPrompt}
                   onChange={e => setSuperAgentPrompt(e.target.value)}
-                  rows={6}
+                  rows={4}
                   className="w-full resize-none rounded-2xl border border-gray-200 bg-transparent px-3 py-2 text-sm leading-relaxed text-gray-900 outline-none transition-colors focus:border-gray-400 dark:border-gray-800 dark:text-gray-100 dark:focus:border-gray-600"
                 />
               </label>
 
-              <div className="rounded-2xl border border-gray-200 px-4 py-3 text-xs text-gray-600 dark:border-gray-800 dark:text-gray-300">
-                <p>Last status: {activeConversation?.superAgent?.lastRunStatus ?? 'idle'}</p>
-                <p className="mt-1">Next heartbeat: {activeConversation?.superAgent?.nextHeartbeatAt ? new Date(activeConversation.superAgent.nextHeartbeatAt).toLocaleString() : 'Not scheduled'}</p>
-                <p className="mt-1">Last heartbeat: {activeConversation?.superAgent?.lastHeartbeatAt ? new Date(activeConversation.superAgent.lastHeartbeatAt).toLocaleString() : 'Never'}</p>
-                {!canConfigureSuperAgent && (
-                  <p className="mt-1">Send the first task once so this conversation is saved before scheduling heartbeat runs.</p>
-                )}
+              <div className="rounded-2xl border border-gray-200 px-4 py-3 text-xs dark:border-gray-800">
+                {(() => {
+                  const status = activeConversation?.superAgent?.lastRunStatus ?? 'idle';
+                  const statusColor = status === 'error'
+                    ? 'text-red-600 dark:text-red-400'
+                    : status === 'running'
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : status === 'success'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-gray-500 dark:text-gray-400';
+                  return (
+                    <div className="space-y-1 text-gray-600 dark:text-gray-300">
+                      <p>Status: <span className={`font-medium ${statusColor}`}>{status}</span></p>
+                      <p>Next run: {activeConversation?.superAgent?.nextHeartbeatAt ? new Date(activeConversation.superAgent.nextHeartbeatAt).toLocaleString() : <span className="text-gray-400 dark:text-gray-500">Not scheduled</span>}</p>
+                      <p>Last run: {activeConversation?.superAgent?.lastHeartbeatAt ? new Date(activeConversation.superAgent.lastHeartbeatAt).toLocaleString() : <span className="text-gray-400 dark:text-gray-500">Never</span>}</p>
+                      {!canConfigureSuperAgent && (
+                        <p className="text-amber-600 dark:text-amber-400">Send the first task to save this conversation before enabling the super agent.</p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 
@@ -3325,15 +3417,25 @@ export default function AppPage() {
               <button
                 type="button"
                 onClick={wakeSuperAgentNow}
-                disabled={!canConfigureSuperAgent || superAgentWaking}
-                className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100"
+                disabled={!canConfigureSuperAgent || superAgentWaking || superAgentWakeSuccess}
+                className="flex items-center justify-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100"
               >
-                {superAgentWaking ? 'Waking…' : 'Wake Now'}
+                {superAgentWaking
+                  ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="animate-spin text-indigo-400">
+                          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.25" />
+                          <path d="M6 1.5A4.5 4.5 0 0110.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                        Waking…
+                      </>
+                    )
+                  : 'Wake Now'}
               </button>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setSuperAgentOpen(false)}
+                  onClick={() => { setSuperAgentOpen(false); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
                   className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100"
                 >
                   Cancel
