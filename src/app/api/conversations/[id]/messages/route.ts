@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { getBearerToken, getRequestAuth } from '@/libs/ApiKeys';
+import { authFailureResponse, getRequestAuth, isAuthFailure } from '@/libs/ApiKeys';
 import { conversationsSchema, messagesSchema } from '@/models/Schema';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getRequestAuth(req);
-  if (getBearerToken(req) && !auth) {
-    return Response.json({ error: 'Invalid API key' }, { status: 401 });
+  if (isAuthFailure(auth)) {
+    return authFailureResponse(auth);
   }
 
   const { id } = await params;

@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { and, desc, eq, isNull, or } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { getBearerToken, getRequestAuth } from '@/libs/ApiKeys';
+import { authFailureResponse, getRequestAuth, isAuthFailure } from '@/libs/ApiKeys';
 import { agentJobsSchema, conversationsSchema, messagesSchema } from '@/models/Schema';
 
 export async function GET(req: NextRequest) {
   const auth = await getRequestAuth(req);
-  if (getBearerToken(req) && !auth) {
-    return Response.json({ error: 'Invalid API key' }, { status: 401 });
+  if (isAuthFailure(auth)) {
+    return authFailureResponse(auth);
   }
 
   const sessionId = req.nextUrl.searchParams.get('sessionId');
@@ -63,8 +63,8 @@ async function hydrateConversations(conversations: (typeof conversationsSchema.$
 
 export async function POST(req: NextRequest) {
   const auth = await getRequestAuth(req);
-  if (getBearerToken(req) && !auth) {
-    return Response.json({ error: 'Invalid API key' }, { status: 401 });
+  if (isAuthFailure(auth)) {
+    return authFailureResponse(auth);
   }
 
   const { id, title, sessionId } = await req.json() as { id: string; title: string; sessionId?: string };

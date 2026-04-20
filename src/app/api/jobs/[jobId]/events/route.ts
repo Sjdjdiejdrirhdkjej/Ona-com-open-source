@@ -1,15 +1,15 @@
 import type { NextRequest } from 'next/server';
 import { and, eq, gt } from 'drizzle-orm';
 import { db } from '@/libs/DB';
-import { getBearerToken, getRequestAuth } from '@/libs/ApiKeys';
+import { authFailureResponse, getRequestAuth, isAuthFailure } from '@/libs/ApiKeys';
 import { agentEventsSchema, agentJobsSchema, conversationsSchema } from '@/models/Schema';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ jobId: string }> }) {
   const auth = await getRequestAuth(req);
-  if (getBearerToken(req) && !auth) {
-    return Response.json({ error: 'Invalid API key' }, { status: 401 });
+  if (isAuthFailure(auth)) {
+    return authFailureResponse(auth);
   }
 
   const { jobId } = await params;

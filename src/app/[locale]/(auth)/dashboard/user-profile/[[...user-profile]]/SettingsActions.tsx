@@ -7,6 +7,8 @@ type ApiKeyRecord = {
   id: string;
   name: string;
   keyPrefix: string;
+  requestCount: number;
+  rateLimitPerHour: number;
   createdAt: string;
   lastUsedAt: string | null;
   revokedAt: string | null;
@@ -150,7 +152,7 @@ export function ApiKeysPanel() {
       <div>
         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">Programmatic API access</p>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Create an API key and send it as a Bearer token in the Authorization header.
+          Create an API key and send it as a Bearer token in the Authorization header. Each key is limited to 60 requests per hour.
         </p>
       </div>
 
@@ -205,6 +207,9 @@ export function ApiKeysPanel() {
                     <p className="truncate text-sm font-medium text-gray-800 dark:text-gray-200">{key.name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {key.keyPrefix}… · {key.revokedAt ? 'Revoked' : key.lastUsedAt ? `Last used ${new Date(key.lastUsedAt).toLocaleDateString()}` : 'Never used'}
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500">
+                      {key.requestCount.toLocaleString()} total requests · {key.rateLimitPerHour.toLocaleString()} requests/hour
                     </p>
                   </div>
                   {!key.revokedAt && (

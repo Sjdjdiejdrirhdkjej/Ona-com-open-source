@@ -3,12 +3,12 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { conversationsSchema } from '@/models/Schema';
 import { deleteSandboxById } from '@/libs/Daytona';
-import { getBearerToken, getRequestAuth } from '@/libs/ApiKeys';
+import { authFailureResponse, getRequestAuth, isAuthFailure } from '@/libs/ApiKeys';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getRequestAuth(req);
-  if (getBearerToken(req) && !auth) {
-    return Response.json({ error: 'Invalid API key' }, { status: 401 });
+  if (isAuthFailure(auth)) {
+    return authFailureResponse(auth);
   }
 
   const { id } = await params;
@@ -24,8 +24,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await getRequestAuth(req);
-  if (getBearerToken(req) && !auth) {
-    return Response.json({ error: 'Invalid API key' }, { status: 401 });
+  if (isAuthFailure(auth)) {
+    return authFailureResponse(auth);
   }
 
   const { id } = await params;

@@ -27,9 +27,23 @@ export const apiKeysSchema = pgTable('api_keys', {
   name: text('name').notNull(),
   keyHash: text('key_hash').notNull().unique(),
   keyPrefix: text('key_prefix').notNull(),
+  requestCount: integer('request_count').notNull().default(0),
+  rateLimitPerHour: integer('rate_limit_per_hour').notNull().default(60),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   lastUsedAt: timestamp('last_used_at', { mode: 'date' }),
   revokedAt: timestamp('revoked_at', { mode: 'date' }),
+});
+
+export const apiKeyRateLimitsSchema = pgTable('api_key_rate_limits', {
+  apiKeyId: text('api_key_id')
+    .primaryKey()
+    .references(() => apiKeysSchema.id, { onDelete: 'cascade' }),
+  windowStart: timestamp('window_start', { mode: 'date' }).notNull(),
+  requestCount: integer('request_count').notNull().default(0),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
 export const counterSchema = pgTable('counter', {
