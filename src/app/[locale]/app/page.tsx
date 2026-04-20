@@ -3015,11 +3015,12 @@ export default function AppPage() {
                   </div>
                 )}
 
-                {/* Autonomy level selector */}
+                {/* Autonomy level selector + super agent button */}
                 {(() => {
                   const current = AUTONOMY_OPTIONS.find(m => m.key === selectedModel) ?? AUTONOMY_OPTIONS[0];
                   return (
-                    <div ref={modelMenuRef} className="relative mb-1.5 flex">
+                    <div className="mb-1.5 flex items-center gap-2">
+                    <div ref={modelMenuRef} className="relative flex">
                       <button
                         type="button"
                         onClick={() => setModelMenuOpen(o => !o)}
@@ -3060,6 +3061,21 @@ export default function AppPage() {
                           ))}
                         </div>
                       )}
+                    </div>
+                      <button
+                        type="button"
+                        onClick={() => { setSuperAgentOpen(true); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
+                        disabled={!canConfigureSuperAgent}
+                        title={canConfigureSuperAgent ? 'Configure super agent' : 'Send the first task to save this conversation before enabling the super agent'}
+                        className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                          activeConversation?.superAgent?.enabled
+                            ? 'border-emerald-200 text-emerald-700 hover:border-emerald-400 dark:border-emerald-900 dark:text-emerald-300 dark:hover:border-emerald-700'
+                            : 'border-black/8 bg-white/80 text-gray-500 hover:border-black/20 hover:text-gray-900 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200'
+                        }`}
+                      >
+                        <span className={`size-1.5 shrink-0 rounded-full ${activeConversation?.superAgent?.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                        Super agent
+                      </button>
                     </div>
                   );
                 })()}
