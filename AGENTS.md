@@ -22,6 +22,7 @@ Vitest covers unit and UI tests. Name source tests `src/**/*.test.ts` or `src/**
 
 ## Commit & Pull Request Guidelines
 Commits follow Conventional Commits via commitlint, for example `feat: add GitHub device flow` or `fix: prevent duplicate SSE events`. Keep subjects imperative and scoped when useful. PRs should describe the behavior change, note any schema or env updates, link the related issue, and include screenshots for UI work. If you change migrations, API routes, or auth flows, call that out explicitly in the PR description.
+Create a separate commit for every discrete change instead of batching unrelated edits together.
 
 ## Security & Configuration Tips
 Keep secrets in `.env.local` and never commit credentials. Review changes touching `src/libs/auth.ts`, `src/libs/session.ts`, or `src/app/api/**` carefully, since they affect authentication, sessions, and external integrations.
