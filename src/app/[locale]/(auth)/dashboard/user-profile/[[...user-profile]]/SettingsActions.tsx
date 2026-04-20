@@ -159,27 +159,68 @@ export function ApiKeysPanel() {
         </p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_180px_auto]">
+      <div className="flex flex-col gap-3">
         <input
           value={name}
           onChange={event => setName(event.target.value)}
-          className="min-h-10 flex-1 rounded-xl border border-black/8 bg-transparent px-3 text-sm text-gray-900 outline-none transition focus:border-gray-500 dark:border-white/10 dark:text-gray-100"
+          className="min-h-10 w-full rounded-xl border border-black/8 bg-transparent px-3 text-sm text-gray-900 outline-none transition focus:border-gray-500 dark:border-white/10 dark:text-gray-100"
           placeholder="Key name"
         />
-        <select
-          value={scope}
-          onChange={event => setScope(event.target.value as 'read_only' | 'task_running')}
-          className="min-h-10 rounded-xl border border-black/8 bg-transparent px-3 text-sm text-gray-900 outline-none transition focus:border-gray-500 dark:border-white/10 dark:text-gray-100"
-          aria-label="API key scope"
-        >
-          <option value="task_running">Task-running</option>
-          <option value="read_only">Read-only</option>
-        </select>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          {([
+            {
+              value: 'task_running',
+              label: 'Task-running',
+              description: 'Can run the agent, create and manage conversations, and read results. Use this for automation scripts.',
+              capabilities: ['Start agent tasks', 'Create conversations', 'Read results & job events'],
+            },
+            {
+              value: 'read_only',
+              label: 'Read-only',
+              description: 'Can only read existing data. Cannot trigger the agent or create anything new.',
+              capabilities: ['List conversations', 'Poll job events'],
+            },
+          ] as const).map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setScope(option.value)}
+              className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                scope === option.value
+                  ? 'border-gray-900 bg-gray-900/5 dark:border-gray-100 dark:bg-gray-100/8'
+                  : 'border-black/8 hover:border-gray-400 dark:border-white/10 dark:hover:border-white/30'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{option.label}</span>
+                <span className={`size-4 shrink-0 rounded-full border-2 transition-colors ${
+                  scope === option.value
+                    ? 'border-gray-900 bg-gray-900 dark:border-gray-100 dark:bg-gray-100'
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{option.description}</p>
+              <ul className="mt-2 space-y-0.5">
+                {option.capabilities.map(cap => (
+                  <li key={cap} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-gray-400 dark:text-gray-500">
+                      <path d="M2 5l2 2 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {cap}
+                  </li>
+                ))}
+              </ul>
+            </button>
+          ))}
+        </div>
+
         <button
           type="button"
           onClick={createKey}
           disabled={saving}
-          className="min-h-10 rounded-xl bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
+          className="min-h-10 w-full rounded-xl bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-300"
         >
           {saving ? 'Creating…' : 'Create API key'}
         </button>
