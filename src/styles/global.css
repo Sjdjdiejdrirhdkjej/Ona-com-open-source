@@ -42,6 +42,12 @@ body {
   background-size: 92px 92px;
 }
 
+@media (max-width: 640px) {
+  .amp-grid {
+    background-size: 56px 56px;
+  }
+}
+
 .dark .amp-grid {
   background-image:
     linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),

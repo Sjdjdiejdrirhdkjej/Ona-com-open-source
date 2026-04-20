@@ -2090,13 +2090,13 @@ export default function AppPage() {
   );
 
   return (
-    <div className="flex flex-col text-gray-950 dark:text-gray-50" style={{ backgroundColor: 'var(--bg)', height: '100dvh' }}>
+    <div className="flex flex-col overflow-hidden text-gray-950 dark:text-gray-50" style={{ backgroundColor: 'var(--bg)', height: '100dvh' }}>
       {/* ── Header ── */}
       <header
-        className="flex h-10 shrink-0 items-center justify-between border-b border-black/6 px-3 text-xs dark:border-white/8 sm:px-5"
+        className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-black/6 px-2.5 text-xs dark:border-white/8 sm:h-10 sm:px-5"
         style={{ backgroundColor: 'var(--bg-header)', backdropFilter: 'blur(14px)' }}
       >
-        <Link href="/" className="flex min-w-0 shrink items-center gap-2 font-semibold tracking-tight text-gray-950 dark:text-gray-50 truncate mr-2">
+        <Link href="/" className="flex min-w-0 shrink items-center gap-1.5 truncate font-semibold tracking-tight text-gray-950 dark:text-gray-50 sm:mr-2 sm:gap-2">
           <span className="flex size-5 items-center justify-center rounded-full bg-gray-950 text-[10px] text-white dark:bg-gray-100 dark:text-gray-950">O</span>
           <span className="hidden sm:inline">{APP_NAME}</span>
           <span className="sm:hidden">ONA</span>
@@ -2106,13 +2106,13 @@ export default function AppPage() {
           <button type="button" onClick={() => setSidebarOpen(true)} className="transition-colors hover:text-gray-950 dark:hover:text-gray-100">History</button>
           <Link href="/" className="transition-colors hover:text-gray-950 dark:hover:text-gray-100">Home</Link>
         </nav>
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="flex min-w-0 shrink-0 items-center justify-end gap-0.5 sm:gap-2">
           <GitHubConnect />
           {activeSandboxId
             ? (
                 <Link
                   href={`/sandbox-modify/${activeSandboxId}`}
-                  className="flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100 sm:px-3"
+                  className="hidden items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100 sm:flex sm:px-3"
                   style={{ backgroundColor: 'var(--bg-card)' }}
                   title="Modify VM"
                 >
@@ -2127,7 +2127,7 @@ export default function AppPage() {
                 <button
                   type="button"
                   disabled
-                  className="flex items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-400 opacity-60 dark:border-gray-700 dark:text-gray-500 sm:px-3"
+                  className="hidden items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-400 opacity-60 dark:border-gray-700 dark:text-gray-500 sm:flex sm:px-3"
                   style={{ backgroundColor: 'var(--bg-card)' }}
                   title="Start a task to create a VM before modifying it"
                 >
@@ -2142,7 +2142,7 @@ export default function AppPage() {
           <UserDropdown />
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs text-gray-600 transition-colors hover:bg-black/5 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/8 dark:hover:text-gray-100"
+            className="flex size-8 items-center justify-center rounded-full text-xs text-gray-600 transition-colors hover:bg-black/5 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/8 dark:hover:text-gray-100 sm:size-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5"
           >
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M3 3h8M3 7h8M3 11h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -2151,7 +2151,7 @@ export default function AppPage() {
           </button>
           <button
             onClick={createNewChat}
-            className="flex items-center gap-1.5 rounded-full bg-gray-950 px-2.5 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-85 active:opacity-75 dark:bg-gray-100 dark:text-gray-950 sm:px-3"
+            className="flex size-8 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white transition-opacity hover:opacity-85 active:opacity-75 dark:bg-gray-100 dark:text-gray-950 sm:size-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -2160,7 +2160,7 @@ export default function AppPage() {
           </button>
         </div>
       </header>
-      <div className="shrink-0 border-b border-black/5 py-1.5 text-center text-[11px] text-gray-500 dark:border-white/8 dark:text-gray-400">
+      <div className="shrink-0 truncate border-b border-black/5 px-3 py-1.5 text-center text-[10px] text-gray-500 dark:border-white/8 dark:text-gray-400 sm:text-[11px]">
         ONA runs background tasks in isolated VMs, keeps audit-ready progress, and lets you take over when needed.
       </div>
 
@@ -2170,12 +2170,12 @@ export default function AppPage() {
         {/* ── Chat area ── */}
         <div className="flex min-w-0 flex-1 flex-col">
           {/* Messages / empty state */}
-          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-3 py-4 sm:px-8 sm:py-6">
             {showEmptyPrompt
               ? (
-                  <div key={activeId} className="flex h-full flex-col items-center justify-center px-0 py-8 sm:px-8">
+                  <div key={activeId} className="flex min-h-full flex-col items-center justify-center px-0 py-4 sm:px-8 sm:py-8">
                     <h1
-                      className="mb-6 text-center text-3xl text-gray-900 dark:text-gray-100 sm:text-4xl"
+                      className="mb-5 max-w-xl text-center text-2xl leading-tight text-gray-900 dark:text-gray-100 sm:mb-6 sm:text-4xl"
                       style={{ fontFamily: SERIF, fontWeight: 400 }}
                     >
                       What should your background agent ship?
@@ -2242,7 +2242,7 @@ export default function AppPage() {
                       {(() => {
                         const current = MODEL_OPTIONS.find(m => m.key === selectedModel) ?? MODEL_OPTIONS[0];
                         return (
-                          <div ref={modelMenuRef} className="relative mb-2 flex justify-start">
+                          <div ref={modelMenuRef} className="relative mb-2 flex justify-center sm:justify-start">
                             <button
                               type="button"
                               onClick={() => setModelMenuOpen(o => !o)}
@@ -2282,7 +2282,7 @@ export default function AppPage() {
                         );
                       })()}
                       <div
-                        className="flex min-h-24 items-end gap-2 rounded-[1.75rem] border border-black/10 px-3 py-3 shadow-sm transition-shadow focus-within:border-black/20 focus-within:shadow-md dark:border-white/10 dark:focus-within:border-white/20 sm:min-h-32 sm:gap-3 sm:px-4 sm:py-4"
+                        className="flex min-h-24 items-end gap-2 rounded-[1.5rem] border border-black/10 px-3 py-3 shadow-sm transition-shadow focus-within:border-black/20 focus-within:shadow-md dark:border-white/10 dark:focus-within:border-white/20 sm:min-h-32 sm:gap-3 sm:rounded-[1.75rem] sm:px-4 sm:py-4"
                         style={{ backgroundColor: 'var(--bg-input)' }}
                       >
                         <button
@@ -2304,7 +2304,7 @@ export default function AppPage() {
                           onKeyDown={handleKey}
                           onPaste={handlePaste}
                           placeholder="Assign a task or ask anything"
-                          className="min-h-16 sm:min-h-28 flex-1 resize-none bg-transparent py-1.5 sm:py-2 text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                          className="min-h-16 flex-1 resize-none bg-transparent py-1.5 text-sm text-gray-900 outline-none placeholder-gray-400 dark:text-gray-100 dark:placeholder-gray-500 sm:min-h-28 sm:py-2 sm:text-base"
                           style={{ maxHeight: '180px' }}
                         />
                         {waitingForInitialSandbox ? (
@@ -2342,13 +2342,13 @@ export default function AppPage() {
                           </button>
                         )}
                       </div>
-                      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                      <div className="-mx-3 mt-4 flex max-w-[100vw] snap-x items-center gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 sm:pb-0">
                         {PROMPT_SUGGESTIONS.map(suggestion => (
                           <button
                             key={suggestion.label}
                             type="button"
                             onClick={() => useSuggestion(suggestion.prompt)}
-                            className="rounded-full border border-black/8 bg-white/70 px-3 py-1.5 text-xs text-gray-600 shadow-sm transition-colors hover:border-black/20 hover:text-gray-950 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-100"
+                            className="shrink-0 snap-start rounded-full border border-black/8 bg-white/70 px-3 py-1.5 text-xs text-gray-600 shadow-sm transition-colors hover:border-black/20 hover:text-gray-950 dark:border-white/10 dark:bg-white/5 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-100"
                           >
                             {suggestion.label}
                           </button>

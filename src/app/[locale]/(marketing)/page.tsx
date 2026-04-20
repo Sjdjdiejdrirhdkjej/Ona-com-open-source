@@ -142,7 +142,7 @@ const blogPosts = [
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-5 text-[11px] uppercase tracking-[0.28em] text-neutral-800 dark:text-neutral-300" style={{ fontFamily: MONO }}>
+    <p className="mb-4 text-[10px] uppercase tracking-[0.22em] text-neutral-800 dark:text-neutral-300 sm:mb-5 sm:text-[11px] sm:tracking-[0.28em]" style={{ fontFamily: MONO }}>
       {children}
     </p>
   );
@@ -163,32 +163,32 @@ export default async function Index(props: IIndexProps) {
 
   return (
     <div className="amp-grid min-h-screen text-neutral-950 dark:text-neutral-100">
-      <section className="mx-auto grid min-h-[calc(100vh-3.5rem)] max-w-7xl grid-cols-1 border-x border-black/8 px-6 pb-12 pt-16 dark:border-white/10 sm:px-8 md:grid-cols-12 md:items-center md:gap-8 md:pt-10">
-        <div className="md:col-span-8 md:col-start-4">
+      <section className="mx-auto grid min-h-[calc(100svh-3.5rem)] max-w-7xl grid-cols-1 border-x border-black/8 px-4 pb-12 pt-14 dark:border-white/10 sm:px-8 md:grid-cols-12 md:items-center md:gap-8 md:pt-10">
+        <div className="md:col-span-9 md:col-start-3 lg:col-span-8 lg:col-start-4">
           <h1
-            className="max-w-5xl text-[clamp(3.8rem,9vw,9rem)] leading-[0.82] tracking-[-0.075em] text-neutral-950 dark:text-neutral-50"
+            className="max-w-5xl text-[clamp(3.15rem,15vw,9rem)] leading-[0.86] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50 sm:leading-[0.82] sm:tracking-[-0.075em]"
             style={{ fontFamily: SERIF, fontWeight: 400 }}
           >
             <span className="block italic tracking-[-0.085em]">The platform for</span>
             <span className="block">background agents</span>
           </h1>
-          <div className="mt-10 grid gap-7 md:grid-cols-[minmax(0,26rem)_auto] md:items-start">
-            <p className="max-w-xl text-xl leading-snug tracking-[-0.03em] text-neutral-900 dark:text-neutral-200 sm:text-2xl">
+          <div className="mt-8 grid gap-6 sm:mt-10 md:grid-cols-[minmax(0,26rem)_auto] md:items-start">
+            <p className="max-w-xl text-lg leading-snug tracking-[-0.03em] text-neutral-900 dark:text-neutral-200 sm:text-2xl">
               Run a team of AI software engineers in the cloud.
               <br className="hidden sm:block" />
               {' '}
               Orchestrated, governed, secured at the kernel.
             </p>
-            <div className="flex flex-col items-start gap-3 sm:flex-row md:pt-1">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start md:pt-1">
               <Link
                 href="/app"
-                className="inline-flex rounded-[4px] bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
+                className="inline-flex justify-center rounded-[4px] bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
               >
                 Start for free
               </Link>
               <Link
                 href="/about/"
-                className="inline-flex rounded-[4px] border border-black/20 px-5 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:border-black/60 dark:border-white/25 dark:text-neutral-100 dark:hover:border-white/70"
+                className="inline-flex justify-center rounded-[4px] border border-black/20 px-5 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:border-black/60 dark:border-white/25 dark:text-neutral-100 dark:hover:border-white/70"
               >
                 Request a demo
               </Link>
@@ -197,17 +197,17 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-7xl grid-cols-1 border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8 lg:grid-cols-12 lg:gap-8">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-3">
           <SectionLabel>Background Agents virtual summit. RSVP now</SectionLabel>
-          <h2 className="max-w-xs text-4xl leading-[0.9] tracking-[-0.06em] sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          <h2 className="max-w-xs text-3xl leading-[0.92] tracking-[-0.055em] sm:text-5xl sm:leading-[0.9] sm:tracking-[-0.06em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
             The AI engineering workforce.
           </h2>
         </div>
         <div className="mt-10 lg:col-span-6 lg:mt-0">
-          <div className="relative min-h-[360px] overflow-hidden bg-[#20211f] p-5 text-[#d8d6b8] shadow-[0_20px_80px_rgba(0,0,0,0.18)] sm:min-h-[460px] sm:p-8">
+          <div className="relative min-h-[300px] overflow-hidden bg-[#20211f] p-4 text-[#d8d6b8] shadow-[0_20px_80px_rgba(0,0,0,0.18)] sm:min-h-[460px] sm:p-8">
             <div className="absolute inset-0 opacity-35" style={{ backgroundImage: 'radial-gradient(circle at center, rgba(18,180,95,0.8) 0 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
-            <div className="relative grid min-h-[300px] place-items-center sm:min-h-[380px]">
+            <div className="relative grid min-h-[260px] place-items-center sm:min-h-[380px]">
               <pre className="select-none text-center text-[10px] leading-[1.05] text-emerald-500/80 sm:text-xs" style={{ fontFamily: MONO }}>
                 {`           ..............           
        ....::::::::::::....       
@@ -248,14 +248,14 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
         <div className="grid border border-black/8 bg-black/8 dark:border-white/10 dark:bg-white/10 md:grid-cols-2">
           {featureCards.map(item => (
-            <div key={item.tag} className="min-h-72 border-black/8 bg-[var(--bg)] p-6 dark:border-white/10 sm:p-8 md:border-r md:border-b md:even:border-r-0">
-              <p className="mb-12 text-[11px] uppercase tracking-[0.28em] text-neutral-600 dark:text-neutral-400" style={{ fontFamily: MONO }}>
+            <div key={item.tag} className="min-h-60 border-b border-black/8 bg-[var(--bg)] p-5 last:border-b-0 dark:border-white/10 sm:min-h-72 sm:p-8 md:border-r md:border-b md:even:border-r-0">
+              <p className="mb-8 text-[10px] uppercase tracking-[0.22em] text-neutral-600 dark:text-neutral-400 sm:mb-12 sm:text-[11px] sm:tracking-[0.28em]" style={{ fontFamily: MONO }}>
                 {item.tag}
               </p>
-              <h3 className="max-w-sm text-4xl leading-[0.9] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h3 className="max-w-sm text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 dark:text-neutral-50 sm:text-4xl sm:leading-[0.9] sm:tracking-[-0.06em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                 {item.title}
               </h3>
               <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{item.body}</p>
@@ -267,11 +267,11 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <SectionLabel>How automations run</SectionLabel>
-            <h2 className="max-w-sm text-5xl leading-[0.9] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="max-w-sm text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl sm:leading-[0.9] sm:tracking-[-0.07em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               Closed-loop work, not chat-only assistance.
             </h2>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
@@ -281,9 +281,9 @@ export default async function Index(props: IIndexProps) {
           <div className="lg:col-span-8">
             <div className="grid border border-black/8 dark:border-white/10 md:grid-cols-3">
               {automationSteps.map(item => (
-                <div key={item.step} className="min-h-80 border-b border-black/8 p-6 last:border-b-0 dark:border-white/10 md:border-b-0 md:border-r md:last:border-r-0 sm:p-8">
+                <div key={item.step} className="min-h-56 border-b border-black/8 p-5 last:border-b-0 dark:border-white/10 sm:p-8 md:min-h-80 md:border-b-0 md:border-r md:last:border-r-0">
                   <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-500 dark:text-neutral-400" style={{ fontFamily: MONO }}>{item.step}</p>
-                  <h3 className="mt-14 text-4xl leading-[0.9] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                  <h3 className="mt-8 text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 dark:text-neutral-50 sm:mt-14 sm:text-4xl sm:leading-[0.9] sm:tracking-[-0.06em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                     {item.title}
                   </h3>
                   <p className="mt-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{item.body}</p>
@@ -294,10 +294,10 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
         <SectionLabel>Native context</SectionLabel>
         <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
-          <h2 className="text-5xl leading-[0.9] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50 lg:col-span-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl sm:leading-[0.9] sm:tracking-[-0.07em] lg:col-span-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
             Connect agents to the systems engineers already use.
           </h2>
           <p className="max-w-2xl text-base leading-relaxed text-neutral-700 dark:text-neutral-300 lg:col-span-7">
@@ -306,8 +306,8 @@ export default async function Index(props: IIndexProps) {
         </div>
         <div className="mt-10 grid border border-black/8 dark:border-white/10 md:grid-cols-3">
           {integrationCards.map(card => (
-            <div key={card.title} className="border-b border-black/8 p-6 last:border-b-0 dark:border-white/10 md:border-b-0 md:border-r md:last:border-r-0 sm:p-8">
-              <h3 className="text-3xl leading-[0.92] tracking-[-0.05em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <div key={card.title} className="border-b border-black/8 p-5 last:border-b-0 dark:border-white/10 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0">
+              <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-3xl sm:leading-[0.92] sm:tracking-[-0.05em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                 {card.title}
               </h3>
               <p className="mt-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{card.body}</p>
@@ -323,12 +323,12 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
         <SectionLabel>Use cases</SectionLabel>
         <div className="divide-y divide-black/8 border-y border-black/8 dark:divide-white/10 dark:border-white/10">
           {useCases.map(item => (
             <div key={item.title} className="grid gap-5 py-8 md:grid-cols-12 md:items-start">
-              <h3 className="text-3xl leading-[0.92] tracking-[-0.05em] text-neutral-950 dark:text-neutral-50 md:col-span-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-3xl sm:leading-[0.92] sm:tracking-[-0.05em] md:col-span-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                 {item.title}
               </h3>
               <p className="max-w-2xl text-base leading-relaxed text-neutral-700 dark:text-neutral-300 md:col-span-5">{item.body}</p>
@@ -340,13 +340,13 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
-        <div className="grid gap-8 bg-[#20211f] p-6 text-[#f0efd9] sm:p-10 lg:grid-cols-12">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
+        <div className="grid gap-8 bg-[#20211f] p-5 text-[#f0efd9] sm:p-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-[#d8d6b8]/60" style={{ fontFamily: MONO }}>
               Top 100 global company
             </p>
-            <blockquote className="text-4xl leading-[0.95] tracking-[-0.06em] sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <blockquote className="text-3xl leading-[0.98] tracking-[-0.055em] sm:text-5xl sm:leading-[0.95] sm:tracking-[-0.06em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               "90–95% of migration work is done by ONA but OPEN SOURCE Automations. We just have to do the final push commands."
             </blockquote>
             <div className="mt-8">
@@ -362,7 +362,7 @@ export default async function Index(props: IIndexProps) {
               { stat: '400+', label: 'Python repos modernized in 6 months' },
             ].map(item => (
               <div key={item.stat} className="border-t border-[#d8d6b8]/20 pt-5 first:border-t-0 first:pt-0">
-                <p className="text-6xl leading-none tracking-[-0.08em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <p className="text-5xl leading-none tracking-[-0.08em] sm:text-6xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                   {item.stat}
                 </p>
                 <p className="mt-1 text-sm text-[#d8d6b8]/70">{item.label}</p>
@@ -372,10 +372,10 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
-        <div className="grid gap-8 border border-black/8 p-6 dark:border-white/10 sm:p-8 md:grid-cols-12 md:items-center">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
+        <div className="grid gap-8 border border-black/8 p-5 dark:border-white/10 sm:p-8 md:grid-cols-12 md:items-center">
           <div className="md:col-span-7">
-            <h2 className="text-5xl leading-[0.9] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl sm:leading-[0.9] sm:tracking-[-0.07em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               Governed from the runtime up.
             </h2>
             <p className="mt-4 text-base text-neutral-700 dark:text-neutral-300">
@@ -392,13 +392,13 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
-        <div className="grid gap-8 bg-neutral-950 p-6 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 sm:p-10 lg:grid-cols-12">
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
+        <div className="grid gap-8 bg-neutral-950 p-5 text-neutral-50 dark:bg-neutral-100 dark:text-neutral-950 sm:p-10 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500" style={{ fontFamily: MONO }}>
               Operating model
             </p>
-            <h2 className="text-5xl leading-[0.9] tracking-[-0.07em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] sm:text-5xl sm:leading-[0.9] sm:tracking-[-0.07em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               Autonomous when you want it. Takeover when you need it.
             </h2>
           </div>
@@ -412,8 +412,8 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-14 dark:border-white/10 sm:px-8">
-        <h2 className="mb-8 max-w-2xl text-5xl leading-[0.9] tracking-[-0.07em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-10 dark:border-white/10 sm:px-8 sm:py-14">
+        <h2 className="mb-8 max-w-2xl text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl sm:leading-[0.9] sm:tracking-[-0.07em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
           Recent highlights from our blog
         </h2>
         <div className="grid border border-black/8 dark:border-white/10 md:grid-cols-3">
@@ -435,21 +435,21 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-6 py-20 text-center dark:border-white/10 sm:px-8">
-        <h2 className="mx-auto max-w-4xl text-[clamp(3.6rem,10vw,8.5rem)] leading-[0.78] tracking-[-0.08em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+      <section className="mx-auto max-w-7xl border-x border-t border-black/8 px-4 py-14 text-center dark:border-white/10 sm:px-8 sm:py-20">
+        <h2 className="mx-auto max-w-4xl text-[clamp(3rem,14vw,8.5rem)] leading-[0.84] tracking-[-0.075em] text-neutral-950 dark:text-neutral-50 sm:leading-[0.78] sm:tracking-[-0.08em]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
           Start shipping with ONA but OPEN SOURCE
         </h2>
         <p className="mx-auto mt-8 max-w-md text-lg text-neutral-700 dark:text-neutral-300">No commitment. No setup. Just start.</p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <Link
             href="/app"
-            className="inline-flex rounded-[4px] bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
+            className="inline-flex justify-center rounded-[4px] bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-neutral-100 dark:text-neutral-950"
           >
             Start for free
           </Link>
           <Link
             href="/about/"
-            className="inline-flex rounded-[4px] border border-black/20 px-5 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:border-black/60 dark:border-white/25 dark:text-neutral-100 dark:hover:border-white/70"
+            className="inline-flex justify-center rounded-[4px] border border-black/20 px-5 py-2.5 text-sm font-medium text-neutral-950 transition-colors hover:border-black/60 dark:border-white/25 dark:text-neutral-100 dark:hover:border-white/70"
           >
             Request a demo
           </Link>
