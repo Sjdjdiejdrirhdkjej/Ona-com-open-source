@@ -2392,12 +2392,14 @@ export default function AppPage() {
                   <span className="hidden sm:inline">Modify VM</span>
                 </button>
               )}
-          <ThemeToggle />
-          <CreditsChip />
+          <span className="hidden sm:contents">
+            <ThemeToggle />
+            <CreditsChip />
+          </span>
           <UserDropdown />
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="flex size-8 items-center justify-center rounded-full text-xs text-gray-600 transition-colors hover:bg-black/5 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/8 dark:hover:text-gray-100 sm:size-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5"
+            className="flex size-10 items-center justify-center rounded-full text-xs text-gray-600 transition-colors hover:bg-black/5 hover:text-gray-950 dark:text-gray-400 dark:hover:bg-white/8 dark:hover:text-gray-100 sm:size-auto sm:gap-1.5 sm:px-2.5 sm:py-1.5"
           >
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
               <path d="M3 3h8M3 7h8M3 11h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -2406,7 +2408,7 @@ export default function AppPage() {
           </button>
           <button
             onClick={createNewChat}
-            className="flex size-8 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white transition-opacity hover:opacity-85 active:opacity-75 dark:bg-gray-100 dark:text-gray-950 sm:size-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
+            className="flex size-10 items-center justify-center rounded-full bg-gray-950 text-xs font-medium text-white transition-opacity hover:opacity-85 active:opacity-75 dark:bg-gray-100 dark:text-gray-950 sm:size-auto sm:gap-1.5 sm:px-3 sm:py-1.5"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
@@ -2415,7 +2417,7 @@ export default function AppPage() {
           </button>
         </div>
       </header>
-      <div className="shrink-0 truncate border-b border-black/5 px-3 py-1.5 text-center text-[10px] text-gray-500 dark:border-white/8 dark:text-gray-400 sm:text-[11px]">
+      <div className="hidden sm:block shrink-0 truncate border-b border-black/5 px-3 py-1.5 text-center text-[11px] text-gray-500 dark:border-white/8 dark:text-gray-400">
         ONA runs background tasks in isolated VMs, keeps audit-ready progress, and lets you take over when needed.
       </div>
 
@@ -2507,7 +2509,7 @@ export default function AppPage() {
                                 <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
                                 <path d="M3 5h4M5 3v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                               </svg>
-                              <span className="text-gray-400 dark:text-gray-500">Autonomy level:</span>
+                              <span className="hidden sm:inline text-gray-400 dark:text-gray-500">Autonomy level:</span>
                               {current.label}
                               <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
                                 <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -2558,13 +2560,13 @@ export default function AppPage() {
                         <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                         <textarea
                           ref={textareaRef}
-                          rows={3}
+                          rows={1}
                           value={input}
                           onChange={autoResize}
                           onKeyDown={handleKey}
                           onPaste={handlePaste}
                           placeholder="Assign a task or ask anything"
-                          className="min-h-16 flex-1 resize-none bg-transparent py-1.5 text-sm text-gray-900 outline-none placeholder-gray-400 dark:text-gray-100 dark:placeholder-gray-500 sm:min-h-28 sm:py-2 sm:text-base"
+                          className="min-h-[4rem] flex-1 resize-none bg-transparent py-1.5 text-base text-gray-900 outline-none placeholder-gray-400 dark:text-gray-100 dark:placeholder-gray-500 sm:min-h-28 sm:py-2"
                           style={{ maxHeight: '180px' }}
                         />
                         {waitingForInitialSandbox ? (
@@ -2572,7 +2574,7 @@ export default function AppPage() {
                             type="button"
                             disabled
                             aria-label="Booting Daytona VM"
-                            className="flex size-9 sm:size-10 shrink-0 cursor-not-allowed items-center justify-center rounded-full bg-gray-950 text-white opacity-80"
+                            className="flex size-10 shrink-0 cursor-not-allowed items-center justify-center rounded-full bg-gray-950 text-white opacity-80"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="animate-spin">
                               <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.25" />
@@ -2583,7 +2585,7 @@ export default function AppPage() {
                           <button
                             onClick={stopGeneration}
                             aria-label="Stop"
-                            className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
                           >
                             <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                               <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
@@ -2594,7 +2596,7 @@ export default function AppPage() {
                             onClick={() => send(input, pendingImage ?? undefined)}
                             disabled={!canSend}
                             aria-label="Send"
-                            className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
                           >
                             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                               <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -2645,7 +2647,7 @@ export default function AppPage() {
 
           {/* ── Input bar (shown only when there are messages) ── */}
           {!showEmptyPrompt && (
-            <div className="shrink-0 border-t border-black/6 px-3 py-3 dark:border-white/10 sm:px-6 sm:py-4">
+            <div className="shrink-0 border-t border-black/6 px-3 pt-3 dark:border-white/10 sm:px-6 sm:pt-4" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}>
               <div className="relative mx-auto max-w-3xl">
                 {/* @ mention file picker */}
                 {atMention && (
@@ -2719,7 +2721,7 @@ export default function AppPage() {
                           <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4" />
                           <path d="M3 5h4M5 3v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                         </svg>
-                        <span className="text-gray-400 dark:text-gray-500">Autonomy level:</span>
+                        <span className="hidden sm:inline text-gray-400 dark:text-gray-500">Autonomy level:</span>
                         {current.label}
                         <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`shrink-0 transition-transform ${modelMenuOpen ? 'rotate-180' : ''}`}>
                           <path d="M1.5 3L4 5.5L6.5 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
@@ -2771,20 +2773,20 @@ export default function AppPage() {
                   <input suppressHydrationWarning ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                   <textarea
                     ref={textareaRef}
-                    rows={3}
+                    rows={1}
                     value={input}
                     onChange={autoResize}
                     onKeyDown={handleKey}
                     onPaste={handlePaste}
                     placeholder="Assign a follow-up task or ask anything"
-                    className="flex-1 resize-none bg-transparent py-2 sm:py-3 text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+                    className="flex-1 resize-none bg-transparent py-2.5 sm:py-3 text-base text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
                     style={{ maxHeight: '180px' }}
                   />
                   {loading ? (
                     <button
                       onClick={stopGeneration}
                       aria-label="Stop"
-                      className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 active:opacity-70"
                     >
                       <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                         <rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor" />
@@ -2795,7 +2797,7 @@ export default function AppPage() {
                       onClick={() => send(input, pendingImage ?? undefined)}
                       disabled={!canSend}
                       aria-label="Send"
-                      className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gray-950 text-white transition-opacity hover:opacity-80 disabled:opacity-25 active:opacity-70"
                     >
                       <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
                         <path d="M7 12V2M7 2L3 6M7 2L11 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

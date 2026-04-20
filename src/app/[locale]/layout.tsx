@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -6,6 +6,12 @@ import { notFound } from 'next/navigation';
 import { ThemeInitializer } from '@/components/ThemeInitializer';
 import { routing } from '@/libs/I18nRouting';
 import '@/styles/global.css';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   icons: [
