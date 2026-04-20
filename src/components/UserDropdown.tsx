@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { signOut, useAuth } from '@/libs/auth-client';
 
 function getInitials(firstName: string | null, lastName: string | null, email: string | null): string {
@@ -22,17 +23,78 @@ function getDisplayName(firstName: string | null, lastName: string | null, email
   return full || email || 'Account';
 }
 
+type MenuPosition = { top: number; right: number };
+
 export function UserDropdown() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [position, setPosition] = useState<MenuPosition>({ top: 0, right: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
+  // SSR guard: only render the portal on the client so createPortal/document
+  // are never referenced during server rendering.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Compute and track the menu's anchor position relative to the viewport.
+  // Rendered via a portal with position:fixed so the menu escapes the header's
+  // `backdrop-filter` stacking context, which otherwise caused sibling body
+  // content to intercept clicks on the menu items.
+  useLayoutEffect(() => {
+    if (!open) {
+      return;
+    }
+    const button = buttonRef.current;
+    if (!button) {
+      return;
+    }
+
+    function updatePosition() {
+      if (!button) {
+        return;
+      }
+      const rect = button.getBoundingClientRect();
+      setPosition({
+        // 8px gap below the button (matches the original `mt-2`).
+        // Clamp so the menu stays within the viewport on small screens.
+        top: Math.max(8, rect.bottom + 8),
+        right: Math.max(8, window.innerWidth - rect.right),
+      });
+    }
+
+    updatePosition();
+
+    const resizeObserver = new ResizeObserver(updatePosition);
+    resizeObserver.observe(button);
+
+    window.addEventListener('resize', updatePosition);
+    // Capture-phase scroll so we catch scrolls on any ancestor container.
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open]);
+
+  // Close on outside click / Escape. Because the menu lives in a portal (not
+  // inside the button's wrapper), check BOTH the button and the menu refs.
   useEffect(() => {
     if (!open) {
       return;
     }
     function handleClickOutside(e: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+      const target = e.target as Node | null;
+      if (!target) {
+        return;
+      }
+      const inButton = buttonRef.current?.contains(target) ?? false;
+      const inMenu = menuRef.current?.contains(target) ?? false;
+      if (!inButton && !inMenu) {
         setOpen(false);
       }
     }
@@ -65,37 +127,17 @@ export function UserDropdown() {
   const initials = getInitials(user.firstName, user.lastName, user.email);
   const displayName = getDisplayName(user.firstName, user.lastName, user.email);
 
-  return (
-    <div ref={wrapperRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-label="Open account menu"
-        className="flex size-8 items-center justify-center rounded-full ring-1 ring-black/10 transition-opacity hover:opacity-85 dark:ring-white/10"
-      >
-        {user.profileImageUrl
-          ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={user.profileImageUrl}
-                alt={displayName}
-                className="size-8 rounded-full object-cover"
-              />
-            )
-          : (
-              <span className="flex size-8 items-center justify-center rounded-full bg-gray-900 text-[11px] font-semibold text-white dark:bg-gray-100 dark:text-gray-900">
-                {initials}
-              </span>
-            )}
-      </button>
-
-      {open && (
+  const menu = open
+    ? (
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-xl border border-black/5 shadow-lg dark:border-white/10"
-          style={{ backgroundColor: 'var(--bg-card)' }}
+          className="fixed z-[100] w-60 overflow-hidden rounded-xl border border-black/5 shadow-lg dark:border-white/10"
+          style={{
+            top: position.top,
+            right: position.right,
+            backgroundColor: 'var(--bg-card)',
+          }}
         >
           <div className="flex items-center gap-2.5 border-b border-black/5 px-3 py-2.5 dark:border-white/8">
             {user.profileImageUrl
@@ -164,7 +206,36 @@ export function UserDropdown() {
             </button>
           </div>
         </div>
-      )}
-    </div>
+      )
+    : null;
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Open account menu"
+        className="flex size-8 items-center justify-center rounded-full ring-1 ring-black/10 transition-opacity hover:opacity-85 dark:ring-white/10"
+      >
+        {user.profileImageUrl
+          ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.profileImageUrl}
+                alt={displayName}
+                className="size-8 rounded-full object-cover"
+              />
+            )
+          : (
+              <span className="flex size-8 items-center justify-center rounded-full bg-gray-900 text-[11px] font-semibold text-white dark:bg-gray-100 dark:text-gray-900">
+                {initials}
+              </span>
+            )}
+      </button>
+      {mounted && menu ? createPortal(menu, document.body) : null}
+    </>
   );
 }
