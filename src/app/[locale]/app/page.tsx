@@ -36,6 +36,7 @@ type ContentPart =
 type SubStep = {
   label: string;
   status: 'running' | 'done' | 'error';
+  thinking?: string;
 };
 
 type TodoStatus = 'pending' | 'in_progress' | 'done';
@@ -45,7 +46,10 @@ type ToolStep = {
   label: string;
   status: 'running' | 'done' | 'error';
   subSteps?: SubStep[];
+  traceKind?: 'oracle' | 'editor' | 'librarian' | 'tool';
+  traceRequest?: string;
   librarianReport?: string;
+  librarianThinking?: string[];
   browserReport?: string;
   oracleReport?: string;
   editorReport?: string;
@@ -290,17 +294,21 @@ function ToolStepsBlock({ steps }: { steps: ToolStep[] }) {
       <div className="min-w-0 flex-1 space-y-2 rounded-3xl rounded-tl-md border border-black/6 bg-white/70 px-4 py-3 shadow-sm dark:border-white/10 dark:bg-white/5">
         {steps.map((step, i) => {
           const hasSubSteps = !!(step.subSteps && step.subSteps.length > 0);
+          const hasTraceRequest = !!step.traceRequest;
           const hasReport = !!step.librarianReport;
           const hasBrowserReport = !!step.browserReport;
           const hasOracleReport = !!step.oracleReport;
           const hasEditorReport = !!step.editorReport;
           const hasDiff = !!(step.touchedFiles && step.touchedFiles.length > 0);
+          const hasLibrarianThinking = !!(step.librarianThinking && step.librarianThinking.length > 0);
+          const hasOracleSubStepThinking = !!(step.subSteps && step.subSteps.some(s => s.thinking));
           const isOpen = expandedLabels.has(step.label) || (step.status === 'running' && hasSubSteps);
           const isReportOpen = expandedReports.has(step.label);
           const isBrowserReportOpen = expandedReports.has(`${step.label}::browser`);
           const isOracleReportOpen = expandedReports.has(`${step.label}::oracle`);
           const isEditorReportOpen = expandedReports.has(`${step.label}::editor`);
           const isDiffOpen = expandedReports.has(`${step.label}::diff`);
+          const isThinkingOpen = expandedReports.has(`${step.label}::thinking`);
           return (
             <div key={i}>
               <div className="flex items-center gap-2 flex-wrap">
@@ -387,26 +395,75 @@ function ToolStepsBlock({ steps }: { steps: ToolStep[] }) {
                     {isEditorReportOpen ? 'Hide editor' : 'Editor report'}
                   </button>
                 )}
+                {(hasLibrarianThinking || hasOracleSubStepThinking) && (
+                  <button
+                    onClick={() => toggleReport(`${step.label}::thinking`)}
+                    className="ml-auto flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-teal-500 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M5 1.5a3 3 0 013 3c0 1.2-.7 2.2-1.7 2.7V8.5H3.7V7.2A3 3 0 015 1.5z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round" />
+                      <path d="M3.7 8.5h2.6" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                    </svg>
+                    {isThinkingOpen ? 'Hide thinking' : 'Thinking'}
+                  </button>
+                )}
               </div>
               {hasSubSteps && isOpen && (
-                <div className="mt-1.5 ml-4 pl-3 space-y-1 border-l border-gray-200 dark:border-gray-700">
+                <div className="mt-1.5 ml-4 pl-3 space-y-1.5 border-l border-gray-200 dark:border-gray-700">
                   {step.subSteps!.map((sub, j) => (
-                    <div key={j} className="flex items-center gap-2">
-                      <ToolStepIcon status={sub.status} />
-                      <span
-                        className={`text-xs ${
-                          sub.status === 'done'
-                            ? 'text-gray-400 dark:text-gray-500'
-                            : sub.status === 'error'
-                              ? 'text-red-400'
-                              : 'text-gray-500 dark:text-gray-400'
-                        }`}
-                      >
-                        {sub.label}
-                        {sub.status === 'running' ? '…' : ''}
-                      </span>
+                    <div key={j}>
+                      <div className="flex items-center gap-2">
+                        <ToolStepIcon status={sub.status} />
+                        <span
+                          className={`text-xs ${
+                            sub.status === 'done'
+                              ? 'text-gray-400 dark:text-gray-500'
+                              : sub.status === 'error'
+                                ? 'text-red-400'
+                                : 'text-gray-500 dark:text-gray-400'
+                          }`}
+                        >
+                          {sub.label}
+                          {sub.status === 'running' ? '…' : ''}
+                        </span>
+                      </div>
+                      {isThinkingOpen && sub.thinking && (
+                        <div className="mt-1 ml-5 rounded-lg border border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-950/20 px-2.5 py-2 max-h-48 overflow-y-auto">
+                          <div className="mb-1 text-[10px] font-medium uppercase tracking-[0.1em] text-teal-500 dark:text-teal-400">Reasoning</div>
+                          <pre className="whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-gray-600 dark:text-gray-300">{sub.thinking}</pre>
+                        </div>
+                      )}
                     </div>
                   ))}
+                </div>
+              )}
+              {hasLibrarianThinking && isThinkingOpen && (
+                <div className="mt-2 ml-4 rounded-xl border border-teal-100 dark:border-teal-900/50 bg-teal-50/50 dark:bg-teal-950/20 px-3 py-2.5 max-h-72 overflow-y-auto">
+                  <div className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.1em] text-teal-500 dark:text-teal-400">Internal Reasoning</div>
+                  {step.librarianThinking!.map((chunk, idx) => (
+                    <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-teal-100 dark:border-teal-900/40' : ''}>
+                      {step.librarianThinking!.length > 1 && (
+                        <div className="mb-1 text-[10px] text-teal-400 dark:text-teal-500">Pass {idx + 1}</div>
+                      )}
+                      <pre className="whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-gray-600 dark:text-gray-300">{chunk}</pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {hasTraceRequest && (
+                <div className="mt-2 ml-4 rounded-xl border border-gray-200/80 bg-gray-50/80 px-3 py-2.5 dark:border-gray-800 dark:bg-black/20">
+                  <div className="mb-1 text-[11px] font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
+                    {step.traceKind === 'oracle'
+                      ? 'Oracle Invocation'
+                      : step.traceKind === 'editor'
+                        ? 'Editor Invocation'
+                        : step.traceKind === 'librarian'
+                          ? 'Research Invocation'
+                          : 'Invocation'}
+                  </div>
+                  <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-gray-600 dark:text-gray-300">
+                    {step.traceRequest}
+                  </pre>
                 </div>
               )}
               {hasReport && isReportOpen && (
@@ -438,6 +495,27 @@ function ToolStepsBlock({ steps }: { steps: ToolStep[] }) {
       </div>
     </div>
   );
+}
+
+function parseToolSteps(tools: string[], rawToolTraces: unknown): ToolStep[] {
+  if (Array.isArray(rawToolTraces)) {
+    const normalized = rawToolTraces.flatMap((trace) => {
+      if (!trace || typeof trace !== 'object') return [];
+      const item = trace as Partial<ToolStep>;
+      if (typeof item.label !== 'string') return [];
+
+      return [{
+        label: item.label,
+        status: 'running' as const,
+        traceKind: item.traceKind,
+        traceRequest: typeof item.traceRequest === 'string' ? item.traceRequest : undefined,
+      }];
+    });
+
+    if (normalized.length > 0) return normalized;
+  }
+
+  return tools.map(label => ({ label, status: 'running' as const }));
 }
 
 function TypingIndicator() {
@@ -810,7 +888,10 @@ export default function AppPage() {
       // Discard results if polling was stopped (generation bumped) while fetching.
       if ((bgPollGenRef.current.get(convId) ?? 0) !== myGen) return;
       if (!res.ok) {
-        stopBackgroundPoll(convId);
+        // Polling is the fallback when SSE is buffered or intentionally aborted.
+        // A transient non-OK response here must not leave the composer stuck in
+        // a loading/initial-sandbox state with no further retries.
+        scheduleBackgroundPoll(convId, jobId, cursor, rebuild);
         return;
       }
       const data = await res.json() as {
@@ -891,11 +972,12 @@ export default function AppPage() {
             if (ev.type === 'tool_call') {
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
               const tools = (ev.data.tools as string[]) ?? [];
+              const toolTraces = ev.data.toolTraces;
               const toolStepsMsgId = ev.data.toolStepsMsgId as string ?? createBrowserId();
               const nextAssistantMsgId = ev.data.nextAssistantMsgId as string ?? createBrowserId();
               messages = messages.filter(m => !(m.role === 'assistant' && m.content === ''));
               if (!messages.some(m => m.id === toolStepsMsgId)) {
-                messages.push({ id: toolStepsMsgId, role: 'tool_steps', content: tools.map(l => ({ label: l, status: 'running' as const })) });
+                messages.push({ id: toolStepsMsgId, role: 'tool_steps', content: parseToolSteps(tools, toolTraces) });
               }
               if (!messages.some(m => m.id === nextAssistantMsgId)) {
                 messages.push({ id: nextAssistantMsgId, role: 'assistant', content: '' });
@@ -967,6 +1049,13 @@ export default function AppPage() {
                   ),
                 }),
               );
+            } else if (ev.type === 'librarian_pro_thinking') {
+              const parentLabel = ev.data.parentLabel as string;
+              const thinking = ev.data.thinking as string;
+              messages = applyStepUpdate(messages, s => s.label === parentLabel, s => ({
+                ...s,
+                librarianThinking: [...(s.librarianThinking ?? []), thinking],
+              }));
             } else if (ev.type === 'librarian_pro_report') {
               const parentLabel = ev.data.parentLabel as string;
               const report = ev.data.report as string;
@@ -1035,13 +1124,16 @@ export default function AppPage() {
               const parentLabel = ev.data.parentLabel as string;
               const step = ev.data.step as string;
               const hasError = !!ev.data.error;
+              const reasoning = typeof ev.data.reasoning === 'string' ? ev.data.reasoning : undefined;
               messages = applyStepUpdate(
                 messages,
                 s => s.label === parentLabel,
                 s => ({
                   ...s,
                   subSteps: (s.subSteps ?? []).map(sub =>
-                    sub.label === step ? { ...sub, status: (hasError ? 'error' : 'done') as SubStep['status'] } : sub,
+                    sub.label === step
+                      ? { ...sub, status: (hasError ? 'error' : 'done') as SubStep['status'], ...(reasoning ? { thinking: reasoning } : {}) }
+                      : sub,
                   ),
                 }),
               );
@@ -1150,6 +1242,15 @@ export default function AppPage() {
       setActiveId(fromUrl ? fromUrl.id : conversations[0]!.id);
     }
   }, [conversations, activeId]);
+
+  useEffect(() => {
+    if (!initialSandboxGate || loading) return;
+    const gatedConversation = conversations.find(c => c.id === initialSandboxGate.conversationId);
+    if (!gatedConversation?.activeJobId) {
+      setInitialSandboxGate(null);
+      setSandboxBooting(false);
+    }
+  }, [conversations, initialSandboxGate, loading]);
 
   useEffect(() => {
     if (!activeId) return;
@@ -1521,6 +1622,7 @@ export default function AppPage() {
               }));
             } else if (json.type === 'tool_call' && json.tools?.length) {
               setInitialSandboxGate(waiting => waiting?.conversationId === convId ? null : waiting);
+              const toolTraces = (json as { toolTraces?: unknown }).toolTraces;
               const toolStepsMsgId = json.toolStepsMsgId ?? createBrowserId();
               const nextAssistantMsgId = json.nextAssistantMsgId ?? createBrowserId();
               currentAssistantId = nextAssistantMsgId;
@@ -1533,7 +1635,7 @@ export default function AppPage() {
                 const newSteps: Message = {
                   id: toolStepsMsgId,
                   role: 'tool_steps',
-                  content: json.tools!.map((label: string) => ({ label, status: 'running' as const })),
+                  content: parseToolSteps(json.tools as string[], toolTraces),
                 };
                 const newAssistant: Message = {
                   id: nextAssistantMsgId,
@@ -1711,6 +1813,26 @@ export default function AppPage() {
                   ),
                 };
               }));
+            } else if (json.type === 'librarian_pro_thinking' && json.parentLabel && json.thinking) {
+              const { parentLabel, thinking } = json as { parentLabel: string; thinking: string };
+              setConversations(prev => prev.map(c => {
+                if (c.id !== convId) return c;
+                return {
+                  ...c,
+                  messages: c.messages.map(m =>
+                    m.role === 'tool_steps'
+                      ? {
+                          ...m,
+                          content: (m.content as ToolStep[]).map(s =>
+                            s.label === parentLabel
+                              ? { ...s, librarianThinking: [...(s.librarianThinking ?? []), thinking] }
+                              : s,
+                          ),
+                        }
+                      : m,
+                  ),
+                };
+              }));
             } else if (json.type === 'librarian_pro_report' && json.parentLabel && json.report) {
               const { parentLabel, report } = json as { parentLabel: string; report: string };
               setConversations(prev => prev.map(c => {
@@ -1880,7 +2002,7 @@ export default function AppPage() {
                 };
               }));
             } else if (json.type === 'oracle_step_complete' && json.parentLabel && json.step) {
-              const { parentLabel, step, error: hasError } = json as { parentLabel: string; step: string; error?: boolean };
+              const { parentLabel, step, error: hasError, reasoning } = json as { parentLabel: string; step: string; error?: boolean; reasoning?: string };
               setConversations(prev => prev.map(c => {
                 if (c.id !== convId) return c;
                 return {
@@ -1895,7 +2017,7 @@ export default function AppPage() {
                                   ...s,
                                   subSteps: (s.subSteps ?? []).map(sub =>
                                     sub.label === step
-                                      ? { ...sub, status: (hasError ? 'error' : 'done') as SubStep['status'] }
+                                      ? { ...sub, status: (hasError ? 'error' : 'done') as SubStep['status'], ...(reasoning ? { thinking: reasoning } : {}) }
                                       : sub,
                                   ),
                                 }

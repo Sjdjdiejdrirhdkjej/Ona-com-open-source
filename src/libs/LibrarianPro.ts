@@ -826,7 +826,7 @@ type FireworksNonStreamResponse = {
 
 async function librarianProCall(
   messages: LibrarianProMessage[],
-): Promise<{ content: string; toolCalls: LibrarianProToolCall[] }> {
+): Promise<{ content: string; reasoning: string; toolCalls: LibrarianProToolCall[] }> {
   if (!process.env.FIREWORKS_API_KEY) throw new Error('FIREWORKS_API_KEY is not configured.');
 
   const res = await fetch(FIREWORKS_API_URL, {
@@ -857,10 +857,7 @@ async function librarianProCall(
 
   const msg = json.choices?.[0]?.message;
   const rawContent = msg?.content ?? '';
-  const reasoningContent = msg?.reasoning_content ?? '';
-  const content = reasoningContent
-    ? `<think>${reasoningContent}</think>${rawContent}`
-    : rawContent;
+  const reasoning = msg?.reasoning_content?.trim() ?? '';
 
   const toolCalls: LibrarianProToolCall[] = (msg?.tool_calls ?? []).map(tc => ({
     id: tc.id ?? crypto.randomUUID(),
@@ -868,7 +865,7 @@ async function librarianProCall(
     function: { name: tc.function?.name ?? '', arguments: tc.function?.arguments ?? '{}' },
   }));
 
-  return { content, toolCalls };
+  return { content: rawContent, reasoning, toolCalls };
 }
 
 function parseArgs(raw: string): Record<string, unknown> {
@@ -921,11 +918,14 @@ export type LibrarianProStepCallback = (
   error?: boolean,
 ) => void;
 
+export type LibrarianProThinkingCallback = (thinking: string) => void;
+
 // ── Main subagent loop ─────────────────────────────────────────────────────────
 
 export async function runLibrarianProSubagent(
   request: string,
   onStep?: LibrarianProStepCallback,
+  onThinking?: LibrarianProThinkingCallback,
 ): Promise<string> {
   const session = new BrowserSession();
   let sessionOpened = false;
@@ -939,7 +939,11 @@ export async function runLibrarianProSubagent(
 
   try {
     for (let i = 0; i < LIBRARIAN_PRO_MAX_ITERATIONS; i++) {
-      const { content, toolCalls } = await librarianProCall(messages);
+      const { content, reasoning, toolCalls } = await librarianProCall(messages);
+
+      if (reasoning) {
+        onThinking?.(reasoning);
+      }
 
       if (!toolCalls.length) {
         return content || 'Librarian Pro completed the task with no further output.';

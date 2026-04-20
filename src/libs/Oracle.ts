@@ -39,7 +39,7 @@ type FireworksNonStreamResponse = {
   error?: { message?: string };
 };
 
-async function oracleCall(messages: OracleMessage[], maxTokens = 32768): Promise<string> {
+async function oracleCall(messages: OracleMessage[], maxTokens = 32768): Promise<{ content: string; reasoning: string }> {
   if (!process.env.FIREWORKS_API_KEY) {
     throw new Error('FIREWORKS_API_KEY is not configured.');
   }
@@ -68,7 +68,11 @@ async function oracleCall(messages: OracleMessage[], maxTokens = 32768): Promise
   const json = await res.json() as FireworksNonStreamResponse;
   if (json.error?.message) throw new Error(`Oracle AI error: ${json.error.message}`);
 
-  return json.choices?.[0]?.message?.content?.trim() ?? '';
+  const msg = json.choices?.[0]?.message;
+  return {
+    content: msg?.content?.trim() ?? '',
+    reasoning: msg?.reasoning_content?.trim() ?? '',
+  };
 }
 
 function parseCompleteness(value: string): { complete: boolean; feedback: string } {
@@ -93,6 +97,7 @@ export type OracleStepCallback = (
   event: 'start' | 'complete',
   stepLabel: string,
   error?: boolean,
+  reasoning?: string,
 ) => void;
 
 export async function runOracleSubagent(request: string, onStep?: OracleStepCallback): Promise<string> {
@@ -107,8 +112,9 @@ export async function runOracleSubagent(request: string, onStep?: OracleStepCall
   onStep?.('start', 'Deep reasoning pass 1');
   let draft: string;
   try {
-    draft = await oracleCall(messages);
-    onStep?.('complete', 'Deep reasoning pass 1');
+    const result = await oracleCall(messages);
+    draft = result.content;
+    onStep?.('complete', 'Deep reasoning pass 1', false, result.reasoning);
   } catch (error) {
     onStep?.('complete', 'Deep reasoning pass 1', true);
     throw error;
@@ -121,14 +127,15 @@ export async function runOracleSubagent(request: string, onStep?: OracleStepCall
     onStep?.('start', auditLabel);
     let audit: string;
     try {
-      audit = await oracleCall([
+      const auditResult = await oracleCall([
         { role: 'system', content: ORACLE_SYSTEM_PROMPT },
         {
           role: 'user',
           content: `Request:\n${request}\n\nCurrent answer:\n${draft}\n\nEvaluate whether this answer is comprehensive enough for the main AI to act on. Respond only as JSON with this shape: {"complete": boolean, "feedback": "specific missing points or improvements"}. Mark complete=true only if the answer covers assumptions, tradeoffs, edge cases, and concrete next steps.`,
         },
       ], 4096);
-      onStep?.('complete', auditLabel);
+      audit = auditResult.content;
+      onStep?.('complete', auditLabel, false, auditResult.reasoning);
     } catch (error) {
       onStep?.('complete', auditLabel, true);
       throw error;
@@ -140,14 +147,15 @@ export async function runOracleSubagent(request: string, onStep?: OracleStepCall
     const refineLabel = `Refining answer ${pass}`;
     onStep?.('start', refineLabel);
     try {
-      draft = await oracleCall([
+      const refineResult = await oracleCall([
         { role: 'system', content: ORACLE_SYSTEM_PROMPT },
         {
           role: 'user',
           content: `Request:\n${request}\n\nCurrent answer:\n${draft}\n\nAudit feedback:\n${completeness.feedback}\n\nRevise into a stronger, more comprehensive answer. Do not mention this audit process. Do not expose private chain-of-thought.`,
         },
       ]);
-      onStep?.('complete', refineLabel);
+      draft = refineResult.content;
+      onStep?.('complete', refineLabel, false, refineResult.reasoning);
     } catch (error) {
       onStep?.('complete', refineLabel, true);
       throw error;
@@ -157,15 +165,15 @@ export async function runOracleSubagent(request: string, onStep?: OracleStepCall
   const finalLabel = 'Preparing Oracle report';
   onStep?.('start', finalLabel);
   try {
-    const final = await oracleCall([
+    const finalResult = await oracleCall([
       { role: 'system', content: ORACLE_SYSTEM_PROMPT },
       {
         role: 'user',
         content: `Request:\n${request}\n\nBest answer draft:\n${draft}\n\nReturn the final Oracle report in polished Markdown. Be comprehensive but avoid private chain-of-thought.`,
       },
     ]);
-    onStep?.('complete', finalLabel);
-    return final || draft || 'The Oracle completed its reasoning but produced no report.';
+    onStep?.('complete', finalLabel, false, finalResult.reasoning);
+    return finalResult.content || draft || 'The Oracle completed its reasoning but produced no report.';
   } catch (error) {
     onStep?.('complete', finalLabel, true);
     throw error;

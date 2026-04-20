@@ -20,7 +20,52 @@ const FIREWORKS_API_URL = 'https://api.fireworks.ai/inference/v1/chat/completion
 // ── Ultrawork todo types ────────────────────────────────────────────────────
 type TodoStatus = 'pending' | 'in_progress' | 'done';
 type TodoItem = { id: string; task: string; status: TodoStatus };
-type ToolStepUpdate = { label: string; status: string; touchedFiles?: TouchedFileDiff[] };
+type ToolStepUpdate = {
+  label: string;
+  status: string;
+  touchedFiles?: TouchedFileDiff[];
+  traceKind?: 'oracle' | 'editor' | 'librarian' | 'tool';
+  traceRequest?: string;
+};
+
+function getToolTrace(toolName: string, toolArgs: Record<string, unknown>, label: string): ToolStepUpdate {
+  if (toolName === 'call_oracle') {
+    return {
+      label,
+      status: 'running',
+      traceKind: 'oracle',
+      traceRequest: typeof toolArgs.request === 'string' ? toolArgs.request : undefined,
+    };
+  }
+
+  if (toolName === 'call_editor') {
+    const instructions = typeof toolArgs.instructions === 'string' ? toolArgs.instructions : undefined;
+    const files = Array.isArray(toolArgs.files) ? toolArgs.files.map(String) : [];
+    const fileList = files.length ? `Files:\n${files.map(file => `- ${file}`).join('\n')}` : '';
+
+    return {
+      label,
+      status: 'running',
+      traceKind: 'editor',
+      traceRequest: [instructions, fileList].filter(Boolean).join('\n\n') || undefined,
+    };
+  }
+
+  if (toolName === 'call_librarian' || toolName === 'call_librarian_pro' || toolName === 'call_browser_use') {
+    return {
+      label,
+      status: 'running',
+      traceKind: 'librarian',
+      traceRequest: typeof toolArgs.request === 'string'
+        ? toolArgs.request
+        : typeof toolArgs.task === 'string'
+          ? toolArgs.task
+          : undefined,
+    };
+  }
+
+  return { label, status: 'running', traceKind: 'tool' };
+}
 
 function getTouchedFiles(result: unknown): TouchedFileDiff[] | undefined {
   if (!result || typeof result !== 'object') return undefined;
@@ -1171,17 +1216,22 @@ export async function POST(req: NextRequest) {
             noGhAssistantText = '';
           }
 
-          const labels = toolCalls.map(t => toolLabel(t.function.name, parseToolArgs(t.function.arguments)));
+          const toolTraces = toolCalls.map((toolCall) => {
+            const toolArgs = parseToolArgs(toolCall.function.arguments);
+            const label = toolLabel(toolCall.function.name, toolArgs);
+            return getToolTrace(toolCall.function.name, toolArgs, label);
+          });
+          const labels = toolTraces.map(trace => trace.label);
           const toolStepsMsgId = crypto.randomUUID();
           const nextAssistantMsgId = crypto.randomUUID();
           noGhAssistantMsgId = nextAssistantMsgId;
           noGhAssistantText = '';
 
-          emit({ type: 'tool_call', tools: labels, toolStepsMsgId, nextAssistantMsgId });
-          if (jobId) await persistJobEvent(jobId, 'tool_call', { tools: labels, toolStepsMsgId, nextAssistantMsgId });
+          emit({ type: 'tool_call', tools: labels, toolTraces, toolStepsMsgId, nextAssistantMsgId });
+          if (jobId) await persistJobEvent(jobId, 'tool_call', { tools: labels, toolTraces, toolStepsMsgId, nextAssistantMsgId });
 
           conversation.push({ role: 'assistant', content: content ?? '', tool_calls: toolCalls });
-          const toolSteps: ToolStepUpdate[] = labels.map(l => ({ label: l, status: 'running' }));
+          const toolSteps: ToolStepUpdate[] = toolTraces.map(trace => ({ ...trace }));
 
           await Promise.all(toolCalls.map(async (toolCall) => {
             const toolName = toolCall.function.name;
@@ -1201,19 +1251,22 @@ export async function POST(req: NextRequest) {
                     emit({ type: 'librarian_pro_step_complete', parentLabel: label, step: stepLabel, error: error ?? false });
                     if (jobId) persistJobEvent(jobId, 'librarian_pro_step_complete', { parentLabel: label, step: stepLabel, error: error ?? false }).catch(() => {});
                   }
+                }, (thinking) => {
+                  emit({ type: 'librarian_pro_thinking', parentLabel: label, thinking });
+                  if (jobId) persistJobEvent(jobId, 'librarian_pro_thinking', { parentLabel: label, thinking }).catch(() => {});
                 });
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
                 emit({ type: 'librarian_pro_report', parentLabel: label, report });
                 if (jobId) persistJobEvent(jobId, 'librarian_pro_report', { parentLabel: label, report }).catch(() => {});
               } else if (isCallOracleTool(toolName)) {
                 const request = typeof toolArgs.request === 'string' ? toolArgs.request : JSON.stringify(toolArgs);
-                result = await runOracleSubagent(request, (event, stepLabel, error) => {
+                result = await runOracleSubagent(request, (event, stepLabel, error, reasoning) => {
                   if (event === 'start') {
                     emit({ type: 'oracle_step_start', parentLabel: label, step: stepLabel });
                     if (jobId) persistJobEvent(jobId, 'oracle_step_start', { parentLabel: label, step: stepLabel }).catch(() => {});
                   } else {
-                    emit({ type: 'oracle_step_complete', parentLabel: label, step: stepLabel, error: error ?? false });
-                    if (jobId) persistJobEvent(jobId, 'oracle_step_complete', { parentLabel: label, step: stepLabel, error: error ?? false }).catch(() => {});
+                    emit({ type: 'oracle_step_complete', parentLabel: label, step: stepLabel, error: error ?? false, reasoning: reasoning ?? '' });
+                    if (jobId) persistJobEvent(jobId, 'oracle_step_complete', { parentLabel: label, step: stepLabel, error: error ?? false, reasoning: reasoning ?? '' }).catch(() => {});
                   }
                 });
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
@@ -1486,20 +1539,25 @@ export async function POST(req: NextRequest) {
           currentAssistantText = '';
         }
 
-        const labels = toolCalls.map(t => toolLabel(t.function.name, parseToolArgs(t.function.arguments)));
+        const toolTraces = toolCalls.map((toolCall) => {
+          const toolArgs = parseToolArgs(toolCall.function.arguments);
+          const label = toolLabel(toolCall.function.name, toolArgs);
+          return getToolTrace(toolCall.function.name, toolArgs, label);
+        });
+        const labels = toolTraces.map(trace => trace.label);
         const toolStepsMsgId = crypto.randomUUID();
         const nextAssistantMsgId = crypto.randomUUID();
         currentAssistantMsgId = nextAssistantMsgId;
         currentAssistantText = '';
 
-        emit({ type: 'tool_call', tools: labels, toolStepsMsgId, nextAssistantMsgId });
+        emit({ type: 'tool_call', tools: labels, toolTraces, toolStepsMsgId, nextAssistantMsgId });
         if (jobId) {
-          await persistJobEvent(jobId, 'tool_call', { tools: labels, toolStepsMsgId, nextAssistantMsgId });
+          await persistJobEvent(jobId, 'tool_call', { tools: labels, toolTraces, toolStepsMsgId, nextAssistantMsgId });
         }
 
         conversation.push({ role: 'assistant', content: content ?? '', tool_calls: toolCalls });
 
-        const toolSteps: ToolStepUpdate[] = labels.map(l => ({ label: l, status: 'running' }));
+        const toolSteps: ToolStepUpdate[] = toolTraces.map(trace => ({ ...trace }));
 
         await Promise.all(
           toolCalls.map(async (toolCall) => {
@@ -1521,6 +1579,9 @@ export async function POST(req: NextRequest) {
                     emit({ type: 'librarian_pro_step_complete', parentLabel, step: stepLabel, error: error ?? false });
                     if (jobId) persistJobEvent(jobId, 'librarian_pro_step_complete', { parentLabel, step: stepLabel, error: error ?? false }).catch(() => {});
                   }
+                }, (thinking) => {
+                  emit({ type: 'librarian_pro_thinking', parentLabel, thinking });
+                  if (jobId) persistJobEvent(jobId, 'librarian_pro_thinking', { parentLabel, thinking }).catch(() => {});
                 });
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
                 emit({ type: 'librarian_pro_report', parentLabel, report });
@@ -1528,13 +1589,13 @@ export async function POST(req: NextRequest) {
               } else if (isCallOracleTool(toolName)) {
                 const request = typeof toolArgs.request === 'string' ? toolArgs.request : JSON.stringify(toolArgs);
                 const parentLabel = label;
-                result = await runOracleSubagent(request, (event, stepLabel, error) => {
+                result = await runOracleSubagent(request, (event, stepLabel, error, reasoning) => {
                   if (event === 'start') {
                     emit({ type: 'oracle_step_start', parentLabel, step: stepLabel });
                     if (jobId) persistJobEvent(jobId, 'oracle_step_start', { parentLabel, step: stepLabel }).catch(() => {});
                   } else {
-                    emit({ type: 'oracle_step_complete', parentLabel, step: stepLabel, error: error ?? false });
-                    if (jobId) persistJobEvent(jobId, 'oracle_step_complete', { parentLabel, step: stepLabel, error: error ?? false }).catch(() => {});
+                    emit({ type: 'oracle_step_complete', parentLabel, step: stepLabel, error: error ?? false, reasoning: reasoning ?? '' });
+                    if (jobId) persistJobEvent(jobId, 'oracle_step_complete', { parentLabel, step: stepLabel, error: error ?? false, reasoning: reasoning ?? '' }).catch(() => {});
                   }
                 });
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
