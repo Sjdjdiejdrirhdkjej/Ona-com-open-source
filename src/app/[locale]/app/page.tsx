@@ -850,6 +850,26 @@ export default function AppPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // Cmd/Ctrl+Shift+S → open super agent modal
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.metaKey || e.ctrlKey) || !e.shiftKey || e.key !== 'S') return;
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') return;
+      e.preventDefault();
+      if (!canConfigureSuperAgent) return;
+      setSuperAgentOpen(o => {
+        if (!o) {
+          setSuperAgentError(null);
+          setSuperAgentWakeSuccess(false);
+        }
+        return !o;
+      });
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [canConfigureSuperAgent]);
+
   // Load conversation history from DB on mount
   useEffect(() => {
     async function loadHistory() {
@@ -2665,7 +2685,7 @@ export default function AppPage() {
                 : 'border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100'
             }`}
             style={{ backgroundColor: 'var(--bg-card)' }}
-            title={canConfigureSuperAgent ? 'Configure super agent heartbeat' : 'Send the first task to save this conversation before enabling the super agent'}
+            title={canConfigureSuperAgent ? 'Configure super agent (⌘⇧S)' : 'Send the first task to save this conversation before enabling the super agent'}
           >
             <span className={`size-1.5 shrink-0 rounded-full ${activeConversation?.superAgent?.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
             <span>Super agent</span>
@@ -3132,7 +3152,7 @@ export default function AppPage() {
 
                 {/* Hint — desktop only */}
                 <p className="mt-1.5 hidden text-center text-xs text-gray-400 dark:text-gray-500 sm:block">
-                  Enter to send · Shift+Enter for new line · paste images · type @ to reference sandbox files
+                  Enter to send · Shift+Enter for new line · paste images · @ for sandbox files · ⌘⇧S for super agent
                 </p>
               </div>
             </div>
