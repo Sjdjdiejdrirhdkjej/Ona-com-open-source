@@ -9,6 +9,7 @@ import { daytonaToolDefinitions, isDaytonaTool, prebootSandbox, runDaytonaTool }
 import { callLibrarianToolDefinition, isCallLibrarianTool, runLibrarianSubagent } from '@/libs/Librarian';
 import { callBrowserUseToolDefinition, isCallBrowserUseTool, runBrowserUseSubagent } from '@/libs/BrowserUse';
 import { callOracleToolDefinition, isCallOracleTool, runOracleSubagent } from '@/libs/Oracle';
+import { callEditorToolDefinition, isCallEditorTool, runEditorSubagent } from '@/libs/Editor';
 import type { TouchedFileDiff } from '@/libs/FileDiff';
 
 export const runtime = 'nodejs';
@@ -265,6 +266,20 @@ For all other requests (no specific repo target), tell the user to connect their
 **Do NOT use for:** live/current external facts, package API verification, or browser state. Use \`call_librarian\` for evidence and \`call_browser_use\` for live browser work.
 
 **Example:** \`call_oracle({ request: "Evaluate the safest architecture for adding multi-tenant billing to this app, including risks, schema changes, rollout plan, and edge cases." })\`
+
+---
+
+### \`call_editor\` — local file read/write/edit
+
+**Use for:** ALL read and write operations on local project files. Whenever you need to read, create, or modify files in this codebase, delegate to the Editor subagent. This is the ONLY way to touch local files.
+
+**How it works:** The Editor reads each file you specify, applies precise targeted edits using exact string replacement, verifies the results, and returns a report with a diff of every change.
+
+**Always specify every file** the Editor needs to read or modify in the \`files\` array — even files read only for context.
+
+**Do NOT** write file content directly in your response text. Always use \`call_editor\` for local file changes.
+
+**Example:** \`call_editor({ instructions: "In src/components/Header.tsx, change the nav link font size from text-sm to text-xs on mobile", files: ["src/components/Header.tsx"] })\`
 
 ---
 
@@ -544,6 +559,14 @@ function toolLabel(name: string, args: Record<string, unknown> = {}): string {
     case 'call_oracle': {
       const request = s('request');
       return request ? `Oracle: ${trim(request, 55)}` : 'Consulting oracle';
+    }
+
+    // ── Editor ────────────────────────────────────────────────────────────
+    case 'call_editor': {
+      const files = Array.isArray(args.files) ? args.files as string[] : [];
+      return files.length > 0
+        ? `Editor: ${files.map(f => trim(String(f), 30)).join(', ')}`
+        : 'Editing files';
     }
 
     // ── Ultrawork tools ───────────────────────────────────────────────────
@@ -1028,7 +1051,7 @@ export async function POST(req: NextRequest) {
         let noGhAssistantMsgId = assistantMessageId ?? crypto.randomUUID();
         let noGhAssistantText = '';
         const noGhRecentSigs: string[] = [];
-        const noGhTools = [...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition, callOracleToolDefinition];
+        const noGhTools = [...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition, callOracleToolDefinition, callEditorToolDefinition];
 
         for (;;) {
           let iterText = '';
@@ -1142,6 +1165,24 @@ export async function POST(req: NextRequest) {
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
                 emit({ type: 'oracle_report', parentLabel: label, report });
                 if (jobId) persistJobEvent(jobId, 'oracle_report', { parentLabel: label, report }).catch(() => {});
+              } else if (isCallEditorTool(toolName)) {
+                const instructions = typeof toolArgs.instructions === 'string' ? toolArgs.instructions : JSON.stringify(toolArgs);
+                const files = Array.isArray(toolArgs.files) ? toolArgs.files.map(String) : [];
+                const parentLabel = label;
+                result = await runEditorSubagent(instructions, files, (event, stepLabel, error) => {
+                  if (event === 'start') {
+                    emit({ type: 'editor_step_start', parentLabel, step: stepLabel });
+                    if (jobId) persistJobEvent(jobId, 'editor_step_start', { parentLabel, step: stepLabel }).catch(() => {});
+                  } else {
+                    emit({ type: 'editor_step_complete', parentLabel, step: stepLabel, error: error ?? false });
+                    if (jobId) persistJobEvent(jobId, 'editor_step_complete', { parentLabel, step: stepLabel, error: error ?? false }).catch(() => {});
+                  }
+                });
+                const editorReport = typeof (result as { report?: unknown }).report === 'string'
+                  ? (result as { report: string }).report
+                  : JSON.stringify(result);
+                emit({ type: 'editor_report', parentLabel, report: editorReport });
+                if (jobId) persistJobEvent(jobId, 'editor_report', { parentLabel, report: editorReport }).catch(() => {});
               } else if (isDaytonaTool(toolName)) {
                 result = await runDaytonaTool(toolName, toolArgs);
                 if (toolName === 'sandbox_create' && conversationId) {
@@ -1236,7 +1277,7 @@ export async function POST(req: NextRequest) {
         const { content, toolCalls, finishReason } = await streamChargedFireworksCall(
           {
             messages: conversation,
-            tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition, callOracleToolDefinition, ...ULTRAWORK_TOOLS],
+            tools: [...githubToolDefinitions, ...daytonaToolDefinitions, callLibrarianToolDefinition, callBrowserUseToolDefinition, callOracleToolDefinition, callEditorToolDefinition, ...ULTRAWORK_TOOLS],
             tool_choice: 'auto',
             max_tokens: agentMaxTokens,
             temperature: agentTemperature,
@@ -1460,6 +1501,24 @@ export async function POST(req: NextRequest) {
                 const report = typeof result === 'string' ? result : JSON.stringify(result);
                 emit({ type: 'oracle_report', parentLabel, report });
                 if (jobId) persistJobEvent(jobId, 'oracle_report', { parentLabel, report }).catch(() => {});
+              } else if (isCallEditorTool(toolName)) {
+                const instructions = typeof toolArgs.instructions === 'string' ? toolArgs.instructions : JSON.stringify(toolArgs);
+                const files = Array.isArray(toolArgs.files) ? toolArgs.files.map(String) : [];
+                const parentLabel = label;
+                result = await runEditorSubagent(instructions, files, (event, stepLabel, error) => {
+                  if (event === 'start') {
+                    emit({ type: 'editor_step_start', parentLabel, step: stepLabel });
+                    if (jobId) persistJobEvent(jobId, 'editor_step_start', { parentLabel, step: stepLabel }).catch(() => {});
+                  } else {
+                    emit({ type: 'editor_step_complete', parentLabel, step: stepLabel, error: error ?? false });
+                    if (jobId) persistJobEvent(jobId, 'editor_step_complete', { parentLabel, step: stepLabel, error: error ?? false }).catch(() => {});
+                  }
+                });
+                const editorReport = typeof (result as { report?: unknown }).report === 'string'
+                  ? (result as { report: string }).report
+                  : JSON.stringify(result);
+                emit({ type: 'editor_report', parentLabel, report: editorReport });
+                if (jobId) persistJobEvent(jobId, 'editor_report', { parentLabel, report: editorReport }).catch(() => {});
               } else if (isDaytonaTool(toolName)) {
                 result = await runDaytonaTool(toolName, toolArgs);
                 if (toolName === 'sandbox_create' && conversationId) {
