@@ -1,4 +1,4 @@
-import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const userCreditsSchema = pgTable('user_credits', {
@@ -97,4 +97,22 @@ export const agentEventsSchema = pgTable('agent_events', {
   type: text('type').notNull(),
   data: text('data').notNull().default('{}'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+export const conversationSuperAgentsSchema = pgTable('conversation_super_agents', {
+  conversationId: text('conversation_id')
+    .primaryKey()
+    .references(() => conversationsSchema.id, { onDelete: 'cascade' }),
+  enabled: boolean('enabled').notNull().default(false),
+  heartbeatMinutes: integer('heartbeat_minutes').notNull().default(15),
+  wakePrompt: text('wake_prompt').notNull(),
+  model: text('model').notNull().default('ona-hands-off'),
+  nextHeartbeatAt: timestamp('next_heartbeat_at', { mode: 'date' }),
+  lastHeartbeatAt: timestamp('last_heartbeat_at', { mode: 'date' }),
+  lastRunStatus: text('last_run_status').notNull().default('idle'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });

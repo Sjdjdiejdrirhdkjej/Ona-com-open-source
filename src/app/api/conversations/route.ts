@@ -2,7 +2,8 @@ import type { NextRequest } from 'next/server';
 import { and, desc, eq, isNull, or } from 'drizzle-orm';
 import { db } from '@/libs/DB';
 import { authFailureResponse, getRequestAuth, isAuthFailure, requireApiKeyScope } from '@/libs/ApiKeys';
-import { agentJobsSchema, conversationsSchema, messagesSchema } from '@/models/Schema';
+import { agentJobsSchema, conversationsSchema, conversationSuperAgentsSchema, messagesSchema } from '@/models/Schema';
+import { DEFAULT_SUPER_AGENT_HEARTBEAT_MINUTES, DEFAULT_SUPER_AGENT_MODEL, DEFAULT_SUPER_AGENT_PROMPT } from '@/libs/SuperAgent';
 
 export async function GET(req: NextRequest) {
   const auth = await getRequestAuth(req);
@@ -41,11 +42,36 @@ async function hydrateConversations(conversations: (typeof conversationsSchema.$
         .from(agentJobsSchema)
         .where(and(eq(agentJobsSchema.conversationId, conv.id), eq(agentJobsSchema.status, 'running')));
 
+      const [superAgent] = await db
+        .select()
+        .from(conversationSuperAgentsSchema)
+        .where(eq(conversationSuperAgentsSchema.conversationId, conv.id))
+        .limit(1);
+
       const activeJob = runningJobs[0] ?? null;
 
       return {
         ...conv,
         activeJobId: activeJob?.id ?? null,
+        superAgent: superAgent
+          ? {
+              enabled: superAgent.enabled,
+              heartbeatMinutes: superAgent.heartbeatMinutes,
+              wakePrompt: superAgent.wakePrompt,
+              model: superAgent.model,
+              nextHeartbeatAt: superAgent.nextHeartbeatAt?.toISOString() ?? null,
+              lastHeartbeatAt: superAgent.lastHeartbeatAt?.toISOString() ?? null,
+              lastRunStatus: superAgent.lastRunStatus,
+            }
+          : {
+              enabled: false,
+              heartbeatMinutes: DEFAULT_SUPER_AGENT_HEARTBEAT_MINUTES,
+              wakePrompt: DEFAULT_SUPER_AGENT_PROMPT,
+              model: DEFAULT_SUPER_AGENT_MODEL,
+              nextHeartbeatAt: null,
+              lastHeartbeatAt: null,
+              lastRunStatus: 'idle',
+            },
         messages: messages.map(m => ({
           ...m,
           content: (() => {

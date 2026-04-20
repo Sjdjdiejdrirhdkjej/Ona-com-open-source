@@ -948,6 +948,7 @@ const chatRequestSchema = z.object({
   assistantMessageId: z.string().uuid().optional(),
   jobId: z.string().uuid().optional(),
   model: z.string().optional(),
+  runAsUserId: z.string().optional(),
 });
 
 async function saveMessage(conversationId: string, msgId: string, role: string, content: unknown) {
@@ -998,52 +999,6 @@ export async function POST(req: NextRequest) {
   (async () => {
     let jobId: string | null = null;
     try {
-      const auth = await getRequestAuth(req);
-      if (isAuthFailure(auth)) {
-        emit({
-          type: 'error',
-          message: auth.message,
-          status: auth.status,
-          retryAfterSeconds: auth.retryAfterSeconds,
-          resetAt: auth.resetAt?.toISOString(),
-        });
-        close();
-        return;
-      }
-      if (!auth) {
-        emit({ type: 'error', message: 'Authentication required.', status: 401 });
-        close();
-        return;
-      }
-      const billedUserId = auth.userId;
-      const authSource = auth.source;
-
-      // Pre-flight balance check — reject with 402 Payment Required when the
-      // caller has exhausted their credits. Applies uniformly to session and
-      // API-key callers; subsequent provider calls would go further negative.
-      const currentBalance = await getUserCredits(billedUserId);
-      if (currentBalance <= 0) {
-        emit({
-          type: 'error',
-          message: 'Insufficient credits. Top up your balance to continue using the AI.',
-          status: 402,
-          credits: currentBalance,
-        });
-        close();
-        return;
-      }
-
-      const scopeFailure = requireApiKeyScope(auth, 'task_running');
-      if (scopeFailure) {
-        emit({
-          type: 'error',
-          message: scopeFailure.message,
-          status: scopeFailure.status,
-        });
-        close();
-        return;
-      }
-
       let rawBody: unknown;
       try {
         rawBody = await req.json();
@@ -1057,6 +1012,74 @@ export async function POST(req: NextRequest) {
       if (!parsed.success) {
         const message = parsed.error.issues.map(i => i.message).join('; ');
         emit({ type: 'error', message: `Bad request: ${message}` });
+        close();
+        return;
+      }
+
+      const internalHeartbeatSecret = process.env.SUPER_AGENT_HEARTBEAT_SECRET;
+      const internalHeartbeatHeader = req.headers.get('x-ona-heartbeat-secret');
+      const isInternalHeartbeatRequest = Boolean(
+        internalHeartbeatSecret
+          && internalHeartbeatHeader
+          && internalHeartbeatHeader === internalHeartbeatSecret,
+      );
+
+      let billedUserId: string;
+      let authSource: 'session' | 'api_key' | 'internal';
+
+      if (isInternalHeartbeatRequest) {
+        if (!parsed.data.runAsUserId) {
+          emit({ type: 'error', message: 'Internal heartbeat requests must include runAsUserId.', status: 400 });
+          close();
+          return;
+        }
+        billedUserId = parsed.data.runAsUserId;
+        authSource = 'internal';
+      } else {
+        const auth = await getRequestAuth(req);
+        if (isAuthFailure(auth)) {
+          emit({
+            type: 'error',
+            message: auth.message,
+            status: auth.status,
+            retryAfterSeconds: auth.retryAfterSeconds,
+            resetAt: auth.resetAt?.toISOString(),
+          });
+          close();
+          return;
+        }
+        if (!auth) {
+          emit({ type: 'error', message: 'Authentication required.', status: 401 });
+          close();
+          return;
+        }
+
+        const scopeFailure = requireApiKeyScope(auth, 'task_running');
+        if (scopeFailure) {
+          emit({
+            type: 'error',
+            message: scopeFailure.message,
+            status: scopeFailure.status,
+          });
+          close();
+          return;
+        }
+
+        billedUserId = auth.userId;
+        authSource = auth.source;
+      }
+
+      // Pre-flight balance check — reject with 402 Payment Required when the
+      // caller has exhausted their credits. Applies uniformly to session,
+      // API-key, and internal heartbeat callers.
+      const currentBalance = await getUserCredits(billedUserId);
+      if (currentBalance <= 0) {
+        emit({
+          type: 'error',
+          message: 'Insufficient credits. Top up your balance to continue using the AI.',
+          status: 402,
+          credits: currentBalance,
+        });
         close();
         return;
       }
@@ -1132,7 +1155,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const githubToken = await getGitHubToken();
+      const githubToken = await getGitHubToken(billedUserId);
 
       const HANDS_OFF_CONTEXT = `\n\n---\n\n## AUTONOMY MODE: HANDS OFF\n\nYou are operating in **maximum autonomy mode** powered by Qwen3 Coder — a model purpose-built for agentic coding with RL-trained tool use and a 262K token context window. The user has explicitly requested full hands-off execution. They will not intervene or answer questions mid-task. Apply these elevated standards:\n\n### Agentic Execution\n- **Use your full context aggressively.** You have 262K tokens of context. Pull in entire files, full dependency trees, test suites, and CI scripts before making decisions. Never work with partial information when you can load the full picture.\n- **Tool-chain without hesitation.** You are purpose-built for long multi-step tool chains. Execute 50, 100, 200+ tool calls if that is what the task requires. Do not compress or skip steps.\n- **Parallelize reads.** When exploring a repository, fire multiple file reads and searches simultaneously — do not step through them sequentially.\n- **Act like an engineer on deadline.** Make confident implementation decisions. Spend zero cycles asking permission for ordinary choices.\n\n### Reasoning Standards\n- **Think before every non-trivial action.** For architecture, schema, API design, or security decisions: call \`call_oracle\` to reason through alternatives before committing.\n- **Verify external dependencies.** Before using any npm package, API endpoint, or config format, call \`call_librarian_pro\` to confirm the correct current shape. Never trust training memory alone.\n- **Run the code.** Use the sandbox to execute, test, and verify your work. If the repo has tests, run them. Do not open a PR on unverified code.\n\n### Delivery Standards\n- **Resolve ambiguity yourself.** If the task is underspecified, pick the most reasonable interpretation, implement it fully, and document your reasoning.\n- **Quality over speed.** A correct, verified result after 80 tool calls beats a broken one after 10.\n- **Never stop early.** No partial results. No "should I continue?" No summaries of what you would do. Do the work, verify it, and deliver a complete outcome.`;
 
