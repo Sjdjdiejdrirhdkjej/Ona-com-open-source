@@ -2091,8 +2091,8 @@ export default function AppPage() {
                             )}
                         {!renamingId && c.activeJobId && (
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="shrink-0 text-indigo-400" style={{ animation: 'ona-spin 1s linear infinite' }}>
-                            <circle cx="4" cy="4" r="3" stroke="currentColor" strokeWidth="1" strokeOpacity="0.25" />
-                            <path d="M4 1A3 3 0 017 4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                            <circle cx="4" cy="4" r="3.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
+                            <path d="M4 0.5A3.5 3.5 0 017.5 4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
                           </svg>
                         )}
                       </div>
@@ -2698,9 +2698,9 @@ export default function AppPage() {
                                             <HighlightText text={c.title} query={q} />
                                           </span>
                                           {c.activeJobId && (
-                                            <svg width="7" height="7" viewBox="0 0 8 8" fill="none" className="shrink-0 text-indigo-400" style={{ animation: 'ona-spin 1s linear infinite' }}>
-                                              <circle cx="4" cy="4" r="3" stroke="currentColor" strokeWidth="1" strokeOpacity="0.25" />
-                                              <path d="M4 1A3 3 0 017 4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+                                            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="shrink-0 text-indigo-400" style={{ animation: 'ona-spin 1s linear infinite' }}>
+                                              <circle cx="4" cy="4" r="3.5" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
+                                              <path d="M4 0.5A3.5 3.5 0 017.5 4" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
                                             </svg>
                                           )}
                                         </span>
