@@ -2131,6 +2131,17 @@ export default function AppPage() {
         </nav>
         <div className="flex min-w-0 shrink-0 items-center justify-end gap-0.5 sm:gap-2">
           <GitHubConnect />
+          <div
+            title={`Autonomy: ${AUTONOMY_OPTIONS.find(o => o.key === selectedModel)?.label ?? 'Hands on experience'}`}
+            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium sm:flex ${
+              selectedModel === 'ona-hands-off'
+                ? 'border-indigo-200 bg-indigo-50 text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-400'
+                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400'
+            }`}
+          >
+            <span className={`size-1.5 shrink-0 rounded-full ${selectedModel === 'ona-hands-off' ? 'bg-indigo-400 dark:bg-indigo-500' : 'bg-amber-400 dark:bg-amber-500'}`} />
+            <span>{selectedModel === 'ona-hands-off' ? 'Hands off' : 'Hands on'}</span>
+          </div>
           {activeSandboxId
             ? (
                 <Link
