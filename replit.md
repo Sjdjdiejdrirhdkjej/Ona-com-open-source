@@ -38,6 +38,7 @@ An open-source platform for AI background software engineering agents. The landi
 - `src/app/[locale]/app/page.tsx` — Chat UI at /app with real AI streaming + image upload
 - `src/app/[locale]/sandbox-modify/[sandboxId]/page.tsx` — Sandbox env var editor at /sandbox-modify/[id], stores vars in localStorage
 - `src/app/api/chat/route.ts` — Server-side streaming API route calling Fireworks AI
+- `src/app/[locale]/(auth)/dashboard/user-profile/[[...user-profile]]/SettingsActions.tsx` — Settings actions including API key creation, usage stats, rate-limit display, and copy-paste API examples
 - `src/app/[locale]/app/layout.tsx` — Minimal layout for /app
 - `src/app/[locale]/(marketing)/layout.tsx` — Marketing nav with NavPromptBox + Get Started
 - `src/app/[locale]/layout.tsx` — Root locale layout and client-side theme initializer
