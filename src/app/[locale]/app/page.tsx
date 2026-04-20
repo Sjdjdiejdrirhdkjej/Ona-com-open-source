@@ -666,6 +666,10 @@ export default function AppPage() {
   const [sandboxToastId, setSandboxToastId] = useState<string | null>(null);
   const [taskListOpen, setTaskListOpen] = useState(false);
   const bgPollTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Generation counter per conversation. Incremented by stopBackgroundPoll so
+  // that any poll fetch already in-flight when polling is stopped can detect
+  // the change on return and discard its results, preventing stale writes.
+  const bgPollGenRef = useRef<Map<string, number>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
   // Tracks conversations where the SSE stream is confirmed to be delivering
   // events in real-time. Polling skips applying content/tool events for these
@@ -798,8 +802,13 @@ export default function AppPage() {
   }
 
   async function pollBackgroundJob(convId: string, jobId: string, cursor: number, rebuild = false) {
+    // Capture the generation before the async fetch so we can detect if
+    // stopBackgroundPoll was called while the request was in-flight.
+    const myGen = bgPollGenRef.current.get(convId) ?? 0;
     try {
       const res = await fetch(`/api/jobs/${jobId}/events?after=${cursor}`);
+      // Discard results if polling was stopped (generation bumped) while fetching.
+      if ((bgPollGenRef.current.get(convId) ?? 0) !== myGen) return;
       if (!res.ok) {
         stopBackgroundPoll(convId);
         return;
@@ -1073,7 +1082,10 @@ export default function AppPage() {
         scheduleBackgroundPoll(convId, jobId, cursor, false);
       }
     } catch {
-      scheduleBackgroundPoll(convId, jobId, cursor, false);
+      // Only reschedule if polling wasn't stopped while the request was in-flight.
+      if ((bgPollGenRef.current.get(convId) ?? 0) === myGen) {
+        scheduleBackgroundPoll(convId, jobId, cursor, false);
+      }
     }
   }
 
@@ -1083,6 +1095,9 @@ export default function AppPage() {
       clearTimeout(timer);
       bgPollTimersRef.current.delete(convId);
     }
+    // Bump the generation so any in-flight poll fetch discards its results
+    // instead of writing stale data on top of the already-correct state.
+    bgPollGenRef.current.set(convId, (bgPollGenRef.current.get(convId) ?? 0) + 1);
   }
 
   async function refreshConversationMessages(convId: string) {
@@ -1413,11 +1428,15 @@ export default function AppPage() {
     // Mark this conversation as having an active SSE fetch so pollBackgroundJob
     // knows to skip applying events that SSE will deliver in real-time.
     // If no SSE delta arrives within 3 seconds, we assume the proxy is
-    // buffering and remove the marker so polling takes over as primary UI updater.
+    // buffering. We then ABORT the SSE connection so polling becomes the sole
+    // writer — preventing SSE from later appending buffered content on top of
+    // what polling already wrote (which would cause visible message duplication).
     activeSseFetchRef.current.add(convId);
     const sseActivityTimeout = setTimeout(() => {
       activeSseFetchRef.current.delete(convId);
       sseTimeoutRef.current.delete(convId);
+      // Close the SSE stream — polling takes over exclusively from here.
+      abortController.abort();
     }, 3000);
     sseTimeoutRef.current.set(convId, sseActivityTimeout);
 
