@@ -972,6 +972,19 @@ async function persistJobEvent(jobId: string, type: string, data: Record<string,
   }
 }
 
+async function markJobStatus(jobId: string, status: 'done' | 'error') {
+  try {
+    await db.update(agentJobsSchema).set({ status }).where(eq(agentJobsSchema.id, jobId));
+  } catch (err) {
+    logger.warn({ err, jobId, status }, 'markJobStatus: failed to update job status');
+  }
+}
+
+async function completeJob(jobId: string) {
+  await persistJobEvent(jobId, 'done', {});
+  await markJobStatus(jobId, 'done');
+}
+
 export async function POST(req: NextRequest) {
   const { readable, emit, close } = makeStream();
 
@@ -1328,8 +1341,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (jobId) {
-          await persistJobEvent(jobId, 'done', {});
-          await db.update(agentJobsSchema).set({ status: 'done' }).where(eq(agentJobsSchema.id, jobId));
+          await completeJob(jobId);
         }
         return;
       }
@@ -1494,7 +1506,7 @@ export async function POST(req: NextRequest) {
             await saveMessage(conversationId, currentAssistantMsgId, 'assistant', finalText || 'I could not produce a response.');
           }
           if (jobId) {
-            await persistJobEvent(jobId, 'done', {});
+            await completeJob(jobId);
           }
           completed = true;
           break;
@@ -1527,7 +1539,7 @@ export async function POST(req: NextRequest) {
           if (conversationId && currentAssistantMsgId) {
             await saveMessage(conversationId, currentAssistantMsgId, 'assistant', currentAssistantText + stuckMsg);
           }
-          if (jobId) await persistJobEvent(jobId, 'done', {});
+          if (jobId) await completeJob(jobId);
           completed = true;
           break;
         }
