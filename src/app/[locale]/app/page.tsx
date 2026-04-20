@@ -192,7 +192,7 @@ function ToolStepIcon({ status }: { status: ToolStep['status'] }) {
     );
   }
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-indigo-400" style={{ animation: 'ona-spin 1s linear infinite' }}>
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-indigo-400 animate-spin">
       <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.25" />
       <path d="M6 1.5A4.5 4.5 0 0110.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
     </svg>
@@ -428,8 +428,8 @@ function TypingIndicator() {
         {[0, 1, 2].map(i => (
           <span
             key={i}
-            className="size-1.5 rounded-full bg-gray-400"
-            style={{ animation: `ona-pulse 1s ease-in-out ${i * 0.2}s infinite` }}
+            className="size-1.5 rounded-full bg-gray-400 animate-pulse"
+            style={{ animationDelay: `${i * 0.2}s` }}
           />
         ))}
       </div>
@@ -442,7 +442,7 @@ function BackgroundWorkingBanner() {
     <div className="flex justify-start">
       <OnaAvatar />
       <div className="flex items-center gap-2 py-2">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-indigo-400" style={{ animation: 'ona-spin 1s linear infinite' }}>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-indigo-400 animate-spin">
           <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.25" />
           <path d="M6 1.5A4.5 4.5 0 0110.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
         </svg>
