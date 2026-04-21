@@ -25,11 +25,11 @@ Create `.env.local` for local dev. Key vars (see `src/libs/Env.ts`):
 
 - **DB (tried in order):** `POSTGRES_URL`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_DATABASE_URL`, `DATABASE_URL`
 - **Session:** `SESSION_SECRET` (32+ chars) — cookie name `replit_auth_session`
-- **AI:** `FIREWORKS_API_KEY` (+ optional model overrides like `FIREWORKS_BROWSER_MODEL`)
+- **AI:** `FIREWORKS_API_KEY` (+ optional model overrides: `FIREWORKS_MODEL`, `FIREWORKS_BROWSER_MODEL`, `FIREWORKS_LIBRARIAN_MODEL`, `FIREWORKS_FALLBACK_MODELS`)
 - **Sandboxes:** `DAYTONA_API_KEY`
-- **Research/Browser:** `FIRECRAWL_API_KEY`
+- **Research/Browser:** `FIRECRAWL_API_KEY` (+ optional `FIRECRAWL_API_URL`, `FIRECRAWL_BROWSER_TTL`)
 - **GitHub OAuth device flow:** `GITHUB_CLIENT_ID`
-- **Credits (optional):** `CREDITS_PER_1000_TOKENS`
+- **Credits (optional):** `CREDITS_PER_1000_TOKENS`, `SIGNUP_CREDITS`
 
 ## Architecture
 
@@ -43,31 +43,49 @@ Create `.env.local` for local dev. Key vars (see `src/libs/Env.ts`):
 ### API routes (`src/app/api/`)
 
 - **`chat/route.ts`** — central agent endpoint. Runs the "Ultrawork" agentic loop with Fireworks AI, streaming SSE events. Handles tool calls for GitHub, Daytona, Librarian, Oracle, Browser Use. Largest & most critical file.
-- `conversations/` — CRUD for conversation history.
+- `conversations/` — CRUD for conversation history + Super Agent.
+- `credits/balance/` — credit balance endpoint.
 - `jobs/[jobId]/events/` — SSE event stream for background job progress (reconnect polling every 3s).
 - `github/device/` — GitHub OAuth device flow (start/poll/disconnect).
 - `login`, `callback`, `logout` — Replit OIDC (PKCE + nonce via `openid-client`).
 - `auth/user/` — current user.
 - `sandbox/files/` — list files in a Daytona sandbox.
 - `settings/api-keys/` — per-user hashed API keys (raw shown once; used as `Authorization: Bearer <key>`).
+- `super-agent/heartbeat/` — Super Agent heartbeat endpoint.
+- `healthz/` — health check (database, Fireworks AI, Daytona, Super Agent).
+- `readiness/` — readiness probe.
 
 ### Core libraries (`src/libs/`)
 
 - **Daytona.ts** — sandbox tools (`sandbox_create/exec/write_file/read_file/list_files/delete/git_clone`).
 - **GitHub.ts** — full GitHub API; `github_*` tools for repos/files/branches/commits/PRs/issues. **Blocks direct writes to default branch by default** — feature branches + PRs only.
 - **Librarian.ts** — research subagent (up to 15 iterations). Tools: `scrape_page` (Firecrawl), `fetch_url`, `search_web` (DuckDuckGo), `npm_package`, `github_readme`. Exposed as `call_librarian`.
+- **LibrarianPro.ts** — unified research + browser subagent replacing both Librarian and Browser Use. Exposed as `call_librarian_pro`.
 - **Oracle.ts** — deep-reasoning subagent (GLM 5.1). Exposed as `call_oracle` for complex architecture/debugging/synthesis.
 - **BrowserUse.ts** — browser automation (up to 25 iterations). Firecrawl CDP + Playwright, accessibility tree (no vision model). Exposed as `call_browser_use`.
+- **Editor.ts** — code editing subagent with its own Fireworks call.
+- **SuperAgent.ts** — autonomous background agent with configurable heartbeat intervals for proactive, unsupervised work. Default model: `ona-hands-off`.
+- **Credits.ts** — credit deduction logic (1 credit = 1 cent USD).
 - **DB.ts** — Drizzle + pg. Auto-migrates on startup; **skips migrations during `next build`**; build-time proxy when no DB URL.
 - **session.ts** / **auth.ts** — iron-session config (`replit_auth_session`, SameSite=Lax, 7-day expiry).
 - **Env.ts** — centralized env access (no validation lib; reads `process.env`).
 - **ApiKeys.ts** — hashing/verification for programmatic API keys.
+- **Arcjet.ts** — rate limiting & security.
+- **HealthCheck.ts** — health & readiness checks for database, Fireworks AI, Daytona, and Super Agent. Exposed via `/api/healthz` and `/api/readiness`.
+- **CircuitBreaker.ts** — circuit breaker pattern for external API calls.
+- **ResilientApi.ts** — retry-aware API client.
+- **GracefulShutdown.ts** — graceful process shutdown handling.
+- **MemoryMonitor.ts** — memory usage monitoring.
+- **Timeout.ts** — timeout utility.
+- **Logger.ts** — structured logging.
+- **I18n.ts** — internationalization config.
 
 ### AI models (defined in `chat/route.ts` as `ONA_MODELS`)
 
 - `ona-max` — GLM 5.1 (default for accuracy)
 - `ona-max-fast` — Kimi K2.5 Turbo (fastest)
 - `ona-mini` — DeepSeek V3.2
+- `ona-hands-off` — Super Agent autonomous mode
 
 All route through Fireworks AI with a fallback chain; overridable via env.
 
@@ -104,12 +122,12 @@ Mobile auth opens Replit sign-in in a separate tab and polls `/api/auth/user?opt
 ## Conventions
 
 - **TypeScript:** strict mode with `noUncheckedIndexedAccess`, `noImplicitReturns`, `noUnusedLocals`, `noUnusedParameters`. Target ES2022.
-- **Lint:** ESLint with `@antfu/eslint-config` + Next.js/JSX-a11y/Jest-DOM/Playwright/Storybook plugins. Overrides: allow top-level await, **use `type` not `interface`**, 1tbs brace style. Auto-fixes on commit via **lefthook**.
+- **Lint:** ESLint with `@antfu/eslint-config` + Next.js/JSX-a11y/Jest-DOM/Playwright/Storybook plugins. Overrides: allow top-level await, **use `type` not `interface`**, 1tbs brace style. Run with `npx eslint --fix .`. Auto-fixes on commit via **lefthook** (see `lefthook.yml`). Type-checking also runs on commit (`npm run check:types`).
 - **Styling:** Tailwind CSS v4 (PostCSS). App background `#fbfbfa` light / `#101010` dark. Serif font: `Georgia, "Times New Roman", serif`.
-- **Testing:** Vitest for unit/integration (`src/**/*.test.ts`, UI tests in `**/*.test.tsx` with Playwright browser); Playwright E2E in `tests/e2e/`.
+- **Testing:** Vitest for unit/integration (`src/**/*.test.ts`, UI tests in `**/*.test.tsx` with Playwright browser); Playwright E2E in `tests/e2e/`. Run with `npx vitest`. Playwright E2E via `npx playwright test`.
 - **Data-driven content:** keep marketing copy/assets in config modules, not hardcoded in components (see `todo.md` for the 1:1 ona.com clone plan).
 - **File-edit tool steps** attach unified diffs (for `sandbox_write_file`, `github_upsert_file`, `github_delete_file`) — the UI renders a collapsible diff panel.
-- **Credits:** 1 credit = 1 cent. Deducted on each provider call using `CREDITS_PER_1000_TOKENS` (fallback: 1/1k tokens, 1-credit min).
+- **Credits:** 1 credit = 1 cent (USD). Deducted on each provider call using `CREDITS_PER_1000_TOKENS` (fallback: 1/1k tokens, 1-credit min). Signup credits via `SIGNUP_CREDITS` env var. Balance accessible via `/api/credits/balance`.
 
 ## Gotchas
 
@@ -121,5 +139,6 @@ Mobile auth opens Replit sign-in in a separate tab and polls `/api/auth/user?opt
 - **Browser compat fallbacks** (clipboard, ID generation, ResizeObserver) live in `src/utils/browserCompat.ts`.
 - **On Replit, do NOT use raw `npm install`** — use the Replit package installer (see `replit.md` for the exact batches). Raw `npm install` hits `ENOTEMPTY` / rename conflicts.
 - **SSE stream drops:** the client keeps the active job, resets job-generated UI messages, and replays persisted events from the beginning to avoid duplicate streamed text.
-- **Vercel build:** uses `npm install --legacy-peer-deps` + `npm run build`. No local PGlite server started; no recursive `build:*` scripts.
+- **Vercel build:** uses `npm install --legacy-peer-deps` + `npm run build`. No local DB started during build; no recursive `build:*` scripts.
 - **Locale files:** only edit `en.json`; `fr.json` is Crowdin-managed.
+- **Health monitoring:** `/api/healthz` checks database, Fireworks AI, Daytona, Super Agent. `/api/readiness` returns ready/unready status.
