@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const baseConfig: NextConfig = {
+  devIndicators: {
+    position: 'bottom-right',
+  },
   eslint: {
     dirs: ['.'],
     ignoreDuringBuilds: true,
