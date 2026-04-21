@@ -748,6 +748,7 @@ function getMatchSnippet(conv: Conversation, query: string): string | null {
 }
 
 export default function AppPage() {
+  const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<string>('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -841,7 +842,7 @@ export default function AppPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // Cmd/Ctrl+Shift+S → open super agent modal
+  // Cmd/Ctrl+Shift+S → navigate to super agent page
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey) || !e.shiftKey || e.key !== 'S') return;
@@ -849,17 +850,11 @@ export default function AppPage() {
       if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') return;
       e.preventDefault();
       if (!activeId || !syncedIds.current.has(activeId)) return;
-      setSuperAgentOpen(o => {
-        if (!o) {
-          setSuperAgentError(null);
-          setSuperAgentWakeSuccess(false);
-        }
-        return !o;
-      });
+      router.push(`/app/super-agent?conversationId=${activeId}`);
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activeId]);
+  }, [activeId, router]);
 
   // Load conversation history from DB on mount
   useEffect(() => {
@@ -1296,77 +1291,6 @@ export default function AppPage() {
     } catch {}
   }
 
-  async function saveSuperAgentSettings() {
-    if (!activeId) return;
-    const heartbeatMinutes = Math.max(1, Number.parseInt(superAgentHeartbeat, 10) || DEFAULT_SUPER_AGENT_HEARTBEAT_MINUTES);
-
-    setSuperAgentError(null);
-    setSuperAgentSaving(true);
-    try {
-      const res = await fetch(`/api/conversations/${activeId}/super-agent`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          enabled: superAgentEnabled,
-          heartbeatMinutes,
-          wakePrompt: superAgentPrompt.trim() || DEFAULT_SUPER_AGENT_PROMPT,
-          model: superAgentModel,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to save super agent settings');
-      const config = await res.json() as SuperAgentConfig;
-      setConversations(prev => prev.map(c => (
-        c.id === activeId
-          ? { ...c, superAgent: config }
-          : c
-      )));
-      setSuperAgentOpen(false);
-    } catch {
-      setSuperAgentError('Could not save settings. Please try again.');
-    } finally {
-      setSuperAgentSaving(false);
-    }
-  }
-
-  async function wakeSuperAgentNow() {
-    if (!activeId) return;
-    setSuperAgentError(null);
-    setSuperAgentWakeSuccess(false);
-    setSuperAgentWaking(true);
-    try {
-      const res = await fetch('/api/super-agent/heartbeat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: activeId, force: true }),
-      });
-      if (!res.ok) throw new Error('Failed to wake super agent');
-
-      const payload = await res.json() as { results?: Array<{ jobId?: string; status?: string }> };
-      const jobId = payload.results?.[0]?.jobId;
-      if (jobId) {
-        setLoading(false);
-        setConversations(prev => prev.map(c =>
-          c.id === activeId ? { ...c, activeJobId: jobId } : c,
-        ));
-        scheduleBackgroundPoll(activeId, jobId, 0, false);
-        setSuperAgentWakeSuccess(true);
-        setTimeout(() => {
-          setSuperAgentOpen(false);
-          setSuperAgentWakeSuccess(false);
-        }, 1200);
-      } else {
-        setSuperAgentWakeSuccess(true);
-        setTimeout(() => {
-          setSuperAgentOpen(false);
-          setSuperAgentWakeSuccess(false);
-        }, 1200);
-      }
-    } catch {
-      setSuperAgentError('Could not wake the super agent. Please try again.');
-    } finally {
-      setSuperAgentWaking(false);
-    }
-  }
 
   // Detect mobile vs desktop and set sidebar default
   useEffect(() => {
@@ -1412,21 +1336,6 @@ export default function AppPage() {
 
   useEffect(() => { setTodos([]); }, [activeId]);
 
-  useEffect(() => {
-    const config = activeConversation?.superAgent;
-    if (!config) {
-      setSuperAgentEnabled(false);
-      setSuperAgentHeartbeat(String(DEFAULT_SUPER_AGENT_HEARTBEAT_MINUTES));
-      setSuperAgentPrompt(DEFAULT_SUPER_AGENT_PROMPT);
-      setSuperAgentModel(DEFAULT_SUPER_AGENT_MODEL);
-      return;
-    }
-
-    setSuperAgentEnabled(config.enabled);
-    setSuperAgentHeartbeat(String(config.heartbeatMinutes));
-    setSuperAgentPrompt(config.wakePrompt);
-    setSuperAgentModel(config.model);
-  }, [activeConversation?.id, activeConversation?.superAgent]);
 
   // Scroll to bottom using double-RAF so both React's DOM commit and the
   // browser's subsequent layout/paint pass have completed before we read
@@ -2666,21 +2575,34 @@ export default function AppPage() {
             <span className={`size-1.5 shrink-0 rounded-full ${selectedModel === 'ona-hands-off' ? 'bg-indigo-400 dark:bg-indigo-500' : 'bg-amber-400 dark:bg-amber-500'}`} />
             <span>{selectedModel === 'ona-hands-off' ? 'Hands off' : 'Hands on'}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => { setSuperAgentOpen(true); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
-            disabled={!canConfigureSuperAgent}
-            className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex sm:px-3 ${
-              activeConversation?.superAgent?.enabled
-                ? 'border-emerald-200 text-emerald-700 hover:border-emerald-400 dark:border-emerald-900 dark:text-emerald-300 dark:hover:border-emerald-700'
-                : 'border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100'
-            }`}
-            style={{ backgroundColor: 'var(--bg-card)' }}
-            title={canConfigureSuperAgent ? 'Configure super agent (⌘⇧S)' : 'Send the first task to save this conversation before enabling the super agent'}
-          >
-            <span className={`size-1.5 shrink-0 rounded-full ${activeConversation?.superAgent?.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
-            <span>Super agent</span>
-          </button>
+          {canConfigureSuperAgent
+            ? (
+                <Link
+                  href={`/app/super-agent?conversationId=${activeConversation?.id}`}
+                  className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-colors sm:flex sm:px-3 ${
+                    activeConversation?.superAgent?.enabled
+                      ? 'border-emerald-200 text-emerald-700 hover:border-emerald-400 dark:border-emerald-900 dark:text-emerald-300 dark:hover:border-emerald-700'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100'
+                  }`}
+                  style={{ backgroundColor: 'var(--bg-card)' }}
+                  title="Configure super agent (⌘⇧S)"
+                >
+                  <span className={`size-1.5 shrink-0 rounded-full ${activeConversation?.superAgent?.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                  <span>Super agent</span>
+                </Link>
+              )
+            : (
+                <button
+                  type="button"
+                  disabled
+                  className="hidden cursor-not-allowed items-center gap-1.5 rounded-full border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-400 opacity-50 sm:flex sm:px-3"
+                  style={{ backgroundColor: 'var(--bg-card)' }}
+                  title="Send the first task to save this conversation before enabling the super agent"
+                >
+                  <span className="size-1.5 shrink-0 rounded-full bg-gray-300 dark:bg-gray-600" />
+                  <span>Super agent</span>
+                </button>
+              )}
           {activeSandboxId
             ? (
                 <Link
@@ -3288,214 +3210,6 @@ export default function AppPage() {
         </div>
       </div>
 
-      {superAgentOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/25 backdrop-blur-[1px] dark:bg-black/45"
-            onClick={() => { setSuperAgentOpen(false); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
-            aria-label="Close super agent settings"
-          />
-          <div
-            className="relative z-[61] w-full max-w-lg rounded-3xl border border-black/8 p-5 shadow-2xl dark:border-white/10"
-            style={{ backgroundColor: 'var(--bg-card)' }}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Super agent</p>
-                <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                  Wakes this conversation autonomously on a schedule to continue working. Use <strong className="font-medium text-gray-700 dark:text-gray-300">Wake Now</strong> to trigger it instantly, or enable the heartbeat and point a cron job at your deployment.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => { setSuperAgentOpen(false); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
-                className="flex size-8 shrink-0 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-black/5 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/8 dark:hover:text-gray-300"
-                aria-label="Close super agent settings"
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 2l8 8M10 2L2 10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-
-            {superAgentError && (
-              <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800/50 dark:bg-red-950/30">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="mt-0.5 shrink-0 text-red-500">
-                  <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M7 4.5v3M7 9.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                <p className="text-xs text-red-700 dark:text-red-300">{superAgentError}</p>
-              </div>
-            )}
-
-            {superAgentWakeSuccess && (
-              <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-800/50 dark:bg-emerald-950/30">
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="shrink-0 text-emerald-500">
-                  <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M4.5 7l2 2 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300">Super agent woke up — working in the background.</p>
-              </div>
-            )}
-
-            <div className="mt-5 space-y-4">
-              <label className="flex items-center justify-between rounded-2xl border border-gray-200 px-4 py-3 dark:border-gray-800">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Enable heartbeat</p>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Let a cron job wake this conversation automatically on a schedule.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={superAgentEnabled}
-                  onChange={e => { setSuperAgentEnabled(e.target.checked); setSuperAgentError(null); }}
-                  className="size-4"
-                />
-              </label>
-
-              {superAgentEnabled && (
-                <div className="rounded-2xl border border-gray-200 bg-gray-50/50 px-4 py-3 dark:border-gray-800 dark:bg-white/3">
-                  <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Heartbeat endpoint</p>
-                  <div className="flex items-center gap-2">
-                    <code className="min-w-0 flex-1 truncate rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 px-2.5 py-1.5 text-[11px] font-mono text-gray-700 dark:text-gray-300">
-                      POST /api/super-agent/heartbeat
-                    </code>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const url = `${window.location.origin}/api/super-agent/heartbeat`;
-                        const ok = await copyTextToClipboard(url);
-                        if (ok) {
-                          setSuperAgentUrlCopied(true);
-                          setTimeout(() => setSuperAgentUrlCopied(false), 2000);
-                        }
-                      }}
-                      className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 px-2 py-1.5 text-[11px] text-gray-500 dark:text-gray-400 transition-colors hover:border-gray-400 hover:text-gray-900 dark:hover:border-gray-500 dark:hover:text-gray-100"
-                      title="Copy URL"
-                    >
-                      {superAgentUrlCopied
-                        ? (
-                            <>
-                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 5.5l2.5 2.5 5-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                              Copied
-                            </>
-                          )
-                        : (
-                            <>
-                              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><rect x="3.5" y="1" width="6.5" height="7.5" rx="1" stroke="currentColor" strokeWidth="1.2" /><path d="M1 3.5v6a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" /></svg>
-                              Copy
-                            </>
-                          )}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-[10px] text-gray-400 dark:text-gray-500">
-                    Authenticate with header <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-px font-mono">x-ona-heartbeat-secret: &lt;your secret&gt;</code>. Set the <code className="rounded bg-gray-100 dark:bg-gray-800 px-1 py-px font-mono">SUPER_AGENT_HEARTBEAT_SECRET</code> env var to configure the secret.
-                  </p>
-                </div>
-              )}
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Heartbeat interval (minutes)</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={1440}
-                    value={superAgentHeartbeat}
-                    onChange={e => setSuperAgentHeartbeat(e.target.value)}
-                    className="w-full rounded-2xl border border-gray-200 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-gray-400 dark:border-gray-800 dark:text-gray-100 dark:focus:border-gray-600"
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Model</span>
-                  <select
-                    value={superAgentModel}
-                    onChange={e => setSuperAgentModel(e.target.value)}
-                    className="w-full rounded-2xl border border-gray-200 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-gray-400 dark:border-gray-800 dark:text-gray-100 dark:focus:border-gray-600"
-                  >
-                    {AUTONOMY_OPTIONS.map(option => (
-                      <option key={option.key} value={option.key} className="text-black">
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Wake prompt</span>
-                <textarea
-                  value={superAgentPrompt}
-                  onChange={e => setSuperAgentPrompt(e.target.value)}
-                  rows={4}
-                  className="w-full resize-none rounded-2xl border border-gray-200 bg-transparent px-3 py-2 text-sm leading-relaxed text-gray-900 outline-none transition-colors focus:border-gray-400 dark:border-gray-800 dark:text-gray-100 dark:focus:border-gray-600"
-                />
-              </label>
-
-              <div className="rounded-2xl border border-gray-200 px-4 py-3 text-xs dark:border-gray-800">
-                {(() => {
-                  const status = activeConversation?.superAgent?.lastRunStatus ?? 'idle';
-                  const statusColor = status === 'error'
-                    ? 'text-red-600 dark:text-red-400'
-                    : status === 'running'
-                      ? 'text-indigo-600 dark:text-indigo-400'
-                      : status === 'success'
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-gray-500 dark:text-gray-400';
-                  return (
-                    <div className="space-y-1 text-gray-600 dark:text-gray-300">
-                      <p>Status: <span className={`font-medium ${statusColor}`}>{status}</span></p>
-                      <p>Next run: {activeConversation?.superAgent?.nextHeartbeatAt ? new Date(activeConversation.superAgent.nextHeartbeatAt).toLocaleString() : <span className="text-gray-400 dark:text-gray-500">Not scheduled</span>}</p>
-                      <p>Last run: {activeConversation?.superAgent?.lastHeartbeatAt ? new Date(activeConversation.superAgent.lastHeartbeatAt).toLocaleString() : <span className="text-gray-400 dark:text-gray-500">Never</span>}</p>
-                      {!canConfigureSuperAgent && (
-                        <p className="text-amber-600 dark:text-amber-400">Send the first task to save this conversation before enabling the super agent.</p>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
-              <button
-                type="button"
-                onClick={wakeSuperAgentNow}
-                disabled={!canConfigureSuperAgent || superAgentWaking || superAgentWakeSuccess}
-                className="flex items-center justify-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-300 dark:hover:border-gray-500 dark:hover:text-gray-100"
-              >
-                {superAgentWaking
-                  ? (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="animate-spin text-indigo-400">
-                          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.25" />
-                          <path d="M6 1.5A4.5 4.5 0 0110.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                        </svg>
-                        Waking…
-                      </>
-                    )
-                  : 'Wake Now'}
-              </button>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setSuperAgentOpen(false); setSuperAgentError(null); setSuperAgentWakeSuccess(false); }}
-                  className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:border-gray-400 hover:text-gray-900 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-500 dark:hover:text-gray-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={saveSuperAgentSettings}
-                  disabled={superAgentSaving || !canConfigureSuperAgent}
-                  className="rounded-full bg-gray-950 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-gray-100 dark:text-gray-950"
-                >
-                  {superAgentSaving ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {sidebarOpen && (
         <button
