@@ -158,13 +158,19 @@ function CopyButton({ text }: { text: string }) {
 }
 
 
-function MessageBubble({ msg }: { msg: Message }) {
+function isErrorMessageText(text: string) {
+  return text.startsWith('Something went wrong:');
+}
+
+function MessageBubble({ msg, onRetry }: { msg: Message; onRetry?: () => void }) {
   const isUser = msg.role === 'user';
   const text = typeof msg.content === 'string'
     ? msg.content
     : Array.isArray(msg.content) && (msg.content as ContentPart[])[0]?.type === 'text'
       ? ((msg.content as ContentPart[]).find(p => p.type === 'text') as { type: 'text'; text: string } | undefined)?.text ?? ''
       : '';
+
+  const isError = !isUser && isErrorMessageText(text);
 
   return (
     <div className={`group flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -183,12 +189,35 @@ function MessageBubble({ msg }: { msg: Message }) {
                 {text}
               </div>
             )
-          : (
-              <div className="min-w-0 rounded-3xl rounded-tl-md border border-black/6 bg-white/70 px-4 py-3 text-sm leading-relaxed text-gray-800 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-gray-200 [overflow-wrap:anywhere]">
-                <AssistantMarkdownLazy text={text} />
-              </div>
+          : isError
+            ? (
+                <div className="min-w-0 rounded-3xl rounded-tl-md border border-red-200 bg-red-50/70 px-4 py-3 text-sm leading-relaxed text-red-900 shadow-sm dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-200 [overflow-wrap:anywhere]">
+                  {text}
+                </div>
+              )
+            : (
+                <div className="min-w-0 rounded-3xl rounded-tl-md border border-black/6 bg-white/70 px-4 py-3 text-sm leading-relaxed text-gray-800 shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-gray-200 [overflow-wrap:anywhere]">
+                  <AssistantMarkdownLazy text={text} />
+                </div>
+              )}
+        {!isUser && text && (
+          <div className="flex items-center gap-2">
+            {isError && onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-red-700 transition-colors hover:border-red-400 hover:bg-red-50 dark:border-red-900/60 dark:bg-white/5 dark:text-red-300 dark:hover:border-red-700 dark:hover:bg-red-950/30"
+                aria-label="Retry last message"
+              >
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M2 6a4 4 0 0 1 7-2.6M10 6a4 4 0 0 1-7 2.6M9 1.5V4H6.5M3 10.5V8h2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Retry
+              </button>
             )}
-        {!isUser && text && <CopyButton text={text} />}
+            <CopyButton text={text} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2935,13 +2964,47 @@ export default function AppPage() {
                 )
               : (
                   <div key={activeId} ref={messagesContentRef} className="mx-auto max-w-3xl space-y-5">
-                    {messages
-                      .filter(m => m.role === 'tool_steps' || m.role === 'user' || !!m.content)
-                      .map((msg, index) => (
-                        msg.role === 'tool_steps'
-                          ? <ToolStepsBlock key={`${msg.id}:${index}`} steps={msg.content as ToolStep[]} />
-                          : <MessageBubble key={`${msg.id}:${index}`} msg={msg} />
-                      ))}
+                    {(() => {
+                      const visible = messages.filter(m => m.role === 'tool_steps' || m.role === 'user' || !!m.content);
+                      const lastErrorId = (() => {
+                        for (let i = visible.length - 1; i >= 0; i--) {
+                          const m = visible[i]!;
+                          if (m.role === 'assistant') {
+                            const t = typeof m.content === 'string' ? m.content : '';
+                            return isErrorMessageText(t) ? m.id : null;
+                          }
+                        }
+                        return null;
+                      })();
+                      return visible.map((msg, index) => {
+                        if (msg.role === 'tool_steps') {
+                          return <ToolStepsBlock key={`${msg.id}:${index}`} steps={msg.content as ToolStep[]} />;
+                        }
+                        const isLastError = msg.id === lastErrorId;
+                        const onRetry = isLastError && !loading
+                          ? () => {
+                              const prevUser = [...visible.slice(0, index)].reverse().find(m => m.role === 'user');
+                              if (!prevUser) return;
+                              const userText = typeof prevUser.content === 'string'
+                                ? prevUser.content
+                                : (Array.isArray(prevUser.content)
+                                    ? ((prevUser.content as ContentPart[]).find(p => p.type === 'text') as { type: 'text'; text: string } | undefined)?.text ?? ''
+                                    : '');
+                              const userImage = prevUser.imagePreview
+                                ?? (Array.isArray(prevUser.content)
+                                  ? ((prevUser.content as ContentPart[]).find(p => p.type === 'image_url') as { type: 'image_url'; image_url: { url: string } } | undefined)?.image_url.url
+                                  : undefined);
+                              setConversations(prev => prev.map(c =>
+                                c.id === activeId
+                                  ? { ...c, messages: c.messages.filter(m => m.id !== msg.id) }
+                                  : c,
+                              ));
+                              send(userText, userImage);
+                            }
+                          : undefined;
+                        return <MessageBubble key={`${msg.id}:${index}`} msg={msg} onRetry={onRetry} />;
+                      });
+                    })()}
                     {sandboxBooting && (
                       <SandboxBootingBanner />
                     )}
