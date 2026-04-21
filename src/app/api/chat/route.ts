@@ -16,6 +16,7 @@ import { callOverseerToolDefinition, isCallOverseerTool, runOverseerSubagent } f
 import { callEditorToolDefinition, isCallEditorTool, runEditorSubagent } from '@/libs/Editor';
 import { callFleetToolDefinition, isFleetTool, runFleet } from '@/libs/Fleet';
 import type { FleetTask } from '@/libs/Fleet';
+import { extractAndStoreMemory, getUserMemory } from '@/libs/Memory';
 import type { TouchedFileDiff } from '@/libs/FileDiff';
 
 export const runtime = 'nodejs';
@@ -1235,6 +1236,22 @@ export async function POST(req: NextRequest) {
         ...normalizeMessages(messages),
       ];
 
+      // Inject codebase memory so the agent starts every turn already knowing
+      // the user's conventions, tools, and past mistakes.
+      const memoryBlock = await getUserMemory(billedUserId).catch(() => '');
+      if (memoryBlock) {
+        conversation.splice(1, 0,
+          {
+            role: 'user',
+            content: `[System context — codebase memory]\n\n${memoryBlock}\n\nApply these facts immediately. Do not ask the user to confirm things already listed above.`,
+          },
+          {
+            role: 'assistant',
+            content: 'Understood. I have loaded the codebase memory and will apply these facts throughout this session.',
+          },
+        );
+      }
+
       // Pre-boot the sandbox on the very first message so it's ready before the AI starts.
       const isFirstMessage = messages.length === 1;
       if (isFirstMessage && process.env.DAYTONA_API_KEY && !isPlanMode) {
@@ -1447,6 +1464,7 @@ export async function POST(req: NextRequest) {
       // ── Ultrawork state ─────────────────────────────────────────────────
       let todos: TodoItem[] = [];
       let taskCompleted = false;
+      let taskSummary = '';
 
       function emitTodoUpdate() {
         emit({ type: 'todo_update', todos });
@@ -1610,6 +1628,10 @@ export async function POST(req: NextRequest) {
           }
           if (jobId) {
             await completeJob(jobId);
+          }
+          // Fire memory extraction in the background — never block the response.
+          if (taskSummary && billedUserId) {
+            extractAndStoreMemory(billedUserId, taskSummary, conversation, conversationId).catch(() => {});
           }
           completed = true;
           break;
@@ -1792,6 +1814,7 @@ export async function POST(req: NextRequest) {
               } else if (toolName === 'task_complete') {
                 taskCompleted = true;
                 const summary = typeof toolArgs.summary === 'string' ? toolArgs.summary : '';
+                taskSummary = summary;
                 todos = todos.map(t => ({ ...t, status: 'done' as TodoStatus }));
                 emitTodoUpdate();
                 result = { ok: true, message: 'Task marked complete. Write your final summary now.' };

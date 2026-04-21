@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, serial, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 export const userCreditsSchema = pgTable('user_credits', {
@@ -98,6 +98,23 @@ export const agentEventsSchema = pgTable('agent_events', {
   data: text('data').notNull().default('{}'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
+
+export const codebaseMemorySchema = pgTable('codebase_memory', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: text('user_id').notNull(),
+  key: text('key').notNull(),
+  content: text('content').notNull(),
+  category: text('category').notNull().default('general'),
+  confidence: integer('confidence').notNull().default(1),
+  sourceConversationId: text('source_conversation_id'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+}, (table) => [
+  uniqueIndex('codebase_memory_user_key_idx').on(table.userId, table.key),
+]);
 
 export const conversationSuperAgentsSchema = pgTable('conversation_super_agents', {
   conversationId: text('conversation_id')
