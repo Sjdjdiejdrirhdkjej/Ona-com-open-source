@@ -1,9 +1,9 @@
 import { eq, sql } from 'drizzle-orm';
 import { getDb } from '@/libs/DB';
+import { logger as baseLogger } from '@/libs/Logger';
 import { codebaseMemorySchema } from '@/models/Schema';
-import pino from 'pino';
 
-const logger = pino({ name: 'Memory' });
+const logger = baseLogger;
 
 const EXTRACTION_MODEL =
   process.env.FLEET_MODEL ?? 'accounts/fireworks/models/llama-v3p1-8b-instruct';
