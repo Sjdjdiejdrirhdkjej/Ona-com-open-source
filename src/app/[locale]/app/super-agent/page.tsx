@@ -381,7 +381,7 @@ function SuperAgentPageInner() {
                   style={{ backgroundColor: 'var(--bg-card)' }}
                 >
                   {AUTONOMY_OPTIONS.map(option => (
-                    <option key={option.key} value={option.key} className="text-black">
+                    <option key={option.key} value={option.key} className="bg-white text-black dark:bg-gray-900 dark:text-gray-100">
                       {option.label}
                     </option>
                   ))}

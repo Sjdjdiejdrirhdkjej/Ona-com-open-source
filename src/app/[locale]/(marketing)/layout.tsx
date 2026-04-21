@@ -12,7 +12,7 @@ export default async function Layout(props: {
 
   return (
     <div
-      className="[--bg:#f2ede3] [--bg-2:#e8e2d6] [--bg-3:#ddd6c8] [--bg-header:rgba(242,237,227,0.92)] [--text:#171717] [--header-grid:rgba(0,0,0,0.08)] dark:[--bg:#0b0b0d] dark:[--bg-2:#111216] dark:[--bg-3:#17181d] dark:[--bg-header:rgba(11,11,13,0.9)] dark:[--text:#f5f5f5] dark:[--header-grid:rgba(255,255,255,0.08)]"
+      className="[--bg:#f2ede3] [--bg-2:#e8e2d6] [--bg-3:#ddd6c8] [--bg-header:rgba(242,237,227,0.92)] [--text:#171717] [--header-grid:rgba(0,0,0,0.08)] [--cream-border:rgba(0,0,0,0.09)] [--cream-card:rgba(255,255,255,0.25)] dark:[--bg:#0b0b0d] dark:[--bg-2:#111216] dark:[--bg-3:#17181d] dark:[--bg-header:rgba(11,11,13,0.9)] dark:[--text:#f5f5f5] dark:[--header-grid:rgba(255,255,255,0.08)] dark:[--cream-border:rgba(255,255,255,0.10)] dark:[--cream-card:rgba(255,255,255,0.03)]"
     >
       <BaseTemplate
         leftNav={(

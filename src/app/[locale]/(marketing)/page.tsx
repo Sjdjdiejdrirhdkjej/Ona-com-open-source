@@ -17,8 +17,6 @@ export async function generateMetadata(props: IIndexProps) {
 
 const SERIF = 'Georgia, "Times New Roman", serif';
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
-const CREAM = '#f2ede3';
-const CREAM_BORDER = 'rgba(0,0,0,0.09)';
 
 const featureCards = [
   {
@@ -203,7 +201,7 @@ function MonoLabel({ children }: { children: ReactNode }) {
 
 function ArrowLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 transition-opacity hover:opacity-60" style={{ fontFamily: MONO }}>
+    <Link href={href} className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100 transition-opacity hover:opacity-60" style={{ fontFamily: MONO }}>
       {children}
       <span>→</span>
     </Link>
@@ -215,14 +213,14 @@ export default async function Index(props: IIndexProps) {
   setRequestLocale(locale);
 
   return (
-    <div style={{ backgroundColor: CREAM, color: '#1a1a18' }}>
+    <div style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
 
       {/* ── Hero ── */}
-      <section className="relative flex min-h-[92svh] flex-col border-b" style={{ borderColor: CREAM_BORDER }}>
+      <section className="relative flex min-h-[92svh] flex-col border-b" style={{ borderColor: "var(--cream-border)" }}>
         {/* Left vertical accent bar */}
         <div className="absolute bottom-0 left-0 top-0 hidden w-[5px] md:block" style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 30%, rgba(0,0,0,0.06) 70%, transparent 100%)' }} />
 
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col border-x px-6 pb-16 pt-24 sm:px-8 sm:pt-28 md:flex-row md:items-center md:gap-16 md:pt-20" style={{ borderColor: CREAM_BORDER }}>
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col border-x px-6 pb-16 pt-24 sm:px-8 sm:pt-28 md:flex-row md:items-center md:gap-16 md:pt-20" style={{ borderColor: "var(--cream-border)" }}>
           {/* Left column: headline */}
           <div className="flex-1">
             <h1
@@ -234,7 +232,7 @@ export default async function Index(props: IIndexProps) {
             </h1>
 
             <div className="mt-10 max-w-lg space-y-2">
-              <p className="text-lg leading-snug tracking-[-0.02em] text-neutral-700 sm:text-xl">
+              <p className="text-lg leading-snug tracking-[-0.02em] text-neutral-700 dark:text-neutral-300 sm:text-xl">
                 ONA is the open-source platform for background AI software agents.
               </p>
               <p className="text-sm text-neutral-500">
@@ -245,15 +243,15 @@ export default async function Index(props: IIndexProps) {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+                className="inline-flex items-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-950 transition-opacity hover:opacity-80"
               >
                 Get Started for Free
                 <span>→</span>
               </Link>
               <Link
                 href="/about/"
-                className="inline-flex items-center gap-2 rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:text-neutral-950"
-                style={{ borderColor: CREAM_BORDER }}
+                className="inline-flex items-center gap-2 rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 transition-colors hover:border-neutral-400 hover:text-neutral-950 dark:hover:border-neutral-500 dark:hover:text-neutral-50"
+                style={{ borderColor: "var(--cream-border)" }}
               >
                 Request a demo
               </Link>
@@ -317,33 +315,33 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Available in your browser (like ampcode's "Install" section) ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto grid max-w-7xl grid-cols-1 border-x md:grid-cols-2" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 border-x md:grid-cols-2" style={{ borderColor: "var(--cream-border)" }}>
           {/* Left */}
-          <div className="border-b px-6 py-10 md:border-b-0 md:border-r md:px-8 md:py-14" style={{ borderColor: CREAM_BORDER }}>
+          <div className="border-b px-6 py-10 md:border-b-0 md:border-r md:px-8 md:py-14" style={{ borderColor: "var(--cream-border)" }}>
             <MonoLabel>Open source · Self-hostable</MonoLabel>
-            <h2 className="max-w-xs text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 sm:text-5xl sm:leading-[0.9]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="max-w-xs text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl sm:leading-[0.9]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               Available in your browser
             </h2>
           </div>
 
           {/* Right: start command */}
           <div className="flex flex-col justify-center px-6 py-10 md:px-8 md:py-14">
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-400" style={{ fontFamily: MONO }}>
+            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-400 dark:text-neutral-500 dark:text-neutral-500" style={{ fontFamily: MONO }}>
               Open the app
             </p>
-            <div className="flex items-center gap-2 rounded-sm border bg-white/60 px-4 py-3" style={{ borderColor: CREAM_BORDER }}>
-              <code className="flex-1 truncate text-sm text-neutral-700" style={{ fontFamily: MONO }}>
+            <div className="flex items-center gap-2 rounded-sm border bg-white/60 px-4 py-3 dark:bg-white/5" style={{ borderColor: "var(--cream-border)" }}>
+              <code className="flex-1 truncate text-sm text-neutral-700 dark:text-neutral-300" style={{ fontFamily: MONO }}>
                 /dashboard → start your first task
               </code>
               <Link
                 href="/dashboard"
-                className="shrink-0 rounded-sm bg-neutral-950 px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-80"
+                className="shrink-0 rounded-sm bg-neutral-950 px-3 py-1.5 text-xs font-medium text-white dark:bg-white dark:text-neutral-950 transition-opacity hover:opacity-80"
               >
                 Open →
               </Link>
             </div>
-            <p className="mt-3 text-xs text-neutral-400">
+            <p className="mt-3 text-xs text-neutral-400 dark:text-neutral-500">
               Or clone and self-host — Apache 2.0 licensed.
             </p>
           </div>
@@ -351,22 +349,22 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Feature cards ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
-          <div className="grid border md:grid-cols-2" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="grid border md:grid-cols-2" style={{ borderColor: "var(--cream-border)" }}>
             {featureCards.map((item, i) => (
               <div
                 key={item.tag}
                 className="min-h-60 border-b p-6 last:border-b-0 sm:min-h-72 sm:p-8 md:border-r md:border-b md:even:border-r-0"
-                style={{ borderColor: CREAM_BORDER, backgroundColor: i % 2 === 1 ? 'rgba(255,255,255,0.25)' : 'transparent' }}
+                style={{ borderColor: "var(--cream-border)", backgroundColor: i % 2 === 1 ? "var(--cream-card)" : "transparent" }}
               >
-                <p className="mb-8 text-[10px] uppercase tracking-[0.22em] text-neutral-500 sm:mb-12 sm:text-[11px]" style={{ fontFamily: MONO }}>
+                <p className="mb-8 text-[10px] uppercase tracking-[0.22em] text-neutral-500 dark:text-neutral-400 sm:mb-12 sm:text-[11px]" style={{ fontFamily: MONO }}>
                   {item.tag}
                 </p>
-                <h3 className="max-w-sm text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <h3 className="max-w-sm text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 dark:text-neutral-50 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                   {item.title}
                 </h3>
-                <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600">{item.body}</p>
+                <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{item.body}</p>
                 <div className="mt-8">
                   <ArrowLink href="/about/">{item.cta}</ArrowLink>
                 </div>
@@ -377,31 +375,31 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── How automations run (3-step) ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <MonoLabel>How automations run</MonoLabel>
-              <h2 className="max-w-sm text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h2 className="max-w-sm text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                 Closed-loop work, not chat-only assistance.
               </h2>
-              <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-600">
+              <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
                 Trigger, execute, and report — proactive background agents that combine prompts with deterministic commands.
               </p>
             </div>
             <div className="lg:col-span-8">
-              <div className="grid border md:grid-cols-3" style={{ borderColor: CREAM_BORDER }}>
+              <div className="grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
                 {automationSteps.map(item => (
                   <div
                     key={item.step}
                     className="min-h-56 border-b p-6 last:border-b-0 sm:p-8 md:min-h-80 md:border-b-0 md:border-r md:last:border-r-0"
-                    style={{ borderColor: CREAM_BORDER }}
+                    style={{ borderColor: "var(--cream-border)" }}
                   >
-                    <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-400" style={{ fontFamily: MONO }}>{item.step}</p>
+                    <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500" style={{ fontFamily: MONO }}>{item.step}</p>
                     <h3 className="mt-8 text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 sm:mt-14 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                       {item.title}
                     </h3>
-                    <p className="mt-5 text-sm leading-relaxed text-neutral-600">{item.body}</p>
+                    <p className="mt-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{item.body}</p>
                   </div>
                 ))}
               </div>
@@ -411,18 +409,18 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Agent fleets at scale ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
 
           {/* Header row */}
           <div className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-5">
               <MonoLabel>Agent fleets at scale</MonoLabel>
-              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                 Dozens of agents.<br />One review queue.
               </h2>
             </div>
-            <p className="max-w-xl text-base leading-relaxed text-neutral-600 lg:col-span-7">
+            <p className="max-w-xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 lg:col-span-7">
               Dispatch any number of parallel agents from a single trigger. Each agent gets an isolated cloud environment, runs tests, and opens a reviewable PR — all without touching each other's state.
             </p>
           </div>
@@ -492,15 +490,15 @@ export default async function Index(props: IIndexProps) {
           </div>
 
           {/* Stats row */}
-          <div className="mt-8 grid border md:grid-cols-3" style={{ borderColor: CREAM_BORDER }}>
+          <div className="mt-8 grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
             {[
               { stat: 'Unlimited', label: 'parallel agents per trigger' },
               { stat: 'Isolated', label: 'cloud VM per agent, no shared state' },
               { stat: 'PR-first', label: 'every agent delivers a reviewable diff' },
             ].map(item => (
-              <div key={item.stat} className="border-b p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0" style={{ borderColor: CREAM_BORDER }}>
-                <p className="text-3xl leading-none tracking-[-0.06em] text-neutral-950 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>{item.stat}</p>
-                <p className="mt-2 text-sm text-neutral-500">{item.label}</p>
+              <div key={item.stat} className="border-b p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0" style={{ borderColor: "var(--cream-border)" }}>
+                <p className="text-3xl leading-none tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>{item.stat}</p>
+                <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{item.label}</p>
               </div>
             ))}
           </div>
@@ -509,27 +507,27 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Integrations ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
           <MonoLabel>Native context</MonoLabel>
           <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
-            <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 sm:text-5xl lg:col-span-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl lg:col-span-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
               Connect agents to the systems engineers already use.
             </h2>
-            <p className="max-w-2xl text-base leading-relaxed text-neutral-600 lg:col-span-7">
+            <p className="max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 lg:col-span-7">
               Native integrations for planning, code, incidents, and internal tools. Agents get context where they need it and deliver work where it belongs.
             </p>
           </div>
-          <div className="mt-10 grid border md:grid-cols-3" style={{ borderColor: CREAM_BORDER }}>
+          <div className="mt-10 grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
             {integrationCards.map(card => (
-              <div key={card.title} className="border-b p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0" style={{ borderColor: CREAM_BORDER }}>
-                <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 sm:text-3xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <div key={card.title} className="border-b p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0" style={{ borderColor: "var(--cream-border)" }}>
+                <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-3xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                   {card.title}
                 </h3>
-                <p className="mt-5 text-sm leading-relaxed text-neutral-600">{card.body}</p>
+                <p className="mt-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{card.body}</p>
                 <div className="mt-8 flex flex-wrap gap-2">
                   {card.items.map(item => (
-                    <span key={item} className="border px-3 py-1.5 text-xs text-neutral-500" style={{ borderColor: CREAM_BORDER, fontFamily: MONO }}>
+                    <span key={item} className="border px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400" style={{ borderColor: "var(--cream-border)", fontFamily: MONO }}>
                       {item}
                     </span>
                   ))}
@@ -541,16 +539,16 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Use cases ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
           <MonoLabel>Use cases</MonoLabel>
-          <div className="divide-y" style={{ borderColor: CREAM_BORDER }}>
+          <div className="divide-y" style={{ borderColor: "var(--cream-border)" }}>
             {useCases.map(item => (
               <div key={item.title} className="grid gap-5 py-8 md:grid-cols-12 md:items-start">
-                <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 sm:text-3xl md:col-span-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-3xl md:col-span-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                   {item.title}
                 </h3>
-                <p className="max-w-2xl text-base leading-relaxed text-neutral-600 md:col-span-5">{item.body}</p>
+                <p className="max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 md:col-span-5">{item.body}</p>
                 <div className="md:col-span-3 md:text-right">
                   <ArrowLink href="/about/">{item.cta}</ArrowLink>
                 </div>
@@ -561,8 +559,8 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Testimonial / stats (dark section like ampcode's dark block) ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-12" style={{ backgroundColor: '#1a1c1a', color: '#f0efd9' }}>
             <div className="lg:col-span-7">
               <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-[#d8d6b8]/50" style={{ fontFamily: MONO }}>
@@ -596,20 +594,20 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Governance ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
-          <div className="grid gap-8 border p-6 sm:p-8 md:grid-cols-12 md:items-center" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="grid gap-8 border p-6 sm:p-8 md:grid-cols-12 md:items-center" style={{ borderColor: "var(--cream-border)" }}>
             <div className="md:col-span-7">
-              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                 Governed from the runtime up.
               </h2>
-              <p className="mt-4 text-base text-neutral-600">
+              <p className="mt-4 text-base text-neutral-600 dark:text-neutral-400">
                 Audit every human and AI action, scope every credential, and keep background agents inside approved environments.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 md:col-span-5 md:justify-end">
               {['SOC 2', 'RBAC', 'Audit trails', 'Cost caps'].map(badge => (
-                <div key={badge} className="border px-4 py-2 text-sm font-medium text-neutral-700" style={{ borderColor: CREAM_BORDER, fontFamily: MONO }}>
+                <div key={badge} className="border px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300" style={{ borderColor: "var(--cream-border)", fontFamily: MONO }}>
                   {badge}
                 </div>
               ))}
@@ -619,9 +617,9 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Platform capabilities (dark section) ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
-          <div className="grid gap-8 bg-neutral-950 p-6 text-neutral-50 sm:p-10 lg:grid-cols-12">
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="grid gap-8 bg-neutral-950 p-6 text-neutral-50 sm:p-10 lg:grid-cols-12 dark:border dark:border-white/10">
             <div className="lg:col-span-5">
               <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-neutral-500" style={{ fontFamily: MONO }}>
                 Operating model
@@ -642,31 +640,31 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Blog / recent highlights ── */}
-      <section className="border-b" style={{ borderColor: CREAM_BORDER }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: CREAM_BORDER }}>
+      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
           <MonoLabel>Chronicle</MonoLabel>
-          <h2 className="mb-8 max-w-2xl text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          <h2 className="mb-8 max-w-2xl text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
             Recent highlights
           </h2>
-          <div className="grid border md:grid-cols-3" style={{ borderColor: CREAM_BORDER }}>
+          <div className="grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
             {blogPosts.map(post => (
               <Link
                 key={post.title}
                 href="/about/"
                 className="flex min-h-80 flex-col justify-between border-b p-6 transition-colors last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0"
-                style={{ borderColor: CREAM_BORDER }}
+                style={{ borderColor: "var(--cream-border)" }}
               >
                 <div>
-                  <div className="mb-10 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-neutral-400" style={{ fontFamily: MONO }}>
+                  <div className="mb-10 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500" style={{ fontFamily: MONO }}>
                     <span>{post.tag}</span>
                     <span>{post.date}</span>
                   </div>
                   <h3 className="text-3xl leading-[0.92] tracking-[-0.05em] text-neutral-950" style={{ fontFamily: SERIF, fontWeight: 400 }}>
                     {post.title}
                   </h3>
-                  <p className="mt-5 text-sm leading-relaxed text-neutral-600">{post.body}</p>
+                  <p className="mt-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{post.body}</p>
                 </div>
-                <p className="mt-8 text-xs text-neutral-400" style={{ fontFamily: MONO }}>{post.author}</p>
+                <p className="mt-8 text-xs text-neutral-400 dark:text-neutral-500 dark:text-neutral-500" style={{ fontFamily: MONO }}>{post.author}</p>
               </Link>
             ))}
           </div>
@@ -675,7 +673,7 @@ export default async function Index(props: IIndexProps) {
 
       {/* ── Final CTA ── */}
       <section>
-        <div className="mx-auto max-w-7xl border-x px-6 py-20 text-center sm:px-8 sm:py-28" style={{ borderColor: CREAM_BORDER }}>
+        <div className="mx-auto max-w-7xl border-x px-6 py-20 text-center sm:px-8 sm:py-28" style={{ borderColor: "var(--cream-border)" }}>
           <h2
             className="mx-auto max-w-4xl text-[clamp(2.5rem,11vw,7.5rem)] leading-[0.9] tracking-[-0.075em] text-neutral-950"
             style={{ fontFamily: SERIF, fontWeight: 400 }}
@@ -683,19 +681,19 @@ export default async function Index(props: IIndexProps) {
             <span className="block italic">Start shipping</span>
             <span className="block">with ONA</span>
           </h2>
-          <p className="mx-auto mt-8 max-w-sm text-lg text-neutral-600">No commitment. No setup. Just start.</p>
+          <p className="mx-auto mt-8 max-w-sm text-lg text-neutral-600 dark:text-neutral-400">No commitment. No setup. Just start.</p>
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80"
+              className="inline-flex items-center justify-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-950 transition-opacity hover:opacity-80"
             >
               Get Started for Free
               <span>→</span>
             </Link>
             <Link
               href="/about/"
-              className="inline-flex justify-center rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:text-neutral-950"
-              style={{ borderColor: CREAM_BORDER }}
+              className="inline-flex justify-center rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 transition-colors hover:border-neutral-400 hover:text-neutral-950 dark:hover:border-neutral-500 dark:hover:text-neutral-50"
+              style={{ borderColor: "var(--cream-border)" }}
             >
               Request a demo
             </Link>
