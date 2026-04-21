@@ -389,6 +389,48 @@ function SuperAgentPageInner() {
               </label>
             </div>
 
+            {/* Compare modes */}
+            <div
+              className="rounded-2xl border border-gray-200 px-4 py-3 dark:border-gray-800"
+              style={{ backgroundColor: 'var(--bg-card)' }}
+            >
+              <p className="mb-3 text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                Compare modes
+              </p>
+              <ul className="space-y-3 text-xs text-gray-600 dark:text-gray-300">
+                <li className="flex gap-2.5">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-amber-400 dark:bg-amber-500" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Hands on experience</p>
+                    <p className="mt-0.5 leading-relaxed text-gray-500 dark:text-gray-400">
+                      Quick, collaborative changes where you stay in the loop. Best for short tasks, exploration, and pair-programming.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-indigo-400 dark:bg-indigo-500" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">Hands off experience</p>
+                    <p className="mt-0.5 leading-relaxed text-gray-500 dark:text-gray-400">
+                      Long-running autonomous work with extended context. Best for backlog sweeps, refactors, and overnight runs.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-sky-500 dark:bg-sky-400" />
+                  <div>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                      Plan mode
+                      <span className="ml-2 text-[10px] font-normal text-gray-400 dark:text-gray-500">interactive only</span>
+                    </p>
+                    <p className="mt-0.5 leading-relaxed text-gray-500 dark:text-gray-400">
+                      No edits or subagents. Asks clarifying questions and writes a plan.md. Best when you want to think before building.
+                    </p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
             {/* Wake prompt */}
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
