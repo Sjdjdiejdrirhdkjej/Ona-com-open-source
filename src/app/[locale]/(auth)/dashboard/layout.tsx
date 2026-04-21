@@ -1,7 +1,7 @@
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
-import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { BaseTemplate } from '@/templates/BaseTemplate';
+import { UserDropdown } from '@/components/UserDropdown';
 
 export default async function DashboardLayout(props: {
   children: React.ReactNode;
@@ -9,10 +9,6 @@ export default async function DashboardLayout(props: {
 }) {
   const { locale } = await props.params;
   setRequestLocale(locale);
-  const t = await getTranslations({
-    locale,
-    namespace: 'DashboardLayout',
-  });
 
   return (
     <BaseTemplate
@@ -21,19 +17,31 @@ export default async function DashboardLayout(props: {
           <li>
             <Link
               href="/dashboard/"
-              className="border-none text-gray-700 hover:text-gray-900"
+              className="rounded-[4px] px-3 py-1.5 font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
             >
-              {t('dashboard_link')}
+              Dashboard
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/app"
+              className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              Open App
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/dashboard/user-profile"
+              className="rounded-[4px] px-3 py-1.5 transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+            >
+              Settings
             </Link>
           </li>
         </>
       )}
       rightNav={(
-        <>
-          <li>
-            <LocaleSwitcher />
-          </li>
-        </>
+        <UserDropdown />
       )}
     >
       {props.children}
