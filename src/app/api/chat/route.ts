@@ -1,4 +1,6 @@
 import type { NextRequest } from 'next/server';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod/v4';
 import { db } from '@/libs/DB';
@@ -10,6 +12,7 @@ import { getGitHubToken, githubToolDefinitions, runGitHubTool } from '@/libs/Git
 import { daytonaToolDefinitions, isDaytonaTool, prebootSandbox, runDaytonaTool } from '@/libs/Daytona';
 import { callLibrarianProToolDefinition, isCallLibrarianProTool, runLibrarianProSubagent } from '@/libs/LibrarianPro';
 import { callOracleToolDefinition, isCallOracleTool, runOracleSubagent } from '@/libs/Oracle';
+import { callOverseerToolDefinition, isCallOverseerTool, runOverseerSubagent } from '@/libs/Overseer';
 import { callEditorToolDefinition, isCallEditorTool, runEditorSubagent } from '@/libs/Editor';
 import type { TouchedFileDiff } from '@/libs/FileDiff';
 
@@ -145,6 +148,13 @@ export const ONA_MODELS = {
     fireworksId: 'accounts/fireworks/models/qwen3-coder-480b-a35b-instruct',
     maxTokens: 65536,
     temperature: 0.0,
+  },
+  'ona-plan': {
+    label: 'Plan mode',
+    description: 'Planning only — asks clarifying questions and writes a high-level plan',
+    fireworksId: 'accounts/fireworks/routers/kimi-k2p5-turbo',
+    maxTokens: 16384,
+    temperature: 0.3,
   },
 } as const;
 
@@ -591,6 +601,8 @@ function toolLabel(name: string, args: Record<string, unknown> = {}): string {
       const request = s('request');
       return request ? `Oracle: ${trim(request, 55)}` : 'Consulting oracle';
     }
+    case 'call_overseer':
+      return 'Overseer: reviewing plan';
 
     // ── Editor ────────────────────────────────────────────────────────────
     case 'call_editor': {
@@ -951,6 +963,15 @@ const chatRequestSchema = z.object({
   runAsUserId: z.string().optional(),
 });
 
+const PLAN_MODE_CONTEXT = `\n\n---\n\n## PLAN MODE (NO EDITS)\n\nYou are in plan mode.\n\nHard rules:\n- Do not edit code or files yourself.\n- Do not call editing tools.\n- Ask concise, relevant clarifying questions when requirements are ambiguous.\n- Produce a high-level execution plan in markdown suitable for a file named plan.md.\n- You MUST call \`call_overseer\` to deeply review your proposed plan before finalizing.\n- Overseer returns one of: \`BAD + [REASONING]\`, \`OK + [REASONING]\`, \`GOOD + [REASONING]\`.\n- If result is BAD, revise the plan and run Overseer again.\n- \`OK\` is enough to proceed. \`GOOD\` is encouraged when feasible.\n\nPlan quality requirements:\n- Include: objective, assumptions, open questions, proposed approach, risks, and validation strategy.\n- Keep it implementation-guiding but high-level (no giant code dumps).\n- Update and refine the plan as new user answers arrive.\n`;
+
+const PLAN_MODE_ALLOWED_TOOLS = new Set(['todo_write', 'todo_read', 'task_complete', 'call_overseer']);
+
+async function writePlanDocument(content: string) {
+  const planPath = path.join(process.cwd(), 'plan.md');
+  await writeFile(planPath, content, 'utf8');
+}
+
 async function saveMessage(conversationId: string, msgId: string, role: string, content: unknown) {
   try {
     await db.insert(messagesSchema).values({
@@ -1092,6 +1113,7 @@ export async function POST(req: NextRequest) {
       const agentMaxTokens = modelConfig.maxTokens;
       const agentTemperature = modelConfig.temperature;
       const isHandsOff = model === 'ona-hands-off';
+      const isPlanMode = model === 'ona-plan';
       jobId = conversationId ? (clientJobId ?? crypto.randomUUID()) : null;
       let pendingContentEvent = '';
       let contentFlushTimer: ReturnType<typeof setTimeout> | null = null;
@@ -1160,13 +1182,13 @@ export async function POST(req: NextRequest) {
       const HANDS_OFF_CONTEXT = `\n\n---\n\n## AUTONOMY MODE: HANDS OFF\n\nYou are operating in **maximum autonomy mode** powered by Qwen3 Coder — a model purpose-built for agentic coding with RL-trained tool use and a 262K token context window. The user has explicitly requested full hands-off execution. They will not intervene or answer questions mid-task. Apply these elevated standards:\n\n### Agentic Execution\n- **Use your full context aggressively.** You have 262K tokens of context. Pull in entire files, full dependency trees, test suites, and CI scripts before making decisions. Never work with partial information when you can load the full picture.\n- **Tool-chain without hesitation.** You are purpose-built for long multi-step tool chains. Execute 50, 100, 200+ tool calls if that is what the task requires. Do not compress or skip steps.\n- **Parallelize reads.** When exploring a repository, fire multiple file reads and searches simultaneously — do not step through them sequentially.\n- **Act like an engineer on deadline.** Make confident implementation decisions. Spend zero cycles asking permission for ordinary choices.\n\n### Reasoning Standards\n- **Think before every non-trivial action.** For architecture, schema, API design, or security decisions: call \`call_oracle\` to reason through alternatives before committing.\n- **Verify external dependencies.** Before using any npm package, API endpoint, or config format, call \`call_librarian_pro\` to confirm the correct current shape. Never trust training memory alone.\n- **Run the code.** Use the sandbox to execute, test, and verify your work. If the repo has tests, run them. Do not open a PR on unverified code.\n\n### Delivery Standards\n- **Resolve ambiguity yourself.** If the task is underspecified, pick the most reasonable interpretation, implement it fully, and document your reasoning.\n- **Quality over speed.** A correct, verified result after 80 tool calls beats a broken one after 10.\n- **Never stop early.** No partial results. No "should I continue?" No summaries of what you would do. Do the work, verify it, and deliver a complete outcome.`;
 
       const conversation: ApiMessage[] = [
-        { role: 'system', content: isHandsOff ? SYSTEM_PROMPT + HANDS_OFF_CONTEXT : SYSTEM_PROMPT },
+        { role: 'system', content: isPlanMode ? SYSTEM_PROMPT + PLAN_MODE_CONTEXT : isHandsOff ? SYSTEM_PROMPT + HANDS_OFF_CONTEXT : SYSTEM_PROMPT },
         ...normalizeMessages(messages),
       ];
 
       // Pre-boot the sandbox on the very first message so it's ready before the AI starts.
       const isFirstMessage = messages.length === 1;
-      if (isFirstMessage && process.env.DAYTONA_API_KEY) {
+      if (isFirstMessage && process.env.DAYTONA_API_KEY && !isPlanMode) {
         emit({ type: 'sandbox_booting' });
         if (jobId) await persistJobEvent(jobId, 'sandbox_booting', {});
         const booted = await prebootSandbox();
@@ -1189,7 +1211,7 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (!githubToken) {
+      if (!githubToken && !isPlanMode) {
         conversation.splice(1, 0, {
           role: 'user',
           content: 'GitHub is not connected for this user. You CANNOT access their private repos, create branches, or open PRs. However, you CAN use call_librarian to search the web for any public repository, read its README, explore its file structure, and research its tech stack — do this immediately when the user mentions a repo by name. For general coding help with pasted code, answer directly. To prompt connection, mention the "Connect GitHub" button.',
@@ -1419,7 +1441,9 @@ export async function POST(req: NextRequest) {
         const { content, toolCalls, finishReason } = await streamChargedFireworksCall(
           {
             messages: conversation,
-            tools: [...githubToolDefinitions.filter(t => !['github_upsert_file', 'github_delete_file'].includes(t.function.name)), ...daytonaToolDefinitions, callLibrarianProToolDefinition, callOracleToolDefinition, callEditorToolDefinition, ...ULTRAWORK_TOOLS],
+            tools: isPlanMode
+              ? [callOverseerToolDefinition, ...ULTRAWORK_TOOLS]
+              : [...githubToolDefinitions.filter(t => !['github_upsert_file', 'github_delete_file'].includes(t.function.name)), ...daytonaToolDefinitions, callLibrarianProToolDefinition, callOracleToolDefinition, callEditorToolDefinition, ...ULTRAWORK_TOOLS],
             tool_choice: 'auto',
             max_tokens: agentMaxTokens,
             temperature: agentTemperature,
@@ -1524,6 +1548,13 @@ export async function POST(req: NextRequest) {
           // ────────────────────────────────────────────────────────────────────
 
           if (!finalText) emit({ delta: 'I could not produce a response.' });
+          if (isPlanMode && finalText) {
+            try {
+              await writePlanDocument(finalText);
+            } catch (error) {
+              logger.warn({ err: error }, 'Failed to write plan.md');
+            }
+          }
 
           if (conversationId && currentAssistantMsgId) {
             await saveMessage(conversationId, currentAssistantMsgId, 'assistant', finalText || 'I could not produce a response.');
@@ -1603,7 +1634,12 @@ export async function POST(req: NextRequest) {
             if (jobId) await persistJobEvent(jobId, 'tool_start', { tool: label });
             try {
               let result: unknown;
-              if (isCallLibrarianProTool(toolName)) {
+              if (isPlanMode && !PLAN_MODE_ALLOWED_TOOLS.has(toolName)) {
+                result = { error: 'Tool disabled in plan mode. Ask clarifying questions and update plan.md only.' };
+              } else if (isCallOverseerTool(toolName)) {
+                const plan = typeof toolArgs.plan === 'string' ? toolArgs.plan : JSON.stringify(toolArgs);
+                result = await runOverseerSubagent(plan);
+              } else if (isCallLibrarianProTool(toolName)) {
                 const request = typeof toolArgs.request === 'string' ? toolArgs.request : JSON.stringify(toolArgs);
                 const parentLabel = label;
                 result = await runLibrarianProSubagent(request, (event, stepLabel, error) => {

@@ -21,6 +21,7 @@ const APP_NAME = 'ONA but OPEN SOURCE';
 const AUTONOMY_OPTIONS = [
   { key: 'ona-max', label: 'Hands on experience', description: 'Kimi K2.5 · fast, collaborative' },
   { key: 'ona-hands-off', label: 'Hands off experience', description: 'Qwen3 Coder 480B · agentic, 262K ctx' },
+  { key: 'ona-plan', label: 'Plan mode', description: 'No edits/subagents · clarifies requirements · writes plan.md' },
 ] as const;
 const PROMPT_SUGGESTIONS = [
   { label: 'Backlog sweep', prompt: 'Inspect connected backlog items, identify one well-scoped engineering task, implement it in a branch, run checks, and prepare a pull request summary.' },
@@ -824,7 +825,7 @@ export default function AppPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [sidebarOpen]);
 
-  // Cmd/Ctrl+1, +2 → switch autonomy level
+  // Cmd/Ctrl+1, +2, +3 → switch autonomy level
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey)) return;
@@ -836,6 +837,9 @@ export default function AppPage() {
       } else if (e.key === '2') {
         e.preventDefault();
         setSelectedModel(AUTONOMY_OPTIONS[1].key as string);
+      } else if (e.key === '3') {
+        e.preventDefault();
+        setSelectedModel(AUTONOMY_OPTIONS[2].key as string);
       }
     }
     window.addEventListener('keydown', onKeyDown);
@@ -2565,15 +2569,24 @@ export default function AppPage() {
         <div className="flex min-w-0 shrink-0 basis-0 grow items-center justify-end gap-0.5 sm:gap-2">
           <GitHubConnect />
           <div
-            title={`Autonomy: ${AUTONOMY_OPTIONS.find(o => o.key === selectedModel)?.label ?? 'Hands on experience'} · Switch: ⌘1 Hands on · ⌘2 Hands off`}
+            title={`Autonomy: ${AUTONOMY_OPTIONS.find(o => o.key === selectedModel)?.label ?? 'Hands on experience'} · Switch: ⌘1 Hands on · ⌘2 Hands off · ⌘3 Plan mode`}
             className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium sm:flex ${
               selectedModel === 'ona-hands-off'
                 ? 'border-indigo-200 bg-indigo-50 text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-400'
-                : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400'
+                : selectedModel === 'ona-plan'
+                  ? 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-400'
+                  : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400'
             }`}
           >
-            <span className={`size-1.5 shrink-0 rounded-full ${selectedModel === 'ona-hands-off' ? 'bg-indigo-400 dark:bg-indigo-500' : 'bg-amber-400 dark:bg-amber-500'}`} />
-            <span>{selectedModel === 'ona-hands-off' ? 'Hands off' : 'Hands on'}</span>
+            <span className={`size-1.5 shrink-0 rounded-full ${
+              selectedModel === 'ona-hands-off'
+                ? 'bg-indigo-400 dark:bg-indigo-500'
+                : selectedModel === 'ona-plan'
+                  ? 'bg-sky-500 dark:bg-sky-400'
+                  : 'bg-amber-400 dark:bg-amber-500'
+            }`}
+            />
+            <span>{selectedModel === 'ona-hands-off' ? 'Hands off' : selectedModel === 'ona-plan' ? 'Plan mode' : 'Hands on'}</span>
           </div>
           {canConfigureSuperAgent
             ? (
