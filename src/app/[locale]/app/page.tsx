@@ -19,9 +19,9 @@ const AssistantMarkdownLazy = dynamic(() => import('@/components/AssistantMarkdo
 const SERIF = 'Georgia, "Times New Roman", serif';
 const APP_NAME = 'ONA but OPEN SOURCE';
 const AUTONOMY_OPTIONS = [
-  { key: 'ona-max', label: 'Hands on experience', description: 'Kimi K2.5 · fast, collaborative' },
-  { key: 'ona-hands-off', label: 'Hands off experience', description: 'Qwen3 Coder 480B · agentic, 262K ctx' },
-  { key: 'ona-plan', label: 'Plan mode', description: 'No edits/subagents · clarifies requirements · writes plan.md' },
+  { key: 'ona-max', label: 'Hands on experience', description: 'Fast, collaborative pair-programming' },
+  { key: 'ona-hands-off', label: 'Hands off experience', description: 'Long-running agent with extended context' },
+  { key: 'ona-plan', label: 'Plan mode', description: 'Clarifies requirements and writes plan.md without edits' },
 ] as const;
 const PROMPT_SUGGESTIONS = [
   { label: 'Backlog sweep', prompt: 'Inspect connected backlog items, identify one well-scoped engineering task, implement it in a branch, run checks, and prepare a pull request summary.' },

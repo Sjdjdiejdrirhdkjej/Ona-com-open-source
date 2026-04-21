@@ -15,8 +15,8 @@ import {
 const APP_NAME = 'ONA but OPEN SOURCE';
 
 const AUTONOMY_OPTIONS = [
-  { key: 'ona-max', label: 'Hands on experience', description: 'Kimi K2.5 · fast, collaborative' },
-  { key: 'ona-hands-off', label: 'Hands off experience', description: 'Qwen3 Coder 480B · agentic, 262K ctx' },
+  { key: 'ona-max', label: 'Hands on experience', description: 'Fast, collaborative pair-programming' },
+  { key: 'ona-hands-off', label: 'Hands off experience', description: 'Long-running agent with extended context' },
 ] as const;
 
 type SuperAgentConfig = {

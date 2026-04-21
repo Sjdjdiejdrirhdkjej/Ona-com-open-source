@@ -317,7 +317,7 @@ export default async function Index(props: IIndexProps) {
 
                 {/* Bottom status */}
                 <div className="mt-6 flex items-center justify-between border-t border-white/8 pt-4 text-[10px] text-white/30" style={{ fontFamily: MONO }}>
-                  <span className="text-emerald-400/60">▸ ona-hands-off</span>
+                  <span className="text-emerald-400/60">▸ hands off</span>
                   <span>27% of 168k tokens</span>
                 </div>
               </div>
@@ -497,7 +497,7 @@ export default async function Index(props: IIndexProps) {
             {/* Bottom bar */}
             <div className="flex items-center justify-between border-t border-white/8 px-5 py-3 text-[10px] text-white/25" style={{ fontFamily: MONO }}>
               <span>6 agents dispatched from webhook · trigger: merge to main</span>
-              <span>ona-hands-off</span>
+              <span>hands off</span>
             </div>
           </div>
 
