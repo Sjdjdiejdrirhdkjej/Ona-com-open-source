@@ -474,11 +474,8 @@ function SuperAgentPageInner() {
           >
             <div className="relative mx-auto max-w-3xl">
               {/* Status row */}
-              <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-black/8 bg-white/80 px-2.5 py-1 text-[11px] text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400">
-                  opencode
-                </span>
-                {config && (
+              {config && (
+                <div className="mb-1.5 flex flex-wrap items-center gap-2">
                   <span className="flex items-center gap-1.5 rounded-full border border-black/8 bg-white/80 px-2.5 py-1 text-[11px] text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400">
                     <span className={`size-1.5 rounded-full ${config.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
                     {config.enabled
@@ -487,8 +484,8 @@ function SuperAgentPageInner() {
                           : 'Heartbeat enabled'
                       : 'Heartbeat off'}
                   </span>
-                )}
-              </div>
+                </div>
+              )}
 
               <div
                 className="flex items-end gap-2 rounded-[1.5rem] border border-black/10 px-3 py-2 shadow-sm transition-shadow focus-within:border-black/20 focus-within:shadow-md dark:border-white/10 dark:focus-within:border-white/20 sm:py-2.5"

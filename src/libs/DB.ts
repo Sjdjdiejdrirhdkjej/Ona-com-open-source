@@ -135,9 +135,27 @@ export async function getDb(): Promise<NodePgDatabase<typeof schema>> {
   return dbPromise;
 }
 
-// Keep synchronous export for backward compatibility
-// This will be deprecated in favor of getDb()
-export const db = globalForDb.drizzle ?? ({} as NodePgDatabase<typeof schema>);
+// Keep synchronous export for backward compatibility.
+// We expose a Proxy that lazily resolves to the live drizzle instance on
+// every property access, instead of capturing the (probably-empty) value
+// at module load time. This is needed because under Turbopack each route
+// gets its own module realm, so the synchronous capture pattern often
+// snapshots `db` before the async `createDbConnection()` populates the
+// global. With this proxy, callers always reach through to the real
+// instance once it has been initialized.
+export const db: NodePgDatabase<typeof schema> = new Proxy(
+  {} as NodePgDatabase<typeof schema>,
+  {
+    get(_target, prop, receiver) {
+      const real = globalForDb.drizzle;
+      if (!real) {
+        throw new Error('Database is not initialized yet. The async connection is still in progress — use getDb() in code paths that may run during startup.');
+      }
+      const value = Reflect.get(real, prop, receiver);
+      return typeof value === 'function' ? value.bind(real) : value;
+    },
+  },
+);
 
 // Re-export for convenience
 export { schema };
