@@ -14,11 +14,6 @@ import {
 
 const APP_NAME = 'ONA but OPEN SOURCE';
 
-const AUTONOMY_OPTIONS = [
-  { key: 'ona-max', label: 'Hands on experience', description: 'Fast, collaborative pair-programming' },
-  { key: 'ona-hands-off', label: 'Hands off experience', description: 'Long-running agent with extended context' },
-] as const;
-
 type SuperAgentConfig = {
   enabled: boolean;
   heartbeatMinutes: number;
@@ -180,18 +175,18 @@ function SuperAgentPageInner() {
     const abortController = new AbortController();
     abortRef.current = abortController;
 
-    let currentAssistantId = assistantId;
+    const currentAssistantId = assistantId;
+    void history;
+    void jobId;
 
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch('/api/super-agent/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: history,
           conversationId: convId,
+          message: text,
           assistantMessageId: assistantId,
-          jobId,
-          model,
         }),
         signal: abortController.signal,
       });
@@ -220,17 +215,9 @@ function SuperAgentPageInner() {
               type?: string;
               error?: boolean;
               message?: string;
-              nextAssistantMsgId?: string;
+              tool?: string;
             };
-            if (json.type === 'next_assistant_msg' && json.nextAssistantMsgId) {
-              currentAssistantId = json.nextAssistantMsgId;
-              const newId = json.nextAssistantMsgId;
-              setMessages(prev =>
-                prev.some(m => m.id === newId)
-                  ? prev
-                  : [...prev, { id: newId, role: 'assistant', content: '' }],
-              );
-            } else if (typeof json.delta === 'string' && json.delta) {
+            if (typeof json.delta === 'string' && json.delta) {
               const delta = json.delta;
               const targetId = currentAssistantId;
               setMessages(prev => prev.map(m =>
@@ -486,19 +473,11 @@ function SuperAgentPageInner() {
             style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
           >
             <div className="relative mx-auto max-w-3xl">
-              {/* Model + status row */}
+              {/* Status row */}
               <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                <select
-                  value={model}
-                  onChange={e => setModel(e.target.value)}
-                  className="rounded-full border border-black/8 bg-white/80 px-2.5 py-1 text-xs text-gray-600 outline-none transition-colors hover:border-black/20 hover:text-gray-900 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-gray-100"
-                >
-                  {AUTONOMY_OPTIONS.map(opt => (
-                    <option key={opt.key} value={opt.key} className="bg-white text-black dark:bg-gray-900 dark:text-gray-100">
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                <span className="rounded-full border border-black/8 bg-white/80 px-2.5 py-1 text-[11px] text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400">
+                  opencode
+                </span>
                 {config && (
                   <span className="flex items-center gap-1.5 rounded-full border border-black/8 bg-white/80 px-2.5 py-1 text-[11px] text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400">
                     <span className={`size-1.5 rounded-full ${config.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
@@ -571,8 +550,6 @@ function SuperAgentPageInner() {
               setHeartbeat={setHeartbeat}
               prompt={prompt}
               setPrompt={setPrompt}
-              model={model}
-              setModel={setModel}
               config={config}
               statusColor={statusColor}
               saving={saving}
@@ -606,8 +583,6 @@ function SuperAgentPageInner() {
               setHeartbeat={setHeartbeat}
               prompt={prompt}
               setPrompt={setPrompt}
-              model={model}
-              setModel={setModel}
               config={config}
               statusColor={statusColor}
               saving={saving}
@@ -665,8 +640,6 @@ type SettingsPanelProps = {
   setHeartbeat: (v: string) => void;
   prompt: string;
   setPrompt: (v: string) => void;
-  model: string;
-  setModel: (v: string) => void;
   config: SuperAgentConfig | null;
   statusColor: (status: string) => string;
   saving: boolean;
@@ -680,7 +653,7 @@ type SettingsPanelProps = {
 function SettingsPanel(props: SettingsPanelProps) {
   const {
     canConfigure, enabled, setEnabled, heartbeat, setHeartbeat, prompt, setPrompt,
-    model, setModel, config, statusColor, saving, waking, wakeSuccess, saveSuccess,
+    config, statusColor, saving, waking, wakeSuccess, saveSuccess,
     onSave, onWake,
   } = props;
 
@@ -742,24 +715,6 @@ function SettingsPanel(props: SettingsPanelProps) {
           disabled={!canConfigure}
           className="w-full rounded-2xl border border-black/8 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-black/30 disabled:opacity-50 dark:border-white/10 dark:text-gray-100 dark:focus:border-white/30"
         />
-      </label>
-
-      <label className="block">
-        <span className="mb-1.5 block text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">
-          Model
-        </span>
-        <select
-          value={model}
-          onChange={e => setModel(e.target.value)}
-          disabled={!canConfigure}
-          className="w-full rounded-2xl border border-black/8 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-black/30 disabled:opacity-50 dark:border-white/10 dark:text-gray-100 dark:focus:border-white/30"
-        >
-          {AUTONOMY_OPTIONS.map(opt => (
-            <option key={opt.key} value={opt.key} className="bg-white text-black dark:bg-gray-900 dark:text-gray-100">
-              {opt.label}
-            </option>
-          ))}
-        </select>
       </label>
 
       <label className="block">

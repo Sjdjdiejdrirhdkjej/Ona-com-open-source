@@ -103,33 +103,26 @@ async function triggerConversationRun(req: NextRequest, target: TriggerTarget, s
     })
     .where(eq(conversationSuperAgentsSchema.conversationId, target.conversationId));
 
-  const res = await fetch(new URL('/api/chat', req.url), {
+  void historyMessages;
+  void target.model;
+
+  const res = await fetch(new URL('/api/super-agent/chat', req.url), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-ona-heartbeat-secret': secret,
     },
     body: JSON.stringify({
-      messages: [
-        ...historyMessages,
-        { role: 'user', content: heartbeatText },
-      ],
       conversationId: target.conversationId,
+      message: heartbeatText,
       assistantMessageId,
-      jobId,
-      model: target.model,
-      runAsUserId: target.userId,
     }),
   });
 
   const payload = await res.text();
-  const [job] = await db
-    .select({ status: agentJobsSchema.status })
-    .from(agentJobsSchema)
-    .where(eq(agentJobsSchema.id, jobId))
-    .limit(1);
+  void jobId;
 
-  const finalStatus = job?.status === 'error' || payload.includes('"type":"error"') ? 'error' : 'idle';
+  const finalStatus = !res.ok || payload.includes('"type":"error"') ? 'error' : 'idle';
   await db
     .update(conversationSuperAgentsSchema)
     .set({
