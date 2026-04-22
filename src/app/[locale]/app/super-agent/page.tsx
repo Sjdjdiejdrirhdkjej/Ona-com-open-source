@@ -84,7 +84,13 @@ function SuperAgentPageInner() {
           fetch(`/api/conversations/${conversationId}/messages`),
           fetch(`/api/conversations/${conversationId}/super-agent`),
         ]);
-        if (!cancelled && msgRes.ok) {
+        if (!cancelled && msgRes.status === 404) {
+          // Stale conversation id in the URL (e.g. created by a failed POST
+          // earlier). Drop it so the next message starts a fresh task.
+          setConversationId(null);
+          router.replace('/app/super-agent');
+          setMessages([]);
+        } else if (!cancelled && msgRes.ok) {
           const data = await msgRes.json() as { messages?: { id: string; role: string; content: string }[] };
           const loaded = (data.messages ?? [])
             .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -162,14 +168,9 @@ function SuperAgentPageInner() {
     setInput('');
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
-    // Persist the user message
-    try {
-      await fetch(`/api/conversations/${convId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messageId: userMsg.id, role: 'user', content: userMsg.content }),
-      });
-    } catch {}
+    // The /api/super-agent/chat endpoint persists the user message itself
+    // (so it survives if the SSE connection drops mid-run), no client-side
+    // POST is needed here.
 
     const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
     const abortController = new AbortController();

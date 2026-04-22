@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const { conversationId, message, assistantMessageId } = parsed.data;
 
-  const [conversation] = await db
+  let [conversation] = await db
     .select({ id: conversationsSchema.id, userId: conversationsSchema.userId })
     .from(conversationsSchema)
     .where(
@@ -52,7 +52,37 @@ export async function POST(req: NextRequest) {
     .limit(1);
 
   if (!conversation) {
-    return Response.json({ error: 'Conversation not found' }, { status: 404 });
+    // Auto-create when an authenticated user posts to a fresh conversation id.
+    // This makes the super-agent flow self-healing if the explicit
+    // POST /api/conversations call was lost (e.g. earlier 500s left a stale
+    // id in the URL).
+    if (!userId) {
+      return Response.json({ error: 'Conversation not found' }, { status: 404 });
+    }
+    try {
+      await db.insert(conversationsSchema).values({
+        id: conversationId,
+        title: message.slice(0, 80) || 'New task',
+        userId,
+      });
+      conversation = { id: conversationId, userId };
+    } catch (err) {
+      logger.error('Failed to auto-create super-agent conversation', err);
+      return Response.json({ error: 'Could not initialize conversation.' }, { status: 500 });
+    }
+  }
+
+  // Persist the user message before kicking off the agent so it survives
+  // even if the SSE connection drops mid-run.
+  try {
+    await db.insert(messagesSchema).values({
+      id: crypto.randomUUID(),
+      conversationId,
+      role: 'user',
+      content: message,
+    });
+  } catch (err) {
+    logger.warn('Failed to persist user message', err);
   }
 
   const finalAssistantId = assistantMessageId ?? crypto.randomUUID();
