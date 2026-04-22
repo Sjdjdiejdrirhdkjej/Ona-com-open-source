@@ -117,29 +117,47 @@ export async function POST(req: NextRequest) {
       const enc = new TextEncoder();
       let assistantText = '';
       let errored = false;
+      let streamOpen = true;
 
-      controller.enqueue(enc.encode(sseEvent({ type: 'assistant_msg_id', messageId: finalAssistantId })));
+      function safeEnqueue(payload: string) {
+        if (!streamOpen) return;
+        try {
+          controller.enqueue(enc.encode(payload));
+        } catch {
+          streamOpen = false;
+        }
+      }
+
+      function safeClose() {
+        if (!streamOpen) return;
+        try {
+          controller.close();
+        } catch {}
+        streamOpen = false;
+      }
+
+      safeEnqueue(sseEvent({ type: 'assistant_msg_id', messageId: finalAssistantId }));
       if (jobId) {
-        controller.enqueue(enc.encode(sseEvent({ type: 'job_id', jobId })));
+        safeEnqueue(sseEvent({ type: 'job_id', jobId }));
       }
 
       try {
         for await (const event of runOpencode({ conversationId, message })) {
           if (event.type === 'session') {
-            controller.enqueue(enc.encode(sseEvent({ type: 'session', sessionID: event.sessionID })));
+            safeEnqueue(sseEvent({ type: 'session', sessionID: event.sessionID }));
           } else if (event.type === 'text') {
             assistantText += event.text;
-            controller.enqueue(enc.encode(sseEvent({ delta: event.text })));
+            safeEnqueue(sseEvent({ delta: event.text }));
             if (jobId && event.text) {
               await persistJobEvent(jobId, 'content', { text: event.text });
             }
           } else if (event.type === 'tool_start') {
-            controller.enqueue(enc.encode(sseEvent({ type: 'tool_start', tool: event.tool })));
+            safeEnqueue(sseEvent({ type: 'tool_start', tool: event.tool }));
           } else if (event.type === 'tool_finish') {
-            controller.enqueue(enc.encode(sseEvent({ type: 'tool_finish', tool: event.tool })));
+            safeEnqueue(sseEvent({ type: 'tool_finish', tool: event.tool }));
           } else if (event.type === 'error') {
             errored = true;
-            controller.enqueue(enc.encode(sseEvent({ type: 'error', message: event.message })));
+            safeEnqueue(sseEvent({ type: 'error', message: event.message }));
             if (jobId) {
               await persistJobEvent(jobId, 'error', { message: event.message });
             }
@@ -167,17 +185,17 @@ export async function POST(req: NextRequest) {
           await persistJobEvent(jobId, 'done', {});
           await markJobStatus(jobId, errored ? 'error' : 'done');
         }
-        controller.enqueue(enc.encode(sseEvent({ type: 'done', error: errored })));
-        controller.enqueue(enc.encode('data: [DONE]\n\n'));
+        safeEnqueue(sseEvent({ type: 'done', error: errored }));
+        safeEnqueue('data: [DONE]\n\n');
       } catch (err) {
-        controller.enqueue(enc.encode(sseEvent({ type: 'error', message: (err as Error).message })));
+        safeEnqueue(sseEvent({ type: 'error', message: (err as Error).message }));
         if (jobId) {
           await persistJobEvent(jobId, 'error', { message: (err as Error).message });
           await markJobStatus(jobId, 'error');
         }
-        controller.enqueue(enc.encode('data: [DONE]\n\n'));
+        safeEnqueue('data: [DONE]\n\n');
       } finally {
-        controller.close();
+        safeClose();
       }
     },
   });
