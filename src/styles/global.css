@@ -5,53 +5,49 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 :root {
-  --bg: #fbfbfa;
-  --bg-2: #f3f3f1;
-  --bg-3: #ececea;
-  --bg-sidebar: #f6f6f4;
-  --bg-header: rgba(251, 251, 250, 0.86);
-  --bg-card: rgba(255, 255, 255, 0.92);
-  --bg-input: #fff;
-  --bg-logo: #111;
+  --bg: #ffffff;
+  --bg-2: #fafafa;
+  --bg-3: #f4f4f5;
+  --bg-sidebar: #fafafa;
+  --bg-header: rgba(255, 255, 255, 0.8);
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-input: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.15);
+  --text-primary: #09090b;
+  --text-secondary: #71717a;
+  --text-muted: #a1a1aa;
+  --accent: #6366f1;
   color-scheme: light;
 }
 
 .dark {
-  --bg: #101010;
-  --bg-2: #181818;
-  --bg-3: #222;
-  --bg-sidebar: #151515;
-  --bg-header: rgba(16,16,16,0.86);
-  --bg-card: rgba(24,24,24,0.92);
-  --bg-input: #191919;
-  --bg-logo: #f5f5f5;
+  --bg: #09090b;
+  --bg-2: #18181b;
+  --bg-3: #27272a;
+  --bg-sidebar: #0f0f12;
+  --bg-header: rgba(9, 9, 11, 0.8);
+  --bg-card: rgba(24, 24, 27, 0.9);
+  --bg-input: #18181b;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --accent: #818cf8;
   color-scheme: dark;
 }
 
 html,
 body {
   background-color: var(--bg);
-}
-
-.amp-grid {
-  background-color: var(--bg);
-  background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
-  background-size: 92px 92px;
-}
-
-@media (max-width: 640px) {
-  .amp-grid {
-    background-size: 56px 56px;
-  }
-}
-
-.dark .amp-grid {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  color: var(--text-primary);
 }
 
 html {
@@ -60,8 +56,8 @@ html {
 }
 
 .hljs {
-  background: rgba(0, 0, 0, 0.06) !important;
-  border-radius: 0.5rem;
+  background: var(--bg-3) !important;
+  border-radius: 0.75rem;
   padding: 0.625rem 0.75rem !important;
   font-size: 0.75rem;
   line-height: 1.6;

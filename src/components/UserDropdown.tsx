@@ -132,14 +132,13 @@ export function UserDropdown() {
         <div
           ref={menuRef}
           role="menu"
-          className="fixed z-[100] w-60 overflow-hidden rounded-xl border border-black/5 shadow-lg dark:border-white/10"
+          className="fixed z-[100] w-60 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-lg backdrop-blur-xl"
           style={{
             top: position.top,
             right: position.right,
-            backgroundColor: 'var(--bg-card)',
           }}
         >
-          <div className="flex items-center gap-2.5 border-b border-black/5 px-3 py-2.5 dark:border-white/8">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border)] px-3 py-2.5">
             {user.profileImageUrl
               ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -150,14 +149,14 @@ export function UserDropdown() {
                   />
                 )
               : (
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-900 text-[11px] font-semibold text-white dark:bg-gray-100 dark:text-gray-900">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--text-primary)] text-[11px] font-semibold text-[var(--bg)]">
                     {initials}
                   </span>
                 )}
             <div className="min-w-0">
-              <p className="truncate text-xs font-medium text-gray-900 dark:text-gray-100">{displayName}</p>
+              <p className="truncate text-xs font-medium text-[var(--text-primary)]">{displayName}</p>
               {user.email && (
-                <p className="truncate text-[11px] text-gray-500 dark:text-gray-400">{user.email}</p>
+                <p className="truncate text-[11px] text-[var(--text-muted)]">{user.email}</p>
               )}
             </div>
           </div>
@@ -167,7 +166,7 @@ export function UserDropdown() {
               href="/dashboard/user-profile"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)] hover:text-[var(--text-primary)]"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path d="M7 9a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.3" />
@@ -179,7 +178,7 @@ export function UserDropdown() {
               href="/app/api-docs"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)] hover:text-[var(--text-primary)]"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="2" y="1.5" width="10" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
@@ -191,7 +190,7 @@ export function UserDropdown() {
               href="/dashboard"
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)] hover:text-[var(--text-primary)]"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <rect x="2" y="2" width="4.5" height="4.5" rx="1" stroke="currentColor" strokeWidth="1.3" />
@@ -208,7 +207,7 @@ export function UserDropdown() {
                 setOpen(false);
                 signOut();
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)] hover:text-[var(--text-primary)]"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path d="M6 2H3a1 1 0 00-1 1v8a1 1 0 001 1h3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
@@ -230,7 +229,7 @@ export function UserDropdown() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Open account menu"
-        className="flex size-8 items-center justify-center rounded-full ring-1 ring-black/10 transition-opacity hover:opacity-85 dark:ring-white/10"
+        className="flex size-8 items-center justify-center rounded-full ring-1 ring-[var(--border)] transition-opacity hover:opacity-85"
       >
         {user.profileImageUrl
           ? (
@@ -242,7 +241,7 @@ export function UserDropdown() {
               />
             )
           : (
-              <span className="flex size-8 items-center justify-center rounded-full bg-gray-900 text-[11px] font-semibold text-white dark:bg-gray-100 dark:text-gray-900">
+              <span className="flex size-8 items-center justify-center rounded-full bg-[var(--text-primary)] text-[11px] font-semibold text-[var(--bg)]">
                 {initials}
               </span>
             )}

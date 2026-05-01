@@ -16,7 +16,7 @@ const AssistantMarkdownLazy = dynamic(() => import('@/components/AssistantMarkdo
   loading: () => null,
 });
 
-const SERIF = 'Georgia, "Times New Roman", serif';
+// Font classes are now handled by Tailwind font-sans/font-mono via Geist
 const APP_NAME = 'ONA but OPEN SOURCE';
 const AUTONOMY_OPTIONS = [
   { key: 'ona-max', label: 'Hands on experience', description: 'Fast, collaborative pair-programming' },
@@ -109,7 +109,7 @@ function OnaAvatar() {
   return (
     <div
       className="mr-2.5 mt-1 flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white dark:text-black"
-      style={{ background: 'var(--bg-logo)' }}
+      style={{ background: 'var(--text-primary)' }}
     >
       O
     </div>
@@ -2756,8 +2756,7 @@ export default function AppPage() {
               ? (
                   <div key={activeId} className="flex min-h-full flex-col items-center justify-center px-0 py-4 sm:px-8 sm:py-8">
                     <h1
-                      className="mb-5 max-w-xl text-center text-2xl leading-tight text-gray-900 dark:text-gray-100 sm:mb-6 sm:text-4xl"
-                      style={{ fontFamily: SERIF, fontWeight: 400 }}
+                      className="mb-5 max-w-xl text-center text-2xl font-bold leading-tight tracking-tight text-[var(--text-primary)] sm:mb-6 sm:text-4xl"
                     >
                       What should Ona ship?
                     </h1>

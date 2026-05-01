@@ -18,7 +18,7 @@ export default async function AppLayout(props: {
   }
 
   return (
-    <div style={{ height: '100dvh', backgroundColor: 'var(--bg)' }}>
+    <div className="h-dvh bg-[var(--bg)]">
       {props.children}
     </div>
   );

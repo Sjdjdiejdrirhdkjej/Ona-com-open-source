@@ -109,20 +109,20 @@ function ThinkBlock({ content, complete, index }: { content: string; complete: b
   const isLive = !complete;
 
   return (
-    <div className="mb-2 rounded-xl border border-slate-200 dark:border-slate-700/60 bg-slate-50/70 dark:bg-slate-900/40 overflow-hidden">
+    <div className="mb-2 rounded-xl border border-[var(--border)] bg-[var(--bg-2)] overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[var(--bg-3)] transition-colors"
       >
         {isLive
           ? (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-slate-400 animate-spin">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[var(--text-muted)] animate-spin">
                 <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.3" strokeOpacity="0.25" />
                 <path d="M6 1.5A4.5 4.5 0 0110.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
             )
           : (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-slate-400">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0 text-[var(--text-muted)]">
                 <path
                   d="M6 1.5C4.07 1.5 2.5 3.07 2.5 5c0 1.05.46 1.98 1.19 2.62V9h4.62V7.62A3.5 3.5 0 006 1.5z"
                   stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round"
@@ -130,7 +130,7 @@ function ThinkBlock({ content, complete, index }: { content: string; complete: b
                 <path d="M4.2 9h3.6M5 10.5h2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
               </svg>
             )}
-        <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-[11px] font-medium text-[var(--text-muted)]">
           {isLive ? 'Thinking…' : `Thought${index > 0 ? ` ${index + 1}` : ''}`}
         </span>
         <svg
@@ -138,15 +138,15 @@ function ThinkBlock({ content, complete, index }: { content: string; complete: b
           height="10"
           viewBox="0 0 10 10"
           fill="none"
-          className="ml-auto shrink-0 text-slate-400 transition-transform"
+          className="ml-auto shrink-0 text-[var(--text-muted)] transition-transform"
           style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
         >
           <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       {open && (
-        <div className="border-t border-slate-200 dark:border-slate-700/60 px-3 py-2.5 max-h-72 overflow-y-auto">
-          <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+        <div className="border-t border-[var(--border)] px-3 py-2.5 max-h-72 overflow-y-auto">
+          <pre className="whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[var(--text-muted)]">
             {content.trim()}
           </pre>
         </div>

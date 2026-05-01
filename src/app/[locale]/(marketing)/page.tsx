@@ -15,9 +15,6 @@ export async function generateMetadata(props: IIndexProps) {
   };
 }
 
-const SERIF = 'Georgia, "Times New Roman", serif';
-const MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
-
 const featureCards = [
   {
     tag: 'Background agents',
@@ -205,7 +202,7 @@ const blogPosts = [
 
 function MonoLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-4 text-[10px] font-medium uppercase tracking-[0.22em] text-neutral-500 sm:mb-5 sm:text-[11px] sm:tracking-[0.28em]" style={{ fontFamily: MONO }}>
+    <p className="mb-4 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] sm:mb-5 sm:text-[11px] sm:tracking-[0.28em]">
       {children}
     </p>
   );
@@ -213,7 +210,7 @@ function MonoLabel({ children }: { children: ReactNode }) {
 
 function ArrowLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100 transition-opacity hover:opacity-60" style={{ fontFamily: MONO }}>
+    <Link href={href} className="inline-flex items-center gap-2 font-mono text-sm font-medium text-[var(--text-primary)] transition-opacity hover:opacity-60">
       {children}
       <span>→</span>
     </Link>
@@ -225,29 +222,23 @@ export default async function Index(props: IIndexProps) {
   setRequestLocale(locale);
 
   return (
-    <div style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
+    <div>
 
       {/* ── Hero ── */}
-      <section className="relative flex min-h-[92svh] flex-col border-b" style={{ borderColor: "var(--cream-border)" }}>
-        {/* Left vertical accent bar */}
-        <div className="absolute bottom-0 left-0 top-0 hidden w-[5px] md:block" style={{ background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.06) 30%, rgba(0,0,0,0.06) 70%, transparent 100%)' }} />
-
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col border-x px-6 pb-16 pt-24 sm:px-8 sm:pt-28 md:flex-row md:items-center md:gap-16 md:pt-20" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="relative flex min-h-[92svh] flex-col border-b border-[var(--border)]">
+        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 pb-16 pt-24 sm:px-8 sm:pt-28 md:flex-row md:items-center md:gap-16 md:pt-20">
           {/* Left column: headline */}
           <div className="flex-1">
-            <h1
-              className="text-[clamp(3rem,12vw,8.5rem)] leading-[0.88] tracking-[-0.06em] text-neutral-950"
-              style={{ fontFamily: SERIF, fontWeight: 400 }}
-            >
-              <span className="block italic tracking-[-0.075em]">Engineered</span>
+            <h1 className="text-6xl font-bold leading-[0.88] tracking-tighter text-[var(--text-primary)] md:text-8xl">
+              <span className="block">Engineered</span>
               <span className="block">For The Agents</span>
             </h1>
 
             <div className="mt-10 max-w-lg space-y-2">
-              <p className="text-lg leading-snug tracking-[-0.02em] text-neutral-700 dark:text-neutral-300 sm:text-xl">
+              <p className="text-lg leading-snug tracking-[-0.02em] text-[var(--text-secondary)] sm:text-xl">
                 ONA is the open-source platform for background AI software agents.
               </p>
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-[var(--text-muted)]">
                 Free to start. No setup required.
               </p>
             </div>
@@ -255,15 +246,14 @@ export default async function Index(props: IIndexProps) {
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-950 transition-opacity hover:opacity-80"
+                className="inline-flex items-center gap-2 rounded-lg bg-[var(--text-primary)] px-5 py-2.5 text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-80"
               >
                 Get Started for Free
                 <span>→</span>
               </Link>
               <Link
                 href="/demo"
-                className="inline-flex items-center gap-2 rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 transition-colors hover:border-neutral-400 hover:text-neutral-950 dark:hover:border-neutral-500 dark:hover:text-neutral-50"
-                style={{ borderColor: "var(--cream-border)" }}
+                className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
               >
                 Request a demo
               </Link>
@@ -272,42 +262,39 @@ export default async function Index(props: IIndexProps) {
 
           {/* Right column: terminal mockup */}
           <div className="mt-14 w-full max-w-xl shrink-0 md:mt-0 md:w-[46%]">
-            <div
-              className="relative overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.22)]"
-              style={{ backgroundColor: '#1a1c1a', borderRadius: 2 }}
-            >
+            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-zinc-900 shadow-2xl">
               {/* Window chrome */}
               <div className="flex items-center gap-1.5 border-b border-white/8 px-4 py-3">
                 <span className="size-3 rounded-full bg-red-500/70" />
                 <span className="size-3 rounded-full bg-yellow-400/70" />
                 <span className="size-3 rounded-full bg-green-500/70" />
-                <span className="ml-3 text-[11px] text-white/30" style={{ fontFamily: MONO }}>ona — background agent</span>
+                <span className="ml-3 font-mono text-[11px] text-white/30">ona — background agent</span>
               </div>
 
               {/* Terminal content */}
               <div className="p-5 sm:p-7">
                 {/* ASCII art */}
-                <pre className="mb-6 select-none text-center text-[9px] leading-[1.1] text-emerald-500/60 sm:text-[10px]" style={{ fontFamily: MONO }}>
+                <pre className="mb-6 select-none text-center font-mono text-[9px] leading-[1.1] text-emerald-500/60 sm:text-[10px]">
                   {`      ..............      
-   ..::::::::::::::..   
-  .::::----++----::::.  
- .:::--+++****+++--:::. 
- .:::--+++****+++--:::. 
-  .::::----++----::::.  
-   ..::::::::::::::..   
-      ..............      `}
+    ..::::::::::::::..   
+   .::::----++----::::.  
+  .:::--+++****+++--:::. 
+  .:::--+++****+++--:::. 
+   .::::----++----::::.  
+    ..::::::::::::::..   
+       ..............      `}
                 </pre>
 
                 {/* Chat lines */}
-                <div className="space-y-3 text-xs" style={{ fontFamily: MONO }}>
+                <div className="space-y-3 font-mono text-xs">
                   <p className="text-white/35">Welcome to ONA but OPEN SOURCE</p>
                   <div className="border-l-2 border-emerald-500/50 pl-3">
                     <p className="text-emerald-400">user</p>
-                    <p className="mt-0.5 text-[#d8d6b8]/80">Find all open PRs blocking the v2 release and summarize blockers.</p>
+                    <p className="mt-0.5 text-zinc-300/80">Find all open PRs blocking the v2 release and summarize blockers.</p>
                   </div>
                   <div className="border-l-2 border-white/20 pl-3">
                     <p className="text-white/40">agent</p>
-                    <p className="mt-0.5 text-[#d8d6b8]/70">Scanning GitHub... found 4 open PRs. Analyzing CI failures and merge conflicts.</p>
+                    <p className="mt-0.5 text-zinc-300/70">Scanning GitHub... found 4 open PRs. Analyzing CI failures and merge conflicts.</p>
                   </div>
                   <div className="flex items-center gap-2 text-emerald-400/80">
                     <span className="inline-block size-1.5 animate-pulse rounded-full bg-emerald-400" />
@@ -316,7 +303,7 @@ export default async function Index(props: IIndexProps) {
                 </div>
 
                 {/* Bottom status */}
-                <div className="mt-6 flex items-center justify-between border-t border-white/8 pt-4 text-[10px] text-white/30" style={{ fontFamily: MONO }}>
+                <div className="mt-6 flex items-center justify-between border-t border-white/8 pt-4 font-mono text-[10px] text-white/30">
                   <span className="text-emerald-400/60">▸ hands off</span>
                   <span>27% of 168k tokens</span>
                 </div>
@@ -326,34 +313,34 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      {/* ── Available in your browser (like ampcode's "Install" section) ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto grid max-w-7xl grid-cols-1 border-x md:grid-cols-2" style={{ borderColor: "var(--cream-border)" }}>
+      {/* ── Available in your browser ── */}
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-2">
           {/* Left */}
-          <div className="border-b px-6 py-10 md:border-b-0 md:border-r md:px-8 md:py-14" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="border-b border-[var(--border)] px-6 py-10 md:border-b-0 md:border-r md:px-8 md:py-14">
             <MonoLabel>Open source · Self-hostable</MonoLabel>
-            <h2 className="max-w-xs text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl sm:leading-[0.9]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="max-w-xs text-4xl font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)] sm:text-5xl sm:leading-[0.9]">
               Available in your browser
             </h2>
           </div>
 
           {/* Right: start command */}
           <div className="flex flex-col justify-center px-6 py-10 md:px-8 md:py-14">
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-neutral-400 dark:text-neutral-500 dark:text-neutral-500" style={{ fontFamily: MONO }}>
+            <p className="mb-2 font-mono text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
               Open the app
             </p>
-            <div className="flex items-center gap-2 rounded-sm border bg-white/60 px-4 py-3 dark:bg-white/5" style={{ borderColor: "var(--cream-border)" }}>
-              <code className="flex-1 truncate text-sm text-neutral-700 dark:text-neutral-300" style={{ fontFamily: MONO }}>
+            <div className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
+              <code className="flex-1 truncate font-mono text-sm text-[var(--text-secondary)]">
                 /dashboard → start your first task
               </code>
               <Link
                 href="/dashboard"
-                className="shrink-0 rounded-sm bg-neutral-950 px-3 py-1.5 text-xs font-medium text-white dark:bg-white dark:text-neutral-950 transition-opacity hover:opacity-80"
+                className="shrink-0 rounded-lg bg-[var(--text-primary)] px-3 py-1.5 text-xs font-medium text-[var(--bg)] transition-opacity hover:opacity-80"
               >
                 Open →
               </Link>
             </div>
-            <p className="mt-3 text-xs text-neutral-400 dark:text-neutral-500">
+            <p className="mt-3 text-xs text-[var(--text-muted)]">
               Or clone and self-host — Apache 2.0 licensed.
             </p>
           </div>
@@ -361,22 +348,24 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Feature cards ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
-          <div className="grid border md:grid-cols-2" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
+          <div className="grid rounded-xl border border-[var(--border)] md:grid-cols-2">
             {featureCards.map((item, i) => (
               <div
                 key={item.tag}
-                className="min-h-60 border-b p-6 last:border-b-0 sm:min-h-72 sm:p-8 md:border-r md:border-b md:even:border-r-0"
-                style={{ borderColor: "var(--cream-border)", backgroundColor: i % 2 === 1 ? "var(--cream-card)" : "transparent" }}
+                className={[
+                  'min-h-60 border-b border-[var(--border)] p-6 last:border-b-0 sm:min-h-72 sm:p-8 md:border-r md:border-b md:even:border-r-0',
+                  i % 2 === 1 ? 'bg-[var(--bg-2)]' : '',
+                ].join(' ')}
               >
-                <p className="mb-8 text-[10px] uppercase tracking-[0.22em] text-neutral-500 dark:text-neutral-400 sm:mb-12 sm:text-[11px]" style={{ fontFamily: MONO }}>
+                <p className="mb-8 font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--text-muted)] sm:mb-12 sm:text-[11px]">
                   {item.tag}
                 </p>
-                <h3 className="max-w-sm text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 dark:text-neutral-50 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <h3 className="max-w-sm text-3xl font-semibold leading-[0.92] tracking-tight text-[var(--text-primary)] sm:text-4xl">
                   {item.title}
                 </h3>
-                <p className="mt-5 max-w-md text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{item.body}</p>
+                <p className="mt-5 max-w-md text-sm leading-relaxed text-[var(--text-secondary)]">{item.body}</p>
                 <div className="mt-8">
                   <ArrowLink href={item.href}>{item.cta}</ArrowLink>
                 </div>
@@ -387,31 +376,30 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── How automations run (3-step) ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
           <div className="grid gap-10 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <MonoLabel>How automations run</MonoLabel>
-              <h2 className="max-w-sm text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h2 className="max-w-sm text-4xl font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)] sm:text-5xl">
                 Closed-loop work, not chat-only assistance.
               </h2>
-              <p className="mt-5 max-w-sm text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+              <p className="mt-5 max-w-sm text-sm leading-relaxed text-[var(--text-secondary)]">
                 Trigger, execute, and report — proactive background agents that combine prompts with deterministic commands.
               </p>
             </div>
             <div className="lg:col-span-8">
-              <div className="grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
+              <div className="grid rounded-xl border border-[var(--border)] md:grid-cols-3">
                 {automationSteps.map(item => (
                   <div
                     key={item.step}
-                    className="min-h-56 border-b p-6 last:border-b-0 sm:p-8 md:min-h-80 md:border-b-0 md:border-r md:last:border-r-0"
-                    style={{ borderColor: "var(--cream-border)" }}
+                    className="min-h-56 border-b border-[var(--border)] p-6 last:border-b-0 sm:p-8 md:min-h-80 md:border-b-0 md:border-r md:last:border-r-0"
                   >
-                    <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-400 dark:text-neutral-500" style={{ fontFamily: MONO }}>{item.step}</p>
-                    <h3 className="mt-8 text-3xl leading-[0.92] tracking-[-0.055em] text-neutral-950 sm:mt-14 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                    <p className="font-mono text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--accent)]">{item.step}</p>
+                    <h3 className="mt-8 text-3xl font-semibold leading-[0.92] tracking-tight text-[var(--text-primary)] sm:mt-14 sm:text-4xl">
                       {item.title}
                     </h3>
-                    <p className="mt-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{item.body}</p>
+                    <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">{item.body}</p>
                   </div>
                 ))}
               </div>
@@ -421,36 +409,35 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Agent fleets at scale ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
 
           {/* Header row */}
           <div className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-5">
               <MonoLabel>Agent fleets at scale</MonoLabel>
-              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
-                Dozens of agents.<br />One review queue.
+              <h2 className="text-4xl font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)] sm:text-5xl">
+                Dozens of agents.
+                <br />
+                One review queue.
               </h2>
             </div>
-            <p className="max-w-xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 lg:col-span-7">
+            <p className="max-w-xl text-base leading-relaxed text-[var(--text-secondary)] lg:col-span-7">
               Dispatch any number of parallel agents from a single trigger. Each agent gets an isolated cloud environment, runs tests, and opens a reviewable PR — all without touching each other's state.
             </p>
           </div>
 
           {/* Fleet panel mockup */}
-          <div
-            className="overflow-hidden"
-            style={{ backgroundColor: '#1a1c1a', borderRadius: 2 }}
-          >
+          <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900">
             {/* Window chrome */}
             <div className="flex items-center justify-between border-b border-white/8 px-5 py-3">
               <div className="flex items-center gap-1.5">
                 <span className="size-3 rounded-full bg-red-500/70" />
                 <span className="size-3 rounded-full bg-yellow-400/70" />
                 <span className="size-3 rounded-full bg-green-500/70" />
-                <span className="ml-3 text-[11px] text-white/30" style={{ fontFamily: MONO }}>ona — fleet dashboard</span>
+                <span className="ml-3 font-mono text-[11px] text-white/30">ona — fleet dashboard</span>
               </div>
-              <div className="flex items-center gap-3 text-[10px] text-white/30" style={{ fontFamily: MONO }}>
+              <div className="flex items-center gap-3 font-mono text-[10px] text-white/30">
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block size-1.5 rounded-full bg-emerald-400" />
                   4 running
@@ -469,25 +456,25 @@ export default async function Index(props: IIndexProps) {
                   {/* Status dot */}
                   <div className="col-span-1 flex justify-center">
                     {agent.status === 'done'
-                      ? <span className="text-emerald-400 text-xs" style={{ fontFamily: MONO }}>✓</span>
+                      ? <span className="font-mono text-xs text-emerald-400">✓</span>
                       : <span className="inline-block size-1.5 animate-pulse rounded-full bg-emerald-400" />}
                   </div>
 
                   {/* Task description */}
                   <div className="col-span-7">
-                    <p className="truncate text-xs text-[#d8d6b8]/80" style={{ fontFamily: MONO }}>{agent.task}</p>
-                    <p className="mt-0.5 truncate text-[10px] text-white/30" style={{ fontFamily: MONO }}>{agent.step}</p>
+                    <p className="truncate font-mono text-xs text-zinc-300/80">{agent.task}</p>
+                    <p className="mt-0.5 truncate font-mono text-[10px] text-white/30">{agent.step}</p>
                   </div>
 
                   {/* Branch */}
                   <div className="col-span-3 hidden md:block">
-                    <span className="truncate rounded px-2 py-1 text-[10px] text-emerald-400/70" style={{ fontFamily: MONO, backgroundColor: 'rgba(52,211,153,0.08)' }}>
+                    <span className="truncate rounded-md bg-emerald-400/8 px-2 py-1 font-mono text-[10px] text-emerald-400/70">
                       {agent.branch}
                     </span>
                   </div>
 
                   {/* Tokens */}
-                  <div className="col-span-1 text-right text-[10px] text-white/25" style={{ fontFamily: MONO }}>
+                  <div className="col-span-1 text-right font-mono text-[10px] text-white/25">
                     {agent.tokens}
                   </div>
                 </div>
@@ -495,22 +482,25 @@ export default async function Index(props: IIndexProps) {
             </div>
 
             {/* Bottom bar */}
-            <div className="flex items-center justify-between border-t border-white/8 px-5 py-3 text-[10px] text-white/25" style={{ fontFamily: MONO }}>
+            <div className="flex items-center justify-between border-t border-white/8 px-5 py-3 font-mono text-[10px] text-white/25">
               <span>6 agents dispatched from webhook · trigger: merge to main</span>
-              <span>hands off</span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-emerald-400/60">▸</span>
+                hands off
+              </span>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="mt-8 grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="mt-8 grid rounded-xl border border-[var(--border)] md:grid-cols-3">
             {[
               { stat: 'Unlimited', label: 'parallel agents per trigger' },
               { stat: 'Isolated', label: 'cloud VM per agent, no shared state' },
               { stat: 'PR-first', label: 'every agent delivers a reviewable diff' },
             ].map(item => (
-              <div key={item.stat} className="border-b p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0" style={{ borderColor: "var(--cream-border)" }}>
-                <p className="text-3xl leading-none tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>{item.stat}</p>
-                <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{item.label}</p>
+              <div key={item.stat} className="border-b border-[var(--border)] p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0">
+                <p className="text-3xl font-bold leading-none tracking-tight text-[var(--text-primary)] sm:text-4xl">{item.stat}</p>
+                <p className="mt-2 text-sm text-[var(--text-muted)]">{item.label}</p>
               </div>
             ))}
           </div>
@@ -519,27 +509,27 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Integrations ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
           <MonoLabel>Native context</MonoLabel>
           <div className="grid gap-6 lg:grid-cols-12 lg:items-end">
-            <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl lg:col-span-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+            <h2 className="text-4xl font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)] sm:text-5xl lg:col-span-5">
               Connect agents to the systems engineers already use.
             </h2>
-            <p className="max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 lg:col-span-7">
+            <p className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)] lg:col-span-7">
               Native integrations for planning, code, incidents, and internal tools. Agents get context where they need it and deliver work where it belongs.
             </p>
           </div>
-          <div className="mt-10 grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="mt-10 grid rounded-xl border border-[var(--border)] md:grid-cols-3">
             {integrationCards.map(card => (
-              <div key={card.title} className="border-b p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0" style={{ borderColor: "var(--cream-border)" }}>
-                <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-3xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <div key={card.title} className="border-b border-[var(--border)] p-6 last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0">
+                <h3 className="text-2xl font-semibold leading-[0.94] tracking-tight text-[var(--text-primary)] sm:text-3xl">
                   {card.title}
                 </h3>
-                <p className="mt-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{card.body}</p>
+                <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">{card.body}</p>
                 <div className="mt-8 flex flex-wrap gap-2">
                   {card.items.map(item => (
-                    <span key={item} className="border px-3 py-1.5 text-xs text-neutral-500 dark:text-neutral-400" style={{ borderColor: "var(--cream-border)", fontFamily: MONO }}>
+                    <span key={item} className="rounded-md border border-[var(--border)] px-3 py-1.5 font-mono text-xs text-[var(--text-muted)]">
                       {item}
                     </span>
                   ))}
@@ -551,16 +541,16 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Use cases ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
           <MonoLabel>Use cases</MonoLabel>
-          <div className="divide-y" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="divide-y divide-[var(--border)]">
             {useCases.map(item => (
               <div key={item.title} className="grid gap-5 py-8 md:grid-cols-12 md:items-start">
-                <h3 className="text-2xl leading-[0.94] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-3xl md:col-span-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <h3 className="text-2xl font-semibold leading-[0.94] tracking-tight text-[var(--text-primary)] sm:text-3xl md:col-span-4">
                   {item.title}
                 </h3>
-                <p className="max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-400 md:col-span-5">{item.body}</p>
+                <p className="max-w-2xl text-base leading-relaxed text-[var(--text-secondary)] md:col-span-5">{item.body}</p>
                 <div className="md:col-span-3 md:text-right">
                   <ArrowLink href={item.href}>{item.cta}</ArrowLink>
                 </div>
@@ -570,34 +560,34 @@ export default async function Index(props: IIndexProps) {
         </div>
       </section>
 
-      {/* ── Testimonial / stats (dark section like ampcode's dark block) ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
-          <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-12" style={{ backgroundColor: '#1a1c1a', color: '#f0efd9' }}>
+      {/* ── Testimonial / stats (dark section) ── */}
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
+          <div className="grid gap-8 rounded-2xl bg-zinc-900 p-6 text-zinc-100 sm:p-10 lg:grid-cols-12">
             <div className="lg:col-span-7">
-              <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-[#d8d6b8]/50" style={{ fontFamily: MONO }}>
+              <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.28em] text-zinc-500">
                 Top 100 global company
               </p>
-              <blockquote className="text-3xl leading-[0.98] tracking-[-0.055em] sm:text-5xl sm:leading-[0.95]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <blockquote className="text-3xl font-semibold leading-[0.98] tracking-tight sm:text-5xl sm:leading-[0.95]">
                 "90–95% of migration work is done by ONA Automations. We just have to do the final push commands."
               </blockquote>
               <div className="mt-8">
-                <Link href="/customer-stories" className="text-sm font-medium text-[#f0efd9] transition-opacity hover:opacity-60" style={{ fontFamily: MONO }}>
+                <Link href="/customer-stories" className="font-mono text-sm font-medium text-zinc-300 transition-opacity hover:opacity-60">
                   Read more customer stories →
                 </Link>
               </div>
             </div>
-            <div className="grid gap-5 lg:col-span-5 lg:border-l lg:pl-8" style={{ borderColor: '#d8d6b8/20' }}>
+            <div className="grid gap-5 lg:col-span-5 lg:border-l lg:border-white/10 lg:pl-8">
               {[
                 { stat: '4x', label: 'productivity increase' },
                 { stat: '83%', label: 'of PRs co-authored by ONA' },
                 { stat: '400+', label: 'Python repos modernized in 6 months' },
               ].map(item => (
-                <div key={item.stat} className="border-t pt-5 first:border-t-0 first:pt-0" style={{ borderColor: 'rgba(216,214,184,0.2)' }}>
-                  <p className="text-5xl leading-none tracking-[-0.08em] sm:text-6xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <div key={item.stat} className="border-t border-white/10 pt-5 first:border-t-0 first:pt-0">
+                  <p className="text-5xl font-bold leading-none tracking-tighter sm:text-6xl">
                     {item.stat}
                   </p>
-                  <p className="mt-1 text-sm" style={{ color: 'rgba(216,214,184,0.65)' }}>{item.label}</p>
+                  <p className="mt-1 text-sm text-zinc-500">{item.label}</p>
                 </div>
               ))}
             </div>
@@ -606,20 +596,20 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Governance ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
-          <div className="grid gap-8 border p-6 sm:p-8 md:grid-cols-12 md:items-center" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
+          <div className="grid gap-8 rounded-xl border border-[var(--border)] p-6 sm:p-8 md:grid-cols-12 md:items-center">
             <div className="md:col-span-7">
-              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h2 className="text-4xl font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)] sm:text-5xl">
                 Governed from the runtime up.
               </h2>
-              <p className="mt-4 text-base text-neutral-600 dark:text-neutral-400">
+              <p className="mt-4 text-base text-[var(--text-secondary)]">
                 Audit every human and AI action, scope every credential, and keep background agents inside approved environments.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 md:col-span-5 md:justify-end">
               {['SOC 2', 'RBAC', 'Audit trails', 'Cost caps'].map(badge => (
-                <div key={badge} className="border px-4 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300" style={{ borderColor: "var(--cream-border)", fontFamily: MONO }}>
+                <div key={badge} className="rounded-lg border border-[var(--border)] px-4 py-2 font-mono text-sm font-medium text-[var(--text-secondary)]">
                   {badge}
                 </div>
               ))}
@@ -629,20 +619,20 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Platform capabilities (dark section) ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
-          <div className="grid gap-8 bg-neutral-950 p-6 text-neutral-50 sm:p-10 lg:grid-cols-12 dark:border dark:border-white/10">
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
+          <div className="grid gap-8 rounded-2xl bg-zinc-950 p-6 text-zinc-50 sm:p-10 lg:grid-cols-12 dark:border dark:border-white/10">
             <div className="lg:col-span-5">
-              <p className="mb-8 text-[11px] uppercase tracking-[0.28em] text-neutral-500" style={{ fontFamily: MONO }}>
+              <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.28em] text-zinc-500">
                 Operating model
               </p>
-              <h2 className="text-4xl leading-[0.92] tracking-[-0.06em] sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              <h2 className="text-4xl font-bold leading-[0.92] tracking-tighter sm:text-5xl">
                 Autonomous when you want it. Takeover when you need it.
               </h2>
             </div>
             <div className="grid gap-4 lg:col-span-7">
               {platformCapabilities.map(item => (
-                <div key={item} className="border-t border-white/10 pt-4 text-sm leading-relaxed text-neutral-400 first:border-t-0 first:pt-0">
+                <div key={item} className="border-t border-white/10 pt-4 text-sm leading-relaxed text-zinc-400 first:border-t-0 first:pt-0">
                   {item}
                 </div>
               ))}
@@ -652,31 +642,30 @@ export default async function Index(props: IIndexProps) {
       </section>
 
       {/* ── Blog / recent highlights ── */}
-      <section className="border-b" style={{ borderColor: "var(--cream-border)" }}>
-        <div className="mx-auto max-w-7xl border-x px-6 py-10 sm:px-8 sm:py-14" style={{ borderColor: "var(--cream-border)" }}>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-7xl px-6 py-10 sm:px-8 sm:py-14">
           <MonoLabel>Chronicle</MonoLabel>
-          <h2 className="mb-8 max-w-2xl text-4xl leading-[0.92] tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          <h2 className="mb-8 max-w-2xl text-4xl font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)] sm:text-5xl">
             Recent highlights
           </h2>
-          <div className="grid border md:grid-cols-3" style={{ borderColor: "var(--cream-border)" }}>
+          <div className="grid rounded-xl border border-[var(--border)] md:grid-cols-3">
             {blogPosts.map(post => (
               <Link
                 key={post.title}
                 href={post.href}
-                className="flex min-h-80 flex-col justify-between border-b p-6 transition-colors last:border-b-0 sm:p-8 md:border-b-0 md:border-r md:last:border-r-0"
-                style={{ borderColor: "var(--cream-border)" }}
+                className="flex min-h-80 flex-col justify-between border-b border-[var(--border)] p-6 transition-colors last:border-b-0 hover:bg-[var(--bg-2)] sm:p-8 md:border-b-0 md:border-r md:last:border-r-0"
               >
                 <div>
-                  <div className="mb-10 flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-neutral-400 dark:text-neutral-500" style={{ fontFamily: MONO }}>
+                  <div className="mb-10 flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
                     <span>{post.tag}</span>
                     <span>{post.date}</span>
                   </div>
-                  <h3 className="text-3xl leading-[0.92] tracking-[-0.05em] text-neutral-950" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                  <h3 className="text-3xl font-semibold leading-[0.92] tracking-tight text-[var(--text-primary)]">
                     {post.title}
                   </h3>
-                  <p className="mt-5 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">{post.body}</p>
+                  <p className="mt-5 text-sm leading-relaxed text-[var(--text-secondary)]">{post.body}</p>
                 </div>
-                <p className="mt-8 text-xs text-neutral-400 dark:text-neutral-500 dark:text-neutral-500" style={{ fontFamily: MONO }}>{post.author}</p>
+                <p className="mt-8 font-mono text-xs text-[var(--text-muted)]">{post.author}</p>
               </Link>
             ))}
           </div>
@@ -685,27 +674,23 @@ export default async function Index(props: IIndexProps) {
 
       {/* ── Final CTA ── */}
       <section>
-        <div className="mx-auto max-w-7xl border-x px-6 py-20 text-center sm:px-8 sm:py-28" style={{ borderColor: "var(--cream-border)" }}>
-          <h2
-            className="mx-auto max-w-4xl text-[clamp(2.5rem,11vw,7.5rem)] leading-[0.9] tracking-[-0.075em] text-neutral-950"
-            style={{ fontFamily: SERIF, fontWeight: 400 }}
-          >
-            <span className="block italic">Start shipping</span>
+        <div className="mx-auto max-w-7xl px-6 py-20 text-center sm:px-8 sm:py-28">
+          <h2 className="mx-auto max-w-4xl text-[clamp(2.5rem,11vw,7.5rem)] font-bold leading-[0.9] tracking-tighter text-[var(--text-primary)]">
+            <span className="block">Start shipping</span>
             <span className="block">with ONA</span>
           </h2>
-          <p className="mx-auto mt-8 max-w-sm text-lg text-neutral-600 dark:text-neutral-400">No commitment. No setup. Just start.</p>
+          <p className="mx-auto mt-8 max-w-sm text-lg text-[var(--text-secondary)]">No commitment. No setup. Just start.</p>
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-950 transition-opacity hover:opacity-80"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--text-primary)] px-5 py-2.5 text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-80"
             >
               Get Started for Free
               <span>→</span>
             </Link>
             <Link
               href="/demo"
-              className="inline-flex justify-center rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 transition-colors hover:border-neutral-400 hover:text-neutral-950 dark:hover:border-neutral-500 dark:hover:text-neutral-50"
-              style={{ borderColor: "var(--cream-border)" }}
+              className="inline-flex justify-center rounded-lg border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
             >
               Request a demo
             </Link>

@@ -32,27 +32,20 @@ export const BaseTemplate = (props: {
   children: React.ReactNode;
 }) => {
   return (
-    <div className="min-h-screen antialiased" style={{ backgroundColor: 'var(--bg)', color: 'var(--text,#111)' }}>
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] antialiased">
       <header
-        className="fixed left-0 right-0 top-0 z-50 border-b border-black/8 dark:border-white/8"
-        style={{
-          backgroundColor: 'var(--bg-header)',
-          backdropFilter: 'blur(14px)',
-          backgroundImage:
-            'linear-gradient(to right, var(--header-grid, rgba(0,0,0,0.08)) 1px, transparent 1px), linear-gradient(to bottom, var(--header-grid, rgba(0,0,0,0.08)) 1px, transparent 1px)',
-          backgroundSize: '92px 92px',
-        }}
+        className="fixed left-0 right-0 top-0 z-50 border-b border-[var(--border)] bg-[var(--bg-header)] backdrop-blur-xl"
       >
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between border-x border-black/8 px-6 dark:border-white/10 sm:px-8">
+        <div className="mx-auto flex h-12 max-w-7xl items-center justify-between px-6 sm:px-8">
           <Link href="/" className="flex-shrink-0">
-            <span className="text-lg font-semibold italic tracking-[-0.08em] text-gray-950 dark:text-gray-50">
+            <span className="text-lg font-semibold tracking-[-0.04em] text-[var(--text-primary)]">
               {AppConfig.name}
             </span>
           </Link>
 
           {/* Desktop nav */}
           <nav aria-label="Main navigation" className="hidden md:flex">
-            <ul className="flex items-center gap-1 text-sm font-medium text-neutral-800 dark:text-neutral-300">
+            <ul className="flex items-center gap-1 text-sm font-medium text-[var(--text-secondary)]">
               {props.leftNav}
             </ul>
           </nav>
@@ -71,14 +64,14 @@ export const BaseTemplate = (props: {
         </div>
       </header>
 
-      <main className="pt-14">{props.children}</main>
+      <main className="pt-12">{props.children}</main>
 
-      <footer className="amp-grid border-t border-black/8 px-6 pt-12 dark:border-white/10 sm:px-8">
-        <div className="mx-auto max-w-7xl border-x border-black/8 dark:border-white/10">
+      <footer className="border-t border-[var(--border)] bg-[var(--bg)] px-6 pt-12 sm:px-8">
+        <div className="mx-auto max-w-7xl">
           <div className="mb-10 grid grid-cols-2 gap-8 sm:grid-cols-3 md:grid-cols-5">
             {footerLinks.map(col => (
               <div key={col.heading}>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
                   {col.heading}
                 </p>
                 <ul className="space-y-2">
@@ -86,7 +79,7 @@ export const BaseTemplate = (props: {
                     <li key={link}>
                       <Link
                         href="/about/"
-                        className="text-sm text-gray-600 dark:text-gray-400 transition-colors hover:text-gray-950 dark:hover:text-gray-50"
+                        className="text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
                       >
                         {link}
                       </Link>
@@ -97,12 +90,12 @@ export const BaseTemplate = (props: {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 dark:border-gray-800 py-6 text-xs text-gray-400 dark:text-gray-500">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] py-6 text-xs text-[var(--text-muted)]">
             <span suppressHydrationWarning>{`© ${new Date().getFullYear()} ${AppConfig.name}`}</span>
             <div className="flex flex-wrap gap-3">
               {['Status', 'Security', 'Imprint', 'Terms of service', 'Privacy policy', 'Cookie policy'].map(
                 item => (
-                  <Link key={item} href="/about/" className="transition-colors hover:text-gray-700 dark:hover:text-gray-300">
+                  <Link key={item} href="/about/" className="transition-colors hover:text-[var(--text-secondary)]">
                     {item}
                   </Link>
                 ),

@@ -76,11 +76,11 @@ export function CreditsChip() {
       aria-label={credits !== null ? `Credit balance: ${label}` : 'Credit balance'}
       title={credits !== null ? `${label} credits remaining` : 'Credit balance'}
       className={[
-        'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium',
+        'inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium',
         'transition-colors select-none',
         depleted
           ? 'border-red-400/40 bg-red-500/10 text-red-700 dark:border-red-400/30 dark:text-red-300'
-          : 'border-black/10 bg-black/5 text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200',
+          : 'border-[var(--border)] bg-[var(--bg-2)] text-[var(--text-secondary)]',
       ].join(' ')}
     >
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">

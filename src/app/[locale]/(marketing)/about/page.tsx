@@ -50,11 +50,11 @@ export default async function About(props: IAboutProps) {
   return (
     <div className="mx-auto max-w-5xl space-y-14 px-4 py-12 sm:px-6 sm:py-16">
       <section className="space-y-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">About ONA</p>
-        <h1 className="max-w-3xl text-4xl font-medium tracking-tight text-gray-900 sm:text-5xl dark:text-gray-50">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">About ONA</p>
+        <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-[var(--text-primary)] sm:text-5xl">
           Built with purpose for teams that need work shipped, not just suggested.
         </h1>
-        <p className="max-w-3xl text-base leading-relaxed text-gray-600 dark:text-gray-300">
+        <p className="max-w-3xl text-base leading-relaxed text-[var(--text-secondary)]">
           This project is inspired by Ona&apos;s idea of background agents: task in, pull request out. We built ONA as an open-source
           implementation focused on practical execution, clear governance, and developer-first control.
         </p>
@@ -62,40 +62,40 @@ export default async function About(props: IAboutProps) {
 
       <section className="grid gap-4 md:grid-cols-3">
         {principles.map(item => (
-          <article key={item.title} className="rounded-xl border border-black/10 bg-white/50 p-5 dark:border-white/10 dark:bg-white/5">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{item.title}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{item.body}</p>
+          <article key={item.title} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--border-hover)]">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">{item.title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{item.body}</p>
           </article>
         ))}
       </section>
 
-      <section className="grid gap-8 rounded-2xl border border-black/10 bg-gradient-to-b from-neutral-100 to-neutral-50 p-6 text-neutral-900 sm:p-8 md:grid-cols-2 dark:border-white/10 dark:from-neutral-950 dark:to-neutral-900 dark:text-neutral-100">
+      <section className="grid gap-8 rounded-2xl border border-[var(--border)] bg-[var(--bg-2)] p-6 sm:p-8 md:grid-cols-2">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">What we are building</h2>
-          <p className="mt-3 text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">What we are building</h2>
+          <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
             A full-stack agent runtime where AI can plan, execute, and deliver inside secure cloud environments. The system connects code,
             tests, tooling, and workflow context so every run produces useful output your team can review.
           </p>
         </div>
-        <ul className="space-y-3 text-sm text-neutral-700 dark:text-neutral-200">
+        <ul className="space-y-3 text-sm text-[var(--text-secondary)]">
           {values.map(value => (
-            <li key={value} className="rounded-lg border border-black/10 bg-white/70 px-3 py-2 dark:border-white/10 dark:bg-white/5">
+            <li key={value} className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-3 py-2">
               {value}
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="rounded-xl border border-black/10 p-6 dark:border-white/10">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Where this is heading</h2>
-        <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+      <section className="rounded-xl border border-[var(--border)] p-6">
+        <h2 className="text-xl font-semibold text-[var(--text-primary)]">Where this is heading</h2>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
           Our goal is to help any product team run reliable autonomous execution for backlog triage, bug fixing, migrations, and maintenance.
           We want teams to spend more time making decisions and less time pushing repetitive work through the pipeline.
         </p>
-        <p className="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+        <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
           If that vision resonates with your team, start a task in the app and let the agent show its work end-to-end.
         </p>
       </section>
     </div>
   );
-};
+}

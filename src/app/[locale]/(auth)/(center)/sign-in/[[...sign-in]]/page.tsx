@@ -43,7 +43,7 @@ export default async function SignInPage(props: ISignInPageProps) {
 
   return (
     <div style={{ textAlign: 'center', padding: '40px 24px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px', fontFamily: 'Georgia, serif' }}>
+      <h1 style={{ fontSize: '24px', fontWeight: 700, marginBottom: '8px' }}>
         Sign in to ONA
       </h1>
       <p style={{ color: '#666', marginBottom: '32px', fontSize: '15px' }}>

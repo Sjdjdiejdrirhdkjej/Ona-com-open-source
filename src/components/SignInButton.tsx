@@ -11,20 +11,7 @@ export function SignInButton({ returnTo = '/dashboard' }: SignInButtonProps) {
     <button
       type="button"
       onClick={() => signIn(returnTo)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        padding: '12px 24px',
-        backgroundColor: '#18182a',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '8px',
-        fontSize: '15px',
-        fontWeight: 500,
-        cursor: 'pointer',
-        transition: 'opacity 0.2s',
-      }}
+      className="flex items-center gap-2.5 rounded-lg bg-[var(--text-primary)] px-6 py-3 text-[15px] font-medium text-[var(--bg)] transition-opacity hover:opacity-80"
     >
       Get started
     </button>
