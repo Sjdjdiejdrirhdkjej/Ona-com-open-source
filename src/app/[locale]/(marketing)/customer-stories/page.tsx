@@ -2,9 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { setRequestLocale } from 'next-intl/server';
 
-const SERIF = 'Georgia, "Times New Roman", serif';
-const MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace';
-
 type Props = { params: Promise<{ locale: string }> };
 
 export const metadata: Metadata = {
@@ -50,38 +47,38 @@ export default async function CustomerStoriesPage(props: Props) {
   setRequestLocale(locale);
 
   return (
-    <div style={{ backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
-      <section className="border-b" style={{ borderColor: 'var(--cream-border)' }}>
-        <div className="mx-auto max-w-6xl border-x px-6 py-20 sm:px-8 sm:py-28" style={{ borderColor: 'var(--cream-border)' }}>
-          <p className="mb-6 text-[11px] font-medium uppercase tracking-[0.28em] text-neutral-500 dark:text-neutral-400" style={{ fontFamily: MONO }}>Customer stories</p>
-          <h1 className="text-[clamp(2.5rem,8vw,5.5rem)] leading-[0.92] tracking-[-0.05em] text-neutral-950 dark:text-neutral-50" style={{ fontFamily: SERIF, fontWeight: 400 }}>
-            <span className="block italic">Real teams.</span>
+    <div>
+      <section className="border-b border-[var(--border)]">
+        <div className="mx-auto max-w-6xl px-6 py-20 sm:px-8 sm:py-28">
+          <p className="mb-6 font-mono text-[11px] font-medium uppercase tracking-[0.28em] text-[var(--text-muted)]">Customer stories</p>
+          <h1 className="text-[clamp(2.5rem,8vw,5.5rem)] font-bold leading-[0.92] tracking-tighter text-[var(--text-primary)]">
+            <span className="block">Real teams.</span>
             <span className="block">Real PRs.</span>
           </h1>
-          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-neutral-700 dark:text-neutral-300">
+          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-[var(--text-secondary)]">
             Each of these teams started with one repetitive task. They expanded as they saw the review queue stay manageable and the test results stay green.
           </p>
         </div>
       </section>
 
       {stories.map((story, i) => (
-        <section key={story.company} className="border-b" style={{ borderColor: 'var(--cream-border)' }}>
-          <div className="mx-auto max-w-6xl border-x px-6 py-16 sm:px-8 sm:py-20" style={{ borderColor: 'var(--cream-border)' }}>
+        <section key={story.company} className="border-b border-[var(--border)]">
+          <div className="mx-auto max-w-6xl px-6 py-16 sm:px-8 sm:py-20">
             <div className="grid gap-10 lg:grid-cols-12">
               <div className="lg:col-span-7">
-                <p className="mb-6 text-[11px] uppercase tracking-[0.28em] text-neutral-500 dark:text-neutral-400" style={{ fontFamily: MONO }}>
+                <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.28em] text-[var(--text-muted)]">
                   Story 0{i + 1} · {story.company}
                 </p>
-                <blockquote className="text-3xl leading-[0.98] tracking-[-0.045em] text-neutral-950 dark:text-neutral-50 sm:text-4xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                <blockquote className="text-3xl font-semibold leading-[0.98] tracking-tight text-[var(--text-primary)] sm:text-4xl">
                   {story.quote}
                 </blockquote>
-                <p className="mt-8 max-w-xl text-base leading-relaxed text-neutral-700 dark:text-neutral-300">{story.body}</p>
+                <p className="mt-8 max-w-xl text-base leading-relaxed text-[var(--text-secondary)]">{story.body}</p>
               </div>
-              <div className="grid gap-5 lg:col-span-5 lg:border-l lg:pl-8" style={{ borderColor: 'var(--cream-border)' }}>
+              <div className="grid gap-5 lg:col-span-5 lg:border-l lg:border-[var(--border)] lg:pl-8">
                 {story.stats.map(s => (
-                  <div key={s.stat} className="border-t pt-5 first:border-t-0 first:pt-0" style={{ borderColor: 'var(--cream-border)' }}>
-                    <p className="text-5xl leading-none tracking-[-0.06em] text-neutral-950 dark:text-neutral-50 sm:text-6xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>{s.stat}</p>
-                    <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">{s.label}</p>
+                  <div key={s.stat} className="border-t border-[var(--border)] pt-5 first:border-t-0 first:pt-0">
+                    <p className="text-5xl font-bold leading-none tracking-tighter text-[var(--text-primary)] sm:text-6xl">{s.stat}</p>
+                    <p className="mt-2 text-sm text-[var(--text-secondary)]">{s.label}</p>
                   </div>
                 ))}
               </div>
@@ -91,16 +88,16 @@ export default async function CustomerStoriesPage(props: Props) {
       ))}
 
       <section>
-        <div className="mx-auto max-w-6xl border-x px-6 py-16 text-center sm:px-8 sm:py-24" style={{ borderColor: 'var(--cream-border)' }}>
-          <h2 className="mx-auto max-w-2xl text-3xl leading-[0.95] tracking-[-0.05em] text-neutral-950 dark:text-neutral-50 sm:text-5xl" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+        <div className="mx-auto max-w-6xl px-6 py-16 text-center sm:px-8 sm:py-24">
+          <h2 className="mx-auto max-w-2xl text-3xl font-bold leading-[0.95] tracking-tighter text-[var(--text-primary)] sm:text-5xl">
             Want to be next?
           </h2>
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-            <Link href="/demo" className="inline-flex items-center justify-center gap-2 rounded-sm bg-neutral-950 px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-80 dark:bg-white dark:text-neutral-950">
+            <Link href="/demo" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--text-primary)] px-5 py-2.5 text-sm font-medium text-[var(--bg)] transition-opacity hover:opacity-80">
               Request a demo
               <span>→</span>
             </Link>
-            <Link href="/dashboard" className="inline-flex justify-center rounded-sm border px-5 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-400 hover:text-neutral-950 dark:text-neutral-300 dark:hover:border-neutral-500 dark:hover:text-neutral-50" style={{ borderColor: 'var(--cream-border)' }}>
+            <Link href="/dashboard" className="inline-flex justify-center rounded-lg border border-[var(--border)] px-5 py-2.5 text-sm font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]">
               Open the dashboard
             </Link>
           </div>

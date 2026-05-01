@@ -74,11 +74,11 @@ export default async function Portfolio(props: IPortfolioProps) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
       <section className="mb-10 max-w-3xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">Portfolio</p>
-        <h1 className="mt-3 text-4xl font-medium tracking-tight text-gray-900 sm:text-5xl dark:text-gray-50">
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[var(--text-muted)]">Portfolio</p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight text-[var(--text-primary)] sm:text-5xl">
           Built with purpose: practical agent workflows teams run every week.
         </h1>
-        <p className="mt-4 text-base leading-relaxed text-gray-600 dark:text-gray-300">
+        <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
           These examples show how ONA-style background execution translates into concrete delivery outcomes. Each case study focuses on
           reproducibility, reviewability, and clear human control.
         </p>
@@ -89,16 +89,16 @@ export default async function Portfolio(props: IPortfolioProps) {
           <Link
             key={study.slug}
             href={`/portfolio/${study.slug}`}
-            className="group rounded-xl border border-black/10 bg-white/50 p-5 transition-colors hover:border-black/20 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20"
+            className="group rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--border-hover)] hover:bg-[var(--bg-2)]"
           >
-            <h2 className="text-xl font-semibold text-gray-900 group-hover:text-black dark:text-gray-100 dark:group-hover:text-white">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)] group-hover:text-[var(--accent)]">
               {study.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{study.summary}</p>
-            <p className="mt-3 text-sm font-medium text-neutral-700 dark:text-neutral-200">{study.outcome}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{study.summary}</p>
+            <p className="mt-3 text-sm font-medium text-[var(--text-primary)]">{study.outcome}</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {study.tags.map(tag => (
-                <span key={tag} className="rounded-md border border-black/10 px-2 py-1 text-xs text-neutral-600 dark:border-white/15 dark:text-neutral-300">
+                <span key={tag} className="rounded-md border border-[var(--border)] px-2 py-1 font-mono text-xs text-[var(--text-muted)]">
                   {tag}
                 </span>
               ))}
@@ -107,13 +107,13 @@ export default async function Portfolio(props: IPortfolioProps) {
         ))}
       </section>
 
-      <section className="mt-10 rounded-xl border border-black/10 p-6 dark:border-white/10">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Why this portfolio exists</h2>
-        <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+      <section className="mt-10 rounded-xl border border-[var(--border)] p-6">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Why this portfolio exists</h2>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
           The point is not to showcase demos. It is to document repeatable execution patterns that teams can adapt in their own repositories
           and governance models.
         </p>
       </section>
     </div>
   );
-};
+}
