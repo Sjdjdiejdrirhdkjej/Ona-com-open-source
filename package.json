@@ -11,6 +11,7 @@
   "dependencies": {
     "@daytonaio/sdk": "^0.165.0",
     "drizzle-orm": "^0.45.2",
+    "geist": "^1.7.0",
     "highlight.js": "^11.11.1",
     "iron-session": "^8.0.4",
     "marked": "^2.1.3",
