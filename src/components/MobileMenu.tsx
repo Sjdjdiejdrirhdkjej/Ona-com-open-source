@@ -31,7 +31,7 @@ export function MobileMenu() {
       <button
         onClick={() => setOpen(prev => !prev)}
         aria-label="Toggle menu"
-        className="flex size-9 items-center justify-center rounded-[4px] text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+        className="flex size-9 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)]"
       >
         {open
           ? (
@@ -48,8 +48,7 @@ export function MobileMenu() {
 
       {open && (
         <div
-          className="amp-grid absolute left-0 right-0 top-14 z-40 border-b border-black/8 px-5 pb-5 pt-4 shadow-sm dark:border-white/10"
-          style={{ backgroundColor: 'var(--bg-header)' }}
+          className="absolute left-0 right-0 top-12 z-40 border-b border-[var(--border)] bg-[var(--bg-header)] px-5 pb-5 pt-4 shadow-lg backdrop-blur-xl"
         >
           <nav>
             <ul className="space-y-1">
@@ -58,7 +57,7 @@ export function MobileMenu() {
                   <Link
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="block rounded-[4px] px-3 py-2.5 text-base font-medium text-gray-700 transition-colors hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/8"
+                    className="block rounded-lg px-3 py-2.5 text-base font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)] hover:text-[var(--text-primary)]"
                   >
                     {link.label}
                   </Link>
@@ -66,13 +65,13 @@ export function MobileMenu() {
               ))}
             </ul>
 
-            <div className="mt-4 flex flex-col gap-2 border-t border-black/8 pt-4 dark:border-white/10">
+            <div className="mt-4 flex flex-col gap-2 border-t border-[var(--border)] pt-4">
               <a
                 href={loginHref}
                 target="_top"
                 rel="noreferrer"
                 onClick={() => setOpen(false)}
-                className="rounded-[4px] bg-gray-950 px-3 py-2.5 text-center text-base font-medium text-white transition-opacity hover:opacity-80 dark:bg-gray-100 dark:text-gray-900"
+                className="rounded-lg bg-[var(--text-primary)] px-3 py-2.5 text-center text-base font-medium text-[var(--bg)] transition-opacity hover:opacity-80"
               >
                 Get Started
               </a>

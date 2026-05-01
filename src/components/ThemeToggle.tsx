@@ -49,7 +49,7 @@ export function ThemeToggle() {
       onClick={cycle}
       aria-label={label}
       title={label}
-      className="flex size-8 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/8"
+      className="flex size-8 items-center justify-center rounded-lg text-[var(--text-secondary)] transition-colors hover:bg-[var(--bg-3)] hover:text-[var(--text-primary)]"
     >
       {mounted
         ? mode === 'dark'
